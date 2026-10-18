@@ -5,8 +5,10 @@ import { supabase, NOTIFY_EMAIL } from './supabaseClient'
  * to brahimhamdipa@gmail.com via the Edge Function.
  */
 export async function submitAndNotify({ table, data, subject }) {
-  // 1. Save to Supabase
-  const { data: inserted, error } = await supabase.from(table).insert(data).select().single()
+  // 1. Save to Supabase.
+  // Note: no .select() here — the tables have insert-only RLS policies,
+  // so reading the row back after insert would be blocked.
+  const { error } = await supabase.from(table).insert(data)
   if (error) throw error
 
   // 2. Trigger email notification (Edge Function: send-notification)
@@ -17,7 +19,7 @@ export async function submitAndNotify({ table, data, subject }) {
         to: NOTIFY_EMAIL,
         subject: subject || `New submission: ${table}`,
         table,
-        record: inserted,
+        record: data,
       },
     })
   } catch (e) {
@@ -25,5 +27,5 @@ export async function submitAndNotify({ table, data, subject }) {
     // Submission is still saved; email can be retried from Supabase dashboard
   }
 
-  return inserted
+  return data
 }

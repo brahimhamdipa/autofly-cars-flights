@@ -6,8 +6,11 @@ body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-
 .brand-logo { height: 54px; width: auto; display: block; }
 .tagline { font-size: 11.5px; font-weight: 600; letter-spacing: .4px; color: #f5a623; }
 .logo { font-weight: 800; font-size: 20px; }
-.header nav button { background: transparent; border: 1px solid #374151; color: #e5e7eb; padding: 8px 18px; margin-left: 8px; border-radius: 999px; cursor: pointer; }
-.header nav button.active, .header nav button:hover { background: #2563eb; border-color: #2563eb; color: white; }
+.header nav { display: flex; align-items: center; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 4px; gap: 4px; }
+.header nav button { background: transparent; border: none; color: #d7e0f5; padding: 8px 16px; margin: 0; border-radius: 999px; cursor: pointer; font-weight: 600; }
+.header nav button.active { background: #2563eb; color: white; box-shadow: 0 2px 8px rgba(37,99,235,.5); }
+.header nav button:hover:not(.active) { background: rgba(255,255,255,.07); color: white; }
+@media (max-width: 640px) { .header { padding: 8px 12px; } .brand-logo { height: 42px; } .tagline { font-size: 10px; } .header nav button { padding: 7px 11px; font-size: 13px; } }
 .dropdown { position: relative; display: inline-block; }
 .dropdown-menu { position: absolute; right: 0; top: calc(100% + 8px); background: white; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.25); padding: 6px; min-width: 160px; z-index: 40; display: flex; flex-direction: column; }
 .dropdown-menu a { color: #1a1d26; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; }

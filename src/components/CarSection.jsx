@@ -234,6 +234,52 @@ function SellModal({ onClose }) {
   )
 }
 
+function ContactModal({ onClose }) {
+  const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' })
+  const [status, setStatus] = useState('')
+  const [sent, setSent] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setStatus('Sending your message...')
+    try {
+      await submitCarInquiry({ carName: 'Contact Us', name: form.name, email: form.email, phone: form.phone, message: form.message })
+      setSent(true)
+      setStatus('')
+    } catch (err) {
+      setStatus('Error: ' + err.message)
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
+        {sent ? (
+          <div className="confirm">
+            <h3>✓ Sent!</h3>
+            <p>Thanks for reaching out — we'll get back to you shortly.</p>
+            <button onClick={onClose}>Close</button>
+          </div>
+        ) : (
+          <form className="modal-form" onSubmit={handleSubmit}>
+            <h3>Contact Us</h3>
+            <p className="hint">Questions, feedback, or a request — good or bad, we want to hear it. Send us a message and we'll get back to you.</p>
+            <div className="row">
+              <input required placeholder="Your name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              <input required placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <input placeholder="Phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+            <textarea required placeholder="Your message" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
+            <button type="submit">Send message</button>
+            {status && <p className="hint">{status}</p>}
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function RequestModal({ cars, onClose }) {
   const [form, setForm] = useState({ car_name: '', name: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
@@ -263,7 +309,7 @@ function RequestModal({ cars, onClose }) {
           </div>
         ) : (
           <form className="modal-form" onSubmit={handleSubmit}>
-            <h3>Request a car / test drive</h3>
+            <h3>Info / Test drive a Car</h3>
             <select required value={form.car_name} onChange={e => setForm({ ...form, car_name: e.target.value })}>
               <option value="">Select a car</option>
               {cars.map(c => <option key={c.name} value={c.name}>{c.name}{c.price ? ` — $${fmtNum(c.price)}` : ''}</option>)}
@@ -283,7 +329,7 @@ function RequestModal({ cars, onClose }) {
   )
 }
 
-export default function CarSection() {
+export default function CarSection({ onRent }) {
   const cars = useMemo(loadCars, [])
   const [filterText, setFilterText] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
@@ -291,6 +337,7 @@ export default function CarSection() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [showSell, setShowSell] = useState(false)
   const [showRequest, setShowRequest] = useState(false)
+  const [showContact, setShowContact] = useState(false)
   const menuRef = useRef(null)
 
   useEffect(() => {
@@ -309,20 +356,15 @@ export default function CarSection() {
   return (
     <div>
       <div className="car-submenu-wrap" ref={menuRef}>
-        <button className="car-submenu-btn" onClick={() => setMenuOpen(o => !o)} aria-haspopup="true" aria-expanded={menuOpen}>
+        <button className="car-submenu-btn" onClick={() => setMenuOpen(o => !o)} aria-haspopup="true" aria-expanded={menuOpen} aria-label="Cars menu">
           <span className="burger" aria-hidden="true"><span /><span /><span /></span>
-          Menu
         </button>
         {menuOpen && (
           <div className="car-submenu">
-            <button onClick={() => { setMenuOpen(false); setShowSell(true) }}>
-              <span className="sm-icon">🚗</span>
-              <span className="sm-text"><b>Sell Car</b><small>Get an instant offer for your car</small></span>
-            </button>
-            <button onClick={() => { setMenuOpen(false); setShowRequest(true) }}>
-              <span className="sm-icon">✉️</span>
-              <span className="sm-text"><b>Request/Contact Us</b><small>Ask about a car or book a test drive</small></span>
-            </button>
+            <button onClick={() => { setMenuOpen(false); onRent && onRent() }}>Rent a Car</button>
+            <button onClick={() => { setMenuOpen(false); setShowSell(true) }}>Sell a Car</button>
+            <button onClick={() => { setMenuOpen(false); setShowRequest(true) }}>Info/Test drive a Car</button>
+            <button onClick={() => { setMenuOpen(false); setShowContact(true) }}>Contact Us</button>
           </div>
         )}
       </div>
@@ -349,6 +391,7 @@ export default function CarSection() {
       {interestCar && <InterestModal car={interestCar} onClose={() => setInterestCar(null)} />}
       {showSell && <SellModal onClose={() => setShowSell(false)} />}
       {showRequest && <RequestModal cars={cars} onClose={() => setShowRequest(false)} />}
+      {showContact && <ContactModal onClose={() => setShowContact(false)} />}
     </div>
   )
 }

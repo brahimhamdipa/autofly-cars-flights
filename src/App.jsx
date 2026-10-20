@@ -3,6 +3,7 @@ import CarSection from './components/CarSection'
 import FlightSection from './components/FlightSection'
 import GroceriesPage from './components/GroceriesPage'
 import AboutPage from './components/AboutPage'
+import RentPage from './components/RentPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
 
@@ -30,7 +31,7 @@ export default function App() {
           <span className="tagline">Cars, Flights & More — All in One Place</span>
         </div>
         <nav>
-          <button className={tab === 'cars' ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
+          <button className={tab === 'cars' || tab === 'rent' ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
           <button className={tab === 'flights' ? 'active' : ''} onClick={() => go('flights')}>Flights</button>
           <span className="dropdown" ref={moreRef}>
             <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
@@ -44,7 +45,8 @@ export default function App() {
         </nav>
       </header>
       <main className="main">
-        {tab === 'cars' && <CarSection />}
+        {tab === 'cars' && <CarSection onRent={() => setTab('rent')} />}
+        {tab === 'rent' && <RentPage />}
         {tab === 'flights' && <FlightSection />}
         {tab === 'groceries' && <GroceriesPage />}
         {tab === 'about' && <AboutPage />}

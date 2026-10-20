@@ -3,20 +3,27 @@ import CarsMenu from './CarsMenu'
 import { submitAndNotify } from '../lib/notify'
 
 export default function SellPage({ go }) {
-  const [form, setForm] = useState({ make: '', model: '', year: '', mileage: '', condition: 'Good', vin: '', name: '', email: '', phone: '' })
+  const [form, setForm] = useState({ make: '', model: '', year: '', mileage: '', condition: 'Good', vin: '', name: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setStatus('Sending your sell request...')
+    const subject = `New car sell request: ${form.year} ${form.make} ${form.model} — ${form.name}`
+    const full = { ...form, year: Number(form.year), mileage: Number(form.mileage) }
     try {
-      await submitAndNotify({
-        table: 'car_sell_requests',
-        data: { ...form, year: Number(form.year), mileage: Number(form.mileage) },
-        subject: `New car sell request: ${form.year} ${form.make} ${form.model} — ${form.name}`,
-      })
+      try {
+        // Includes the message — it's also stored in the DB once the optional
+        // message column exists (supabase/add-sell-message.sql). Either way the
+        // message always goes out in the email via emailExtras.
+        await submitAndNotify({ table: 'car_sell_requests', data: full, subject, emailExtras: { message: form.message } })
+      } catch (err) {
+        if (!/message/i.test(err.message || '')) throw err
+        const { message, ...base } = full
+        await submitAndNotify({ table: 'car_sell_requests', data: base, subject, emailExtras: { message: form.message } })
+      }
       setStatus('✓ Sent! Your instant offer request was received — we\'ll email you shortly.')
-      setForm({ make: '', model: '', year: '', mileage: '', condition: 'Good', vin: '', name: '', email: '', phone: '' })
+      setForm({ make: '', model: '', year: '', mileage: '', condition: 'Good', vin: '', name: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
     }
@@ -49,6 +56,7 @@ export default function SellPage({ go }) {
           <input required placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
         </div>
         <input placeholder="Phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+        <textarea placeholder="Message — anything else we should know about the car?" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
         <button type="submit">Get instant offer</button>
         {status && <p className="status">{status}</p>}
       </form>

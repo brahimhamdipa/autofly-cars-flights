@@ -13,6 +13,7 @@ create table if not exists car_sell_requests (
   name text not null,
   email text not null,
   phone text,
+  message text,
   created_at timestamptz default now()
 );
 

@@ -4,6 +4,9 @@ import FlightSection from './components/FlightSection'
 import GroceriesPage from './components/GroceriesPage'
 import AboutPage from './components/AboutPage'
 import RentPage from './components/RentPage'
+import SellPage from './components/SellPage'
+import TestDrivePage from './components/TestDrivePage'
+import ContactPage from './components/ContactPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
 
@@ -22,6 +25,7 @@ export default function App() {
 
   const go = (t) => { setTab(t); setMoreOpen(false) }
   const inMore = tab === 'groceries' || tab === 'about'
+  const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
 
   return (
     <div className="app">
@@ -31,7 +35,7 @@ export default function App() {
           <span className="tagline">Cars, Flights & More — All in One Place</span>
         </div>
         <nav>
-          <button className={tab === 'cars' || tab === 'rent' ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
+          <button className={inCars ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
           <button className={tab === 'flights' ? 'active' : ''} onClick={() => go('flights')}>Flights</button>
           <span className="dropdown" ref={moreRef}>
             <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
@@ -45,8 +49,11 @@ export default function App() {
         </nav>
       </header>
       <main className="main">
-        {tab === 'cars' && <CarSection onRent={() => setTab('rent')} />}
-        {tab === 'rent' && <RentPage />}
+        {tab === 'cars' && <CarSection go={go} />}
+        {tab === 'rent' && <RentPage go={go} />}
+        {tab === 'sell' && <SellPage go={go} />}
+        {tab === 'testdrive' && <TestDrivePage go={go} />}
+        {tab === 'contact' && <ContactPage go={go} />}
         {tab === 'flights' && <FlightSection />}
         {tab === 'groceries' && <GroceriesPage />}
         {tab === 'about' && <AboutPage />}

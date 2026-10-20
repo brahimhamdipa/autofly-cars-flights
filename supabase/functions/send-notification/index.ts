@@ -13,7 +13,7 @@ serve(async (req) => {
     return new Response("ok", { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" } })
   }
   try {
-    const { to, subject, table, record } = await req.json()
+    const { to, subject, table, record, attachment } = await req.json()
     const recipient = to || NOTIFY_TO
 
     const html = `
@@ -23,18 +23,28 @@ serve(async (req) => {
       <p>Time: ${new Date().toISOString()}</p>
     `
 
+    const payload: Record<string, unknown> = {
+      from: "AutoFly <onboarding@resend.dev>",
+      to: [recipient],
+      subject: subject || `New submission: ${table}`,
+      html,
+    }
+    // Optional file attachment (e.g. the traveler-information PDF):
+    // { filename: string, content: base64 string }
+    if (attachment && attachment.content) {
+      payload.attachments = [{
+        filename: attachment.filename || "attachment.pdf",
+        content: attachment.content,
+      }]
+    }
+
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${RESEND_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        from: "AutoFly <onboarding@resend.dev>",
-        to: [recipient],
-        subject: subject || `New submission: ${table}`,
-        html,
-      }),
+      body: JSON.stringify(payload),
     })
 
     const data = await res.json()

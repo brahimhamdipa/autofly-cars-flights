@@ -72,6 +72,21 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .airport-list li:hover, .airport-list li.active { background: #eff6ff; }
 .airport-main { font-size: 14px; font-weight: 600; color: #1a1d26; }
 .airport-sub { font-size: 12px; font-weight: 400; color: #6b7280; }
+.traveler-pdf-btn { display: block; width: 100%; max-width: 760px; margin: 18px auto 0; background: linear-gradient(180deg, #f59e0b, #ea580c); color: white; font-size: 16px; font-weight: 700; padding: 15px 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(234,88,12,.35); }
+.traveler-pdf-btn:hover { background: linear-gradient(180deg, #fbbf24, #f59e0b); }
+.traveler-modal { max-width: 560px; max-height: 88vh; overflow-y: auto; }
+.traveler-form { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+.traveler-card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; position: relative; margin: 0; }
+.traveler-card legend { font-weight: 700; font-size: 13px; padding: 0 6px; color: #1d4ed8; }
+.traveler-remove { position: absolute; top: 8px; right: 8px; background: #fee2e2; color: #b91c1c; padding: 4px 10px; font-size: 12px; border-radius: 999px; }
+.traveler-remove:hover { background: #fecaca; }
+.add-traveler { background: #eff6ff; color: #1d4ed8; border: 1px dashed #93c5fd; font-weight: 700; }
+.add-traveler:hover { background: #dbeafe; }
+.traveler-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.traveler-actions button { flex: 1; min-width: 160px; font-size: 15px; padding: 13px; }
+.pdf-submit { background: #2563eb; }
+.pdf-download { background: #111827; }
+.pdf-download:hover { background: #1f2937; }
 .status { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 10px; margin-top: 14px; }
 .hint { font-size: 13px; color: #6b7280; }
 .footer { text-align: center; padding: 18px; color: #6b7280; font-size: 13px; }

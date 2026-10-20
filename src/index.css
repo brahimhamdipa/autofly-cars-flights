@@ -72,6 +72,18 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .airport-list li:hover, .airport-list li.active { background: #eff6ff; }
 .airport-main { font-size: 14px; font-weight: 600; color: #1a1d26; }
 .airport-sub { font-size: 12px; font-weight: 400; color: #6b7280; }
+.car-submenu-wrap { position: relative; margin-bottom: 14px; }
+.car-submenu-btn { display: inline-flex; align-items: center; gap: 10px; background: #111827; color: white; font-weight: 700; font-size: 15px; padding: 11px 20px; border-radius: 999px; box-shadow: 0 4px 14px rgba(17,24,39,.25); }
+.car-submenu-btn:hover { background: #1f2937; }
+.car-submenu-btn .burger { display: inline-flex; flex-direction: column; gap: 3.5px; }
+.car-submenu-btn .burger span { display: block; width: 18px; height: 2px; background: white; border-radius: 2px; }
+.car-submenu { position: absolute; top: calc(100% + 8px); left: 0; background: white; border: 1px solid #e5e7eb; border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,.16); padding: 6px; min-width: 290px; z-index: 60; display: flex; flex-direction: column; }
+.car-submenu button { display: flex; align-items: center; gap: 12px; background: transparent; color: #111827; text-align: left; padding: 11px 12px; border-radius: 10px; font-size: 14px; }
+.car-submenu button:hover { background: #f3f4f6; }
+.car-submenu .sm-icon { font-size: 21px; }
+.car-submenu .sm-text { display: flex; flex-direction: column; }
+.car-submenu .sm-text b { font-size: 15px; }
+.car-submenu .sm-text small { color: #6b7280; font-size: 12px; }
 .traveler-pdf-btn { display: block; width: 100%; max-width: 760px; margin: 18px auto 0; background: linear-gradient(180deg, #f59e0b, #ea580c); color: white; font-size: 16px; font-weight: 700; padding: 15px 18px; border-radius: 12px; box-shadow: 0 4px 14px rgba(234,88,12,.35); }
 .traveler-pdf-btn:hover { background: linear-gradient(180deg, #fbbf24, #f59e0b); }
 .traveler-modal { max-width: 560px; max-height: 88vh; overflow-y: auto; }

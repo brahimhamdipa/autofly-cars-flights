@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
 
 // ---------------------------------------------------------------------------
@@ -172,15 +172,133 @@ function InterestModal({ car, onClose }) {
   )
 }
 
+function SellModal({ onClose }) {
+  const [form, setForm] = useState({ make: '', model: '', year: '', mileage: '', condition: 'Good', vin: '', name: '', email: '', phone: '' })
+  const [status, setStatus] = useState('')
+  const [sent, setSent] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setStatus('Sending your sell request...')
+    try {
+      await submitAndNotify({
+        table: 'car_sell_requests',
+        data: { ...form, year: Number(form.year), mileage: Number(form.mileage) },
+        subject: `New car sell request: ${form.year} ${form.make} ${form.model} — ${form.name}`,
+      })
+      setSent(true)
+      setStatus('')
+    } catch (err) {
+      setStatus('Error: ' + err.message)
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
+        {sent ? (
+          <div className="confirm">
+            <h3>✓ Sent!</h3>
+            <p>Your instant offer request was received — we'll email you shortly.</p>
+            <button onClick={onClose}>Close</button>
+          </div>
+        ) : (
+          <form className="modal-form" onSubmit={handleSubmit}>
+            <h3>Sell your car — get an instant offer</h3>
+            <div className="row">
+              <input required placeholder="Make (e.g. Honda)" value={form.make} onChange={e => setForm({ ...form, make: e.target.value })} />
+              <input required placeholder="Model (e.g. Accord)" value={form.model} onChange={e => setForm({ ...form, model: e.target.value })} />
+            </div>
+            <div className="row">
+              <input required placeholder="Year" type="number" value={form.year} onChange={e => setForm({ ...form, year: e.target.value })} />
+              <input required placeholder="Mileage" type="number" value={form.mileage} onChange={e => setForm({ ...form, mileage: e.target.value })} />
+            </div>
+            <div className="row">
+              <select value={form.condition} onChange={e => setForm({ ...form, condition: e.target.value })}>
+                <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option>
+              </select>
+              <input placeholder="VIN (optional)" value={form.vin} onChange={e => setForm({ ...form, vin: e.target.value })} />
+            </div>
+            <div className="row">
+              <input required placeholder="Your name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              <input required placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <input placeholder="Phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+            <button type="submit">Get instant offer</button>
+            {status && <p className="hint">{status}</p>}
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function RequestModal({ cars, onClose }) {
+  const [form, setForm] = useState({ car_name: '', name: '', email: '', phone: '', message: '' })
+  const [status, setStatus] = useState('')
+  const [sent, setSent] = useState(false)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setStatus('Sending your inquiry...')
+    try {
+      await submitCarInquiry({ carName: form.car_name, name: form.name, email: form.email, phone: form.phone, message: form.message })
+      setSent(true)
+      setStatus('')
+    } catch (err) {
+      setStatus('Error: ' + err.message)
+    }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
+        {sent ? (
+          <div className="confirm">
+            <h3>✓ Sent!</h3>
+            <p>Your inquiry was received — the seller will contact you.</p>
+            <button onClick={onClose}>Close</button>
+          </div>
+        ) : (
+          <form className="modal-form" onSubmit={handleSubmit}>
+            <h3>Request a car / test drive</h3>
+            <select required value={form.car_name} onChange={e => setForm({ ...form, car_name: e.target.value })}>
+              <option value="">Select a car</option>
+              {cars.map(c => <option key={c.name} value={c.name}>{c.name}{c.price ? ` — $${fmtNum(c.price)}` : ''}</option>)}
+            </select>
+            <div className="row">
+              <input required placeholder="Your name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              <input required placeholder="Email" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            </div>
+            <input placeholder="Phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+            <textarea placeholder="Message" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
+            <button type="submit">Send inquiry</button>
+            {status && <p className="hint">{status}</p>}
+          </form>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function CarSection() {
   const cars = useMemo(loadCars, [])
   const [filterText, setFilterText] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
   const [interestCar, setInterestCar] = useState(null)
-  const [sellForm, setSellForm] = useState({ make: '', model: '', year: '', mileage: '', condition: 'Good', vin: '', name: '', email: '', phone: '' })
-  const [buyForm, setBuyForm] = useState({ car_name: '', name: '', email: '', phone: '', message: '' })
-  const [sellStatus, setSellStatus] = useState('')
-  const [buyStatus, setBuyStatus] = useState('')
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [showSell, setShowSell] = useState(false)
+  const [showRequest, setShowRequest] = useState(false)
+  const menuRef = useRef(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false) }
+    window.addEventListener('pointerdown', onDown)
+    return () => window.removeEventListener('pointerdown', onDown)
+  }, [menuOpen])
 
   const filtered = cars.filter(c => {
     if (filterText && !c.name.toLowerCase().includes(filterText.toLowerCase())) return false
@@ -188,36 +306,27 @@ export default function CarSection() {
     return true
   })
 
-  const handleSell = async (e) => {
-    e.preventDefault()
-    setSellStatus('Sending your sell request...')
-    try {
-      await submitAndNotify({
-        table: 'car_sell_requests',
-        data: { ...sellForm, year: Number(sellForm.year), mileage: Number(sellForm.mileage) },
-        subject: `New car sell request: ${sellForm.year} ${sellForm.make} ${sellForm.model} — ${sellForm.name}`,
-      })
-      setSellStatus('✓ Sent! Your instant offer request was received — we\'ll email you shortly.')
-      setSellForm({ make: '', model: '', year: '', mileage: '', condition: 'Good', vin: '', name: '', email: '', phone: '' })
-    } catch (err) {
-      setSellStatus('Error: ' + err.message)
-    }
-  }
-
-  const handleBuy = async (e) => {
-    e.preventDefault()
-    setBuyStatus('Sending your inquiry...')
-    try {
-      await submitCarInquiry({ carName: buyForm.car_name, name: buyForm.name, email: buyForm.email, phone: buyForm.phone, message: buyForm.message })
-      setBuyStatus('✓ Sent! Your inquiry was received — the seller will contact you.')
-      setBuyForm({ car_name: '', name: '', email: '', phone: '', message: '' })
-    } catch (err) {
-      setBuyStatus('Error: ' + err.message)
-    }
-  }
-
   return (
     <div>
+      <div className="car-submenu-wrap" ref={menuRef}>
+        <button className="car-submenu-btn" onClick={() => setMenuOpen(o => !o)} aria-haspopup="true" aria-expanded={menuOpen}>
+          <span className="burger" aria-hidden="true"><span /><span /><span /></span>
+          Menu
+        </button>
+        {menuOpen && (
+          <div className="car-submenu">
+            <button onClick={() => { setMenuOpen(false); setShowSell(true) }}>
+              <span className="sm-icon">🚗</span>
+              <span className="sm-text"><b>Sell Car</b><small>Get an instant offer for your car</small></span>
+            </button>
+            <button onClick={() => { setMenuOpen(false); setShowRequest(true) }}>
+              <span className="sm-icon">✉️</span>
+              <span className="sm-text"><b>Request/Contact Us</b><small>Ask about a car or book a test drive</small></span>
+            </button>
+          </div>
+        )}
+      </div>
+
       <div className="hero-card">
         <h2>Buy your next car, fully online</h2>
         <p>Browse our cars below — every listing shows real photos, mileage, and price. Or sell us your car with an instant offer.</p>
@@ -238,49 +347,8 @@ export default function CarSection() {
       </div>
 
       {interestCar && <InterestModal car={interestCar} onClose={() => setInterestCar(null)} />}
-
-      <div className="two-col">
-        <form className="form-card" onSubmit={handleSell}>
-          <h3>Sell your car — get an instant offer</h3>
-          <div className="row">
-            <input required placeholder="Make (e.g. Honda)" value={sellForm.make} onChange={e => setSellForm({ ...sellForm, make: e.target.value })} />
-            <input required placeholder="Model (e.g. Accord)" value={sellForm.model} onChange={e => setSellForm({ ...sellForm, model: e.target.value })} />
-          </div>
-          <div className="row">
-            <input required placeholder="Year" type="number" value={sellForm.year} onChange={e => setSellForm({ ...sellForm, year: e.target.value })} />
-            <input required placeholder="Mileage" type="number" value={sellForm.mileage} onChange={e => setSellForm({ ...sellForm, mileage: e.target.value })} />
-          </div>
-          <div className="row">
-            <select value={sellForm.condition} onChange={e => setSellForm({ ...sellForm, condition: e.target.value })}>
-              <option>Excellent</option><option>Good</option><option>Fair</option><option>Poor</option>
-            </select>
-            <input placeholder="VIN (optional)" value={sellForm.vin} onChange={e => setSellForm({ ...sellForm, vin: e.target.value })} />
-          </div>
-          <div className="row">
-            <input required placeholder="Your name" value={sellForm.name} onChange={e => setSellForm({ ...sellForm, name: e.target.value })} />
-            <input required placeholder="Email" type="email" value={sellForm.email} onChange={e => setSellForm({ ...sellForm, email: e.target.value })} />
-          </div>
-          <input placeholder="Phone" value={sellForm.phone} onChange={e => setSellForm({ ...sellForm, phone: e.target.value })} />
-          <button type="submit">Get instant offer</button>
-          {sellStatus && <p className="status">{sellStatus}</p>}
-        </form>
-
-        <form className="form-card" onSubmit={handleBuy}>
-          <h3>Request a car / test drive</h3>
-          <select required value={buyForm.car_name} onChange={e => setBuyForm({ ...buyForm, car_name: e.target.value })}>
-            <option value="">Select a car</option>
-            {cars.map(c => <option key={c.name} value={c.name}>{c.name}{c.price ? ` — $${fmtNum(c.price)}` : ''}</option>)}
-          </select>
-          <div className="row">
-            <input required placeholder="Your name" value={buyForm.name} onChange={e => setBuyForm({ ...buyForm, name: e.target.value })} />
-            <input required placeholder="Email" type="email" value={buyForm.email} onChange={e => setBuyForm({ ...buyForm, email: e.target.value })} />
-          </div>
-          <input placeholder="Phone" value={buyForm.phone} onChange={e => setBuyForm({ ...buyForm, phone: e.target.value })} />
-          <textarea placeholder="Message" value={buyForm.message} onChange={e => setBuyForm({ ...buyForm, message: e.target.value })} />
-          <button type="submit">Send inquiry</button>
-          {buyStatus && <p className="status">{buyStatus}</p>}
-        </form>
-      </div>
+      {showSell && <SellModal onClose={() => setShowSell(false)} />}
+      {showRequest && <RequestModal cars={cars} onClose={() => setShowRequest(false)} />}
     </div>
   )
 }

@@ -3,9 +3,11 @@ import { submitAndNotify } from '../lib/notify'
 
 export default function FlightSection() {
   const [tripType, setTripType] = useState('Round Trip')
+  // adults/children are kept as raw text while typing so the boxes can be
+  // cleared and retyped freely; they are parsed to numbers only on submit.
   const [form, setForm] = useState({
     from_city: '', to_city: '', depart_date: '', return_date: '',
-    adults: 1, children: 0, cabin_class: 'Economy', direct_only: false,
+    adults: '1', children: '0', cabin_class: 'Economy', direct_only: false,
     name: '', email: '', phone: '',
   })
   const [childAges, setChildAges] = useState([])
@@ -13,28 +15,27 @@ export default function FlightSection() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
-  const setChildren = (v) => {
-    const n = Math.max(0, Math.min(8, Number(v) || 0))
-    set('children', n)
-    setChildAges(prev => {
-      const next = [...prev]
-      next.length = n
-      return next.map(a => (a === undefined ? '' : a))
-    })
-  }
+  const selectAll = (e) => e.target.select()
 
-  const setAge = (i, v) => setChildAges(prev => prev.map((a, idx) => (idx === i ? v : a)))
+  const childrenCount = Math.max(0, Math.min(8, parseInt(form.children, 10) || 0))
+  // Dense array (no holes) so every age box always has a real value slot.
+  const ages = Array.from({ length: childrenCount }, (_, i) => childAges[i] ?? '')
+
+  const setAge = (i, v) => setChildAges(prev => {
+    const next = Array.from({ length: Math.max(prev.length, i + 1) }, (_, idx) => prev[idx] ?? '')
+    next[i] = v
+    return next
+  })
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setStatus('Searching & reserving...')
-    const adults = Number(form.adults) || 1
-    const children = Number(form.children) || 0
-    const ages = childAges.map(a => Number(a))
+    const adults = Math.max(1, Math.min(9, parseInt(form.adults, 10) || 1))
+    const children = childrenCount
     const breakdown = {
       adults,
       children,
-      children_ages: children > 0 ? ages.join(', ') : null,
+      children_ages: children > 0 ? ages.map(a => parseInt(a, 10) || 0).join(', ') : null,
     }
     const baseData = {
       trip_type: tripType,
@@ -67,7 +68,7 @@ export default function FlightSection() {
         })
       }
       setStatus('✓ Reservation request sent! Our travel expert will email you within 24h.')
-      setForm({ from_city: '', to_city: '', depart_date: '', return_date: '', adults: 1, children: 0, cabin_class: 'Economy', direct_only: false, name: '', email: '', phone: '' })
+      setForm({ from_city: '', to_city: '', depart_date: '', return_date: '', adults: '1', children: '0', cabin_class: 'Economy', direct_only: false, name: '', email: '', phone: '' })
       setChildAges([])
     } catch (err) {
       setStatus('Error: ' + err.message + ' (check Supabase .env)')
@@ -96,14 +97,14 @@ export default function FlightSection() {
           {tripType === 'Round Trip' && (
             <label>Return<input type="date" value={form.return_date} onChange={e => set('return_date', e.target.value)} /></label>
           )}
-          <label>Adults<input type="number" min="1" max="9" value={form.adults} onChange={e => set('adults', e.target.value)} /></label>
-          <label>Children<input type="number" min="0" max="8" value={form.children} onChange={e => setChildren(e.target.value)} /></label>
+          <label>Adults<input type="number" min="1" max="9" value={form.adults} onFocus={selectAll} onChange={e => set('adults', e.target.value)} /></label>
+          <label>Children<input type="number" min="0" max="8" value={form.children} onFocus={selectAll} onChange={e => set('children', e.target.value)} /></label>
         </div>
-        {Number(form.children) > 0 && (
+        {childrenCount > 0 && (
           <div className="row">
-            {Array.from({ length: Number(form.children) }, (_, i) => (
+            {ages.map((age, i) => (
               <label key={i}>Age of child {i + 1}
-                <input required type="number" min="0" max="17" placeholder="Years" value={childAges[i] ?? ''} onChange={e => setAge(i, e.target.value)} />
+                <input required type="number" min="0" max="17" placeholder="Years" value={age} onFocus={selectAll} onChange={e => setAge(i, e.target.value)} />
               </label>
             ))}
           </div>

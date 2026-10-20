@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
+import AirportInput from './AirportInput'
 
 export default function FlightSection() {
   const [tripType, setTripType] = useState('Round Trip')
@@ -89,8 +90,8 @@ export default function FlightSection() {
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <div className="row">
-          <label>From<input required placeholder="City or airport (e.g. NYC)" value={form.from_city} onChange={e => set('from_city', e.target.value)} /></label>
-          <label>To<input required placeholder="City or airport (e.g. LAX)" value={form.to_city} onChange={e => set('to_city', e.target.value)} /></label>
+          <AirportInput label="From" placeholder="Type city or airport" value={form.from_city} onChange={v => set('from_city', v)} />
+          <AirportInput label="To" placeholder="Type city or airport" value={form.to_city} onChange={v => set('to_city', v)} />
         </div>
         <div className="row">
           <label>Depart<input required type="date" value={form.depart_date} onChange={e => set('depart_date', e.target.value)} /></label>

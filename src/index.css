@@ -56,6 +56,12 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .trip-tabs { display: flex; gap: 8px; margin-top: 12px; }
 .trip-tabs button { background: #e5e7eb; color: #111827; }
 .trip-tabs button.active { background: #111827; color: white; }
+.airport-wrap { position: relative; width: 100%; }
+.airport-list { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #d1d5db; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.15); margin: 4px 0 0; padding: 4px; list-style: none; z-index: 30; max-height: 290px; overflow-y: auto; }
+.airport-list li { padding: 8px 10px; border-radius: 8px; cursor: pointer; display: flex; flex-direction: column; gap: 1px; }
+.airport-list li:hover, .airport-list li.active { background: #eff6ff; }
+.airport-main { font-size: 14px; font-weight: 600; color: #1a1d26; }
+.airport-sub { font-size: 12px; font-weight: 400; color: #6b7280; }
 .status { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 12px; border-radius: 10px; margin-top: 14px; }
 .hint { font-size: 13px; color: #6b7280; }
 .footer { text-align: center; padding: 18px; color: #6b7280; font-size: 13px; }

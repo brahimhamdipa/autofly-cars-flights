@@ -5,34 +5,70 @@ export default function FlightSection() {
   const [tripType, setTripType] = useState('Round Trip')
   const [form, setForm] = useState({
     from_city: '', to_city: '', depart_date: '', return_date: '',
-    travelers: 1, cabin_class: 'Economy', direct_only: false,
+    adults: 1, children: 0, cabin_class: 'Economy', direct_only: false,
     name: '', email: '', phone: '',
   })
+  const [childAges, setChildAges] = useState([])
   const [status, setStatus] = useState('')
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
+  const setChildren = (v) => {
+    const n = Math.max(0, Math.min(8, Number(v) || 0))
+    set('children', n)
+    setChildAges(prev => {
+      const next = [...prev]
+      next.length = n
+      return next.map(a => (a === undefined ? '' : a))
+    })
+  }
+
+  const setAge = (i, v) => setChildAges(prev => prev.map((a, idx) => (idx === i ? v : a)))
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setStatus('Searching & reserving...')
+    const adults = Number(form.adults) || 1
+    const children = Number(form.children) || 0
+    const ages = childAges.map(a => Number(a))
+    const breakdown = {
+      adults,
+      children,
+      children_ages: children > 0 ? ages.join(', ') : null,
+    }
+    const baseData = {
+      trip_type: tripType,
+      from_city: form.from_city,
+      to_city: form.to_city,
+      depart_date: form.depart_date,
+      return_date: tripType === 'Round Trip' ? form.return_date : null,
+      travelers: adults + children,
+      cabin_class: form.cabin_class,
+      direct_only: form.direct_only,
+      name: form.name, email: form.email, phone: form.phone,
+    }
     try {
-      await submitAndNotify({
-        table: 'flight_bookings',
-        data: {
-          trip_type: tripType,
-          from_city: form.from_city,
-          to_city: form.to_city,
-          depart_date: form.depart_date,
-          return_date: tripType === 'Round Trip' ? form.return_date : null,
-          travelers: Number(form.travelers),
-          cabin_class: form.cabin_class,
-          direct_only: form.direct_only,
-          name: form.name, email: form.email, phone: form.phone,
-        },
-        subject: `New flight reservation: ${form.from_city} → ${form.to_city}`,
-      })
+      try {
+        // Preferred: store the adults/children breakdown in the DB too.
+        await submitAndNotify({
+          table: 'flight_bookings',
+          data: { ...baseData, ...breakdown },
+          subject: `New flight reservation: ${form.from_city} → ${form.to_city}`,
+        })
+      } catch (err) {
+        // If the adults/children columns don't exist yet, save the booking
+        // the original way and still email the full breakdown.
+        if (!/adults|children/i.test(err.message || '')) throw err
+        await submitAndNotify({
+          table: 'flight_bookings',
+          data: baseData,
+          emailExtras: breakdown,
+          subject: `New flight reservation: ${form.from_city} → ${form.to_city}`,
+        })
+      }
       setStatus('✓ Reservation request sent! Our travel expert will email you within 24h.')
-      setForm({ from_city: '', to_city: '', depart_date: '', return_date: '', travelers: 1, cabin_class: 'Economy', direct_only: false, name: '', email: '', phone: '' })
+      setForm({ from_city: '', to_city: '', depart_date: '', return_date: '', adults: 1, children: 0, cabin_class: 'Economy', direct_only: false, name: '', email: '', phone: '' })
+      setChildAges([])
     } catch (err) {
       setStatus('Error: ' + err.message + ' (check Supabase .env)')
     }
@@ -60,8 +96,18 @@ export default function FlightSection() {
           {tripType === 'Round Trip' && (
             <label>Return<input type="date" value={form.return_date} onChange={e => set('return_date', e.target.value)} /></label>
           )}
-          <label>Travelers<input type="number" min="1" max="9" value={form.travelers} onChange={e => set('travelers', e.target.value)} /></label>
+          <label>Adults<input type="number" min="1" max="9" value={form.adults} onChange={e => set('adults', e.target.value)} /></label>
+          <label>Children<input type="number" min="0" max="8" value={form.children} onChange={e => setChildren(e.target.value)} /></label>
         </div>
+        {Number(form.children) > 0 && (
+          <div className="row">
+            {Array.from({ length: Number(form.children) }, (_, i) => (
+              <label key={i}>Age of child {i + 1}
+                <input required type="number" min="0" max="17" placeholder="Years" value={childAges[i] ?? ''} onChange={e => setAge(i, e.target.value)} />
+              </label>
+            ))}
+          </div>
+        )}
         <div className="row">
           <label>Cabin
             <select value={form.cabin_class} onChange={e => set('cabin_class', e.target.value)}>

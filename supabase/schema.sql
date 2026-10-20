@@ -16,10 +16,13 @@ create table if not exists car_sell_requests (
   created_at timestamptz default now()
 );
 
--- Car inquiries (I'm interested / test drive)
+-- Car inquiries (I'm interested / Get instant offer / Send inquiry)
+-- Folder-driven Cars section stores the car folder name in car_name;
+-- car_id is legacy and nullable.
 create table if not exists car_inquiries (
   id bigint generated always as identity primary key,
-  car_id int not null,
+  car_id int,
+  car_name text,
   name text not null,
   email text not null,
   phone text,
@@ -36,6 +39,9 @@ create table if not exists flight_bookings (
   depart_date date not null,
   return_date date,
   travelers int not null default 1,
+  adults int,
+  children int default 0,
+  children_ages text,
   cabin_class text not null default 'Economy',
   direct_only boolean default false,
   name text not null,

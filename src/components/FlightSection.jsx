@@ -10,7 +10,7 @@ export default function FlightSection({ go }) {
   const [form, setForm] = useState({
     from_city: '', to_city: '', depart_date: '', return_date: '',
     adults: '1', children: '0', cabin_class: 'Economy', direct_only: false,
-    name: '', email: '', phone: '',
+    name: '', email: '', phone: '', message: '',
   })
   const [childAges, setChildAges] = useState([])
   const [status, setStatus] = useState('')
@@ -52,25 +52,27 @@ export default function FlightSection({ go }) {
     }
     try {
       try {
-        // Preferred: store the adults/children breakdown in the DB too.
+        // Preferred: store the adults/children breakdown and the message in
+        // the DB too (message column via supabase/add-flight-message.sql).
         await submitAndNotify({
           table: 'flight_bookings',
-          data: { ...baseData, ...breakdown },
+          data: { ...baseData, ...breakdown, message: form.message },
+          emailExtras: { message: form.message },
           subject: `New flight reservation: ${form.from_city} → ${form.to_city}`,
         })
       } catch (err) {
-        // If the adults/children columns don't exist yet, save the booking
-        // the original way and still email the full breakdown.
-        if (!/adults|children/i.test(err.message || '')) throw err
+        // If the breakdown/message columns don't exist yet, save the booking
+        // the original way and still email everything.
+        if (!/adults|children|message/i.test(err.message || '')) throw err
         await submitAndNotify({
           table: 'flight_bookings',
           data: baseData,
-          emailExtras: breakdown,
+          emailExtras: { ...breakdown, message: form.message },
           subject: `New flight reservation: ${form.from_city} → ${form.to_city}`,
         })
       }
       setStatus('✓ Reservation request sent! Our travel expert will email you within 24h.')
-      setForm({ from_city: '', to_city: '', depart_date: '', return_date: '', adults: '1', children: '0', cabin_class: 'Economy', direct_only: false, name: '', email: '', phone: '' })
+      setForm({ from_city: '', to_city: '', depart_date: '', return_date: '', adults: '1', children: '0', cabin_class: 'Economy', direct_only: false, name: '', email: '', phone: '', message: '' })
       setChildAges([])
     } catch (err) {
       setStatus('Error: ' + err.message + ' (check Supabase .env)')
@@ -126,7 +128,8 @@ export default function FlightSection({ go }) {
           <input required placeholder="Email" type="email" value={form.email} onChange={e => set('email', e.target.value)} />
           <input placeholder="Phone" value={form.phone} onChange={e => set('phone', e.target.value)} />
         </div>
-        <button type="submit">Request reservation</button>
+        <textarea placeholder="Message — anything else we should know?" value={form.message} onChange={e => set('message', e.target.value)} />
+        <button type="submit">Request Estimation</button>
         <p className="hint">Prefer to book over call? Our U.S.-based experts are available 24x7x365. Every request is emailed to our team instantly.</p>
       </form>
       {status && <p className="status">{status}</p>}

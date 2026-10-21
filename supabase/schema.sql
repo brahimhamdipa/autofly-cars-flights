@@ -48,6 +48,7 @@ create table if not exists flight_bookings (
   name text not null,
   email text not null,
   phone text,
+  message text,
   created_at timestamptz default now()
 );
 

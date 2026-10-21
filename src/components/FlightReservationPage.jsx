@@ -10,7 +10,7 @@ const fmtDob = (iso) => {
   return isNaN(d) ? iso : d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-function buildPdf(travelers, trip) {
+function buildPdf(travelers, trip, message) {
   const doc = new jsPDF()
   const left = 20
   let y = 22
@@ -55,6 +55,21 @@ function buildPdf(travelers, trip) {
     doc.text(`Date of Birth:  ${fmtDob(t.dob)}`, left + 4, y); y += 13
   })
 
+  if (message && message.trim()) {
+    if (y > 255) { doc.addPage(); y = 22 }
+    doc.setFontSize(13)
+    doc.setFont('helvetica', 'bold')
+    doc.text('Message', left, y)
+    y += 7
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    for (const line of doc.splitTextToSize(message.trim(), 166)) {
+      if (y > 275) { doc.addPage(); y = 22 }
+      doc.text(line, left + 4, y)
+      y += 6.5
+    }
+  }
+
   doc.setFontSize(9)
   doc.setTextColor(120)
   doc.text('Submitted via autofly.us.com', left, 285)
@@ -76,6 +91,7 @@ export default function FlightReservationPage({ go }) {
   const [tripType, setTripType] = useState('Round Trip')
   const [trip, setTrip] = useState({ from: '', to: '', depart: '', return: '' })
   const [travelers, setTravelers] = useState([blank()])
+  const [message, setMessage] = useState('')
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const formRef = useRef(null)
@@ -97,7 +113,7 @@ export default function FlightReservationPage({ go }) {
 
   const handleDownload = () => {
     if (!valid()) return
-    buildPdf(travelers, tripData()).save('AutoFly-Traveler-Information.pdf')
+    buildPdf(travelers, tripData(), message).save('AutoFly-Traveler-Information.pdf')
     setStatus('✓ PDF downloaded.')
   }
 
@@ -106,7 +122,7 @@ export default function FlightReservationPage({ go }) {
     setBusy(true)
     setStatus('Sending PDF...')
     try {
-      const doc = buildPdf(travelers, tripData())
+      const doc = buildPdf(travelers, tripData(), message)
       const base64 = await blobToBase64(doc.output('blob'))
       const { error } = await supabase.functions.invoke('send-notification', {
         body: {
@@ -116,6 +132,7 @@ export default function FlightReservationPage({ go }) {
           record: {
             trip: tripData(),
             travelers: travelers.map(t => ({ first_name: t.first, last_name: t.last, date_of_birth: t.dob })),
+            ...(message.trim() ? { message: message.trim() } : {}),
           },
           attachment: { filename: 'AutoFly-Traveler-Information.pdf', content: base64 },
         },
@@ -166,6 +183,7 @@ export default function FlightReservationPage({ go }) {
             </fieldset>
           ))}
           <button type="button" className="add-traveler" onClick={add}>+ Add another traveler</button>
+          <textarea placeholder="Message — anything else we should know?" value={message} onChange={e => setMessage(e.target.value)} />
           <div className="traveler-actions">
             <button type="button" className="pdf-submit" disabled={busy} onClick={handleSubmit}>Submit as PDF</button>
             <button type="button" className="pdf-download" disabled={busy} onClick={handleDownload}>Download PDF</button>

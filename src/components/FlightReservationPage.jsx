@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { jsPDF } from 'jspdf'
+import FlightsMenu from './FlightsMenu'
 import { supabase, NOTIFY_EMAIL } from '../lib/supabaseClient'
 
 const fmtDob = (iso) => {
@@ -56,9 +57,8 @@ function blobToBase64(blob) {
 
 const blank = () => ({ first: '', last: '', dob: '' })
 
-export default function TravelerPdf({ initialCount = 1, onClose }) {
-  const [travelers, setTravelers] = useState(() =>
-    Array.from({ length: Math.max(1, Math.min(12, initialCount || 1)) }, blank))
+export default function FlightReservationPage({ go }) {
+  const [travelers, setTravelers] = useState([blank()])
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const formRef = useRef(null)
@@ -100,11 +100,13 @@ export default function TravelerPdf({ initialCount = 1, onClose }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal traveler-modal" onClick={e => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
-        <h3>Traveler information</h3>
-        <p className="hint">Enter each traveler's name exactly as it appears on their ID or passport.</p>
+    <div>
+      <FlightsMenu go={go} />
+      <div className="hero-card">
+        <h2>Flight Reservation</h2>
+        <p>Airlines need every traveler's full name and date of birth, exactly as they appear on their ID or passport. Add each traveler below, then send us the PDF — or download it for your records.</p>
+      </div>
+      <div className="form-card wide">
         <form ref={formRef} className="traveler-form" onSubmit={e => e.preventDefault()}>
           {travelers.map((t, i) => (
             <fieldset key={i} className="traveler-card">

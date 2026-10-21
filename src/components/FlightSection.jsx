@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
 import AirportInput from './AirportInput'
-import TravelerPdf from './TravelerPdf'
+import FlightsMenu from './FlightsMenu'
 
-export default function FlightSection() {
+export default function FlightSection({ go }) {
   const [tripType, setTripType] = useState('Round Trip')
   // adults/children are kept as raw text while typing so the boxes can be
   // cleared and retyped freely; they are parsed to numbers only on submit.
@@ -14,7 +14,6 @@ export default function FlightSection() {
   })
   const [childAges, setChildAges] = useState([])
   const [status, setStatus] = useState('')
-  const [showTravelerPdf, setShowTravelerPdf] = useState(false)
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
 
@@ -80,6 +79,7 @@ export default function FlightSection() {
 
   return (
     <div>
+      <FlightsMenu go={go} />
       <div className="hero-card">
         <h2>Cheap flights, fast & secure booking</h2>
         <p>Like CheapFareGuru — compare multi-airline fares, direct flights, last-minute deals. Fill the simple form and we handle the rest.</p>
@@ -130,17 +130,6 @@ export default function FlightSection() {
         <p className="hint">Prefer to book over call? Our U.S.-based experts are available 24x7x365. Every request is emailed to our team instantly.</p>
       </form>
       {status && <p className="status">{status}</p>}
-
-      <button type="button" className="traveler-pdf-btn" onClick={() => setShowTravelerPdf(true)}>
-        📄 Traveler Information — Submit as PDF
-      </button>
-      <p className="hint" style={{ textAlign: 'center' }}>Airlines need every traveler's full name and date of birth. Fill it once, then email it to us as a PDF — or just download it.</p>
-      {showTravelerPdf && (
-        <TravelerPdf
-          initialCount={(parseInt(form.adults, 10) || 1) + (parseInt(form.children, 10) || 0)}
-          onClose={() => setShowTravelerPdf(false)}
-        />
-      )}
     </div>
   )
 }

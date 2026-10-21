@@ -7,6 +7,7 @@ import RentPage from './components/RentPage'
 import SellPage from './components/SellPage'
 import TestDrivePage from './components/TestDrivePage'
 import ContactPage from './components/ContactPage'
+import FlightReservationPage from './components/FlightReservationPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
 
@@ -26,6 +27,7 @@ export default function App() {
   const go = (t) => { setTab(t); setMoreOpen(false) }
   const inMore = tab === 'groceries' || tab === 'about'
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
+  const inFlights = ['flights', 'reserve'].includes(tab)
 
   return (
     <div className="app">
@@ -36,7 +38,7 @@ export default function App() {
         </div>
         <nav>
           <button className={inCars ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
-          <button className={tab === 'flights' ? 'active' : ''} onClick={() => go('flights')}>Flights</button>
+          <button className={inFlights ? 'active' : ''} onClick={() => go('flights')}>Flights</button>
           <span className="dropdown" ref={moreRef}>
             <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
             {moreOpen && (
@@ -54,7 +56,8 @@ export default function App() {
         {tab === 'sell' && <SellPage go={go} />}
         {tab === 'testdrive' && <TestDrivePage go={go} />}
         {tab === 'contact' && <ContactPage go={go} />}
-        {tab === 'flights' && <FlightSection />}
+        {tab === 'flights' && <FlightSection go={go} />}
+        {tab === 'reserve' && <FlightReservationPage go={go} />}
         {tab === 'groceries' && <GroceriesPage />}
         {tab === 'about' && <AboutPage />}
       </main>

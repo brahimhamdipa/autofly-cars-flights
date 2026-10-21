@@ -101,6 +101,11 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .fulfill-tabs { margin-top: 0; }
 .addr-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 10px 12px; font-size: 14px; }
 .addr-box p { margin: 4px 0 0; }
+.g-topbar { display: flex; justify-content: space-between; align-items: flex-start; }
+.cart-fab { position: relative; width: 44px; height: 44px; border-radius: 50%; background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(17, 24, 39, 0.10); font-size: 20px; display: flex; align-items: center; justify-content: center; padding: 0; color: #111827; cursor: pointer; }
+.cart-fab:hover { background: #f9fafb; }
+.cart-fab-count { position: absolute; top: -5px; right: -5px; background: #ea580c; color: #ffffff; font-size: 11px; font-weight: 800; min-width: 19px; height: 19px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 5px; border: 2px solid #ffffff; box-sizing: border-box; }
+.menu-count { background: #ea580c; color: #ffffff; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 1px; }
 .car-submenu-wrap { position: relative; margin-bottom: 14px; }
 .car-submenu-btn { width: 44px; height: 44px; padding: 0; border-radius: 50%; background: white; border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(17,24,39,.08); display: inline-flex; align-items: center; justify-content: center; }
 .car-submenu-btn:hover { background: #f9fafb; }

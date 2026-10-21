@@ -75,7 +75,7 @@ export default function GroceriesPage({ go }) {
     const { data, error } = await supabase
       .from('grocery_products')
       .select('*')
-      .eq('is_available', true)
+      .eq('display', true)
       .order('sort_order')
       .order('name')
     if (error) setLoadError(error.message)

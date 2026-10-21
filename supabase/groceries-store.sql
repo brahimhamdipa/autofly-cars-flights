@@ -24,6 +24,7 @@ create table if not exists grocery_products (
   delivery_address text default '',
   pickup_address text default '',
   is_available boolean not null default true,
+  display boolean not null default true,
   sort_order int default 0,
   created_at timestamptz default now(),
   updated_at timestamptz default now()

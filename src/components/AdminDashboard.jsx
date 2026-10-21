@@ -60,7 +60,7 @@ export default function AdminDashboard() {
 
       <h3 className="admin-h3">🛒 Grocery store</h3>
       <div className="stat-grid">
-        <StatCard label="Products" value={products.length} sub={`${products.filter(p => p.is_available).length} available for sale`} />
+        <StatCard label="Products" value={products.length} sub={`${products.filter(p => p.display !== false).length} shown on the Groceries page`} />
         <StatCard label="Units in stock" value={totalUnits} />
         <StatCard label="Inventory value" value={money(inventoryValue)} sub="stock × selling price" />
         <StatCard label="Low stock (≤ 10)" value={lowStock.length} sub={lowStock.map(p => p.name).join(', ') || 'none'} />

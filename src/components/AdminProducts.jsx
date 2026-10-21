@@ -6,7 +6,7 @@ const CATEGORIES = ['Groceries', 'Fresh Fish', 'Produce', 'Dairy & Eggs', 'Baker
 const BLANK = {
   name: '', description: '', category: 'Groceries', price: '', sale_price: '',
   unit: 'each', stock: '', sku: '', brand: '', weight: '', tags: '',
-  delivery_address: '', pickup_address: '', sort_order: '', is_available: true, images: [],
+  delivery_address: '', pickup_address: '', sort_order: '', is_available: true, display: true, images: [],
 }
 
 const storagePathFromUrl = (url) => {
@@ -44,6 +44,7 @@ export default function AdminProducts() {
       ...BLANK, ...p,
       price: String(p.price ?? ''), sale_price: p.sale_price == null ? '' : String(p.sale_price),
       stock: String(p.stock ?? ''), sort_order: String(p.sort_order ?? ''),
+      display: p.display !== false,
       images: Array.isArray(p.images) ? p.images : [],
     })
     setStatus(`Editing "${p.name}" — change anything and tap Save product.`)
@@ -96,7 +97,8 @@ export default function AdminProducts() {
       delivery_address: form.delivery_address || '',
       pickup_address: form.pickup_address || '',
       sort_order: parseInt(form.sort_order, 10) || 0,
-      is_available: !!form.is_available,
+      display: !!form.display,
+      is_available: !!form.display,
       images: form.images || [],
       image_url: (form.images && form.images[0]) || '',
       updated_at: new Date().toISOString(),
@@ -121,6 +123,18 @@ export default function AdminProducts() {
     } catch (err) {
       setStatus('Save error: ' + err.message)
     }
+  }
+
+  // Flip Display Yes/No straight from the list — no need to open the form.
+  // is_available follows display so the order checks always agree.
+  const toggleDisplay = async (p, show) => {
+    const { error } = await supabase
+      .from('grocery_products')
+      .update({ display: show, is_available: show })
+      .eq('id', p.id)
+    if (error) { setStatus('Error: ' + error.message); return }
+    setProducts(list => list.map(x => (x.id === p.id ? { ...x, display: show, is_available: show } : x)))
+    setStatus(`✓ "${p.name}" is now ${show ? 'shown on' : 'hidden from'} the Groceries page.`)
   }
 
   const remove = async (p) => {
@@ -167,8 +181,11 @@ export default function AdminProducts() {
         <input placeholder="Delivery address (where this item ships from)" value={form.delivery_address} onChange={e => set('delivery_address', e.target.value)} />
         <input placeholder="Pickup address (where customers pick this item up)" value={form.pickup_address} onChange={e => set('pickup_address', e.target.value)} />
         <label className="check-row">
-          <input type="checkbox" checked={form.is_available} onChange={e => set('is_available', e.target.checked)} />
-          Available for sale (visible in the shop)
+          Display on the Groceries page:
+          <select className="mini-select" value={form.display ? 'yes' : 'no'} onChange={e => set('display', e.target.value === 'yes')}>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
         </label>
 
         <div className="img-upload-box">
@@ -194,7 +211,7 @@ export default function AdminProducts() {
 
       <div className="table-wrap">
         <table className="admin-table">
-          <thead><tr><th></th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Available</th><th className="no-print">Actions</th></tr></thead>
+          <thead><tr><th></th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Display</th><th className="no-print">Actions</th></tr></thead>
           <tbody>
             {products.map(p => (
               <tr key={p.id}>
@@ -205,7 +222,12 @@ export default function AdminProducts() {
                 <td>{p.category}</td>
                 <td>{p.sale_price ? <>{money(priceOf(p))} <small>(was {money(p.price)})</small></> : money(p.price)}</td>
                 <td className={p.stock <= 0 ? 'cell-bad' : p.stock <= 10 ? 'cell-warn' : ''}>{p.stock}</td>
-                <td>{p.is_available ? 'Yes' : '—'}</td>
+                <td>
+                  <select className="mini-select" value={p.display === false ? 'no' : 'yes'} onChange={e => toggleDisplay(p, e.target.value === 'yes')} aria-label={`Display ${p.name} on the Groceries page`}>
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                  </select>
+                </td>
                 <td className="no-print">
                   <button type="button" className="btn-mini" onClick={() => startEdit(p)}>Edit</button>{' '}
                   <button type="button" className="btn-mini btn-danger" onClick={() => remove(p)}>Delete</button>

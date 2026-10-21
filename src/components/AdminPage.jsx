@@ -87,14 +87,18 @@ export default function AdminPage() {
           <p>This area is private. Log in with your admin email and password to manage products, stock, pictures, orders and reports.</p>
         </div>
         <form className="form-card wide" onSubmit={submitAuth}>
+          <div className="trip-tabs">
+            <button type="button" className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setAuthMsg('') }}>Log in</button>
+            <button type="button" className={mode === 'signup' ? 'active' : ''} onClick={() => { setMode('signup'); setAuthMsg('') }}>Create account</button>
+          </div>
           <input required type="email" placeholder="Admin email" value={email} onChange={e => setEmail(e.target.value)} />
           <input required type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
           <button type="submit">{mode === 'login' ? 'Log in' : 'Create my admin account'}</button>
           {authMsg && <p className="status">{authMsg}</p>}
           <p className="hint">
             {mode === 'login'
-              ? <>First time here? <a onClick={() => { setMode('signup'); setAuthMsg('') }}>Create your admin account</a> — use your own email and a password you choose. Never share it in chat.<br /><a onClick={sendReset}>Forgot your password?</a></>
-              : <>Already created it? <a onClick={() => { setMode('login'); setAuthMsg('') }}>Back to log in</a></>}
+              ? <>First time here? Tap <b>Create account</b> above, choose a password, and confirm from the email we send you — then log in here.<br /><button type="button" className="link-btn" onClick={sendReset}>Forgot your password?</button></>
+              : <>Use your own email and a password you choose. Never share the password in chat — not even with me.</>}
           </p>
         </form>
       </div>

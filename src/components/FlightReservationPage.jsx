@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { jsPDF } from 'jspdf'
 import FlightsMenu from './FlightsMenu'
+import AirportInput from './AirportInput'
 import { supabase, NOTIFY_EMAIL } from '../lib/supabaseClient'
 
 const fmtDob = (iso) => {
@@ -9,7 +10,7 @@ const fmtDob = (iso) => {
   return isNaN(d) ? iso : d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-function buildPdf(travelers) {
+function buildPdf(travelers, trip) {
   const doc = new jsPDF()
   const left = 20
   let y = 22
@@ -26,6 +27,20 @@ function buildPdf(travelers) {
   doc.setLineWidth(0.6)
   doc.line(left, y, 190, y)
   y += 12
+
+  if (trip) {
+    doc.setFontSize(13)
+    doc.setFont('helvetica', 'bold')
+    doc.text(`Trip — ${trip.type}`, left, y)
+    y += 7
+    doc.setFontSize(11)
+    doc.setFont('helvetica', 'normal')
+    if (trip.from) { doc.text(`From:  ${trip.from}`, left + 4, y); y += 6.5 }
+    if (trip.to) { doc.text(`To:  ${trip.to}`, left + 4, y); y += 6.5 }
+    if (trip.depart) { doc.text(`Depart:  ${fmtDob(trip.depart)}`, left + 4, y); y += 6.5 }
+    if (trip.type === 'Round Trip' && trip.return) { doc.text(`Return:  ${fmtDob(trip.return)}`, left + 4, y); y += 6.5 }
+    y += 7
+  }
 
   travelers.forEach((t, i) => {
     if (y > 255) { doc.addPage(); y = 22 }
@@ -58,10 +73,21 @@ function blobToBase64(blob) {
 const blank = () => ({ first: '', last: '', dob: '' })
 
 export default function FlightReservationPage({ go }) {
+  const [tripType, setTripType] = useState('Round Trip')
+  const [trip, setTrip] = useState({ from: '', to: '', depart: '', return: '' })
   const [travelers, setTravelers] = useState([blank()])
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
   const formRef = useRef(null)
+
+  const setTripField = (k, v) => setTrip(prev => ({ ...prev, [k]: v }))
+  const tripData = () => ({
+    type: tripType,
+    from: trip.from,
+    to: trip.to,
+    depart: trip.depart,
+    return: tripType === 'Round Trip' ? trip.return : undefined,
+  })
 
   const setT = (i, k, v) => setTravelers(prev => prev.map((t, idx) => (idx === i ? { ...t, [k]: v } : t)))
   const add = () => setTravelers(prev => (prev.length >= 20 ? prev : [...prev, blank()]))
@@ -71,7 +97,7 @@ export default function FlightReservationPage({ go }) {
 
   const handleDownload = () => {
     if (!valid()) return
-    buildPdf(travelers).save('AutoFly-Traveler-Information.pdf')
+    buildPdf(travelers, tripData()).save('AutoFly-Traveler-Information.pdf')
     setStatus('✓ PDF downloaded.')
   }
 
@@ -80,14 +106,17 @@ export default function FlightReservationPage({ go }) {
     setBusy(true)
     setStatus('Sending PDF...')
     try {
-      const doc = buildPdf(travelers)
+      const doc = buildPdf(travelers, tripData())
       const base64 = await blobToBase64(doc.output('blob'))
       const { error } = await supabase.functions.invoke('send-notification', {
         body: {
           to: NOTIFY_EMAIL,
           subject: `Traveler information (PDF) — ${travelers.length} traveler${travelers.length > 1 ? 's' : ''}`,
           table: 'traveler_pdf',
-          record: { travelers: travelers.map(t => ({ first_name: t.first, last_name: t.last, date_of_birth: t.dob })) },
+          record: {
+            trip: tripData(),
+            travelers: travelers.map(t => ({ first_name: t.first, last_name: t.last, date_of_birth: t.dob })),
+          },
           attachment: { filename: 'AutoFly-Traveler-Information.pdf', content: base64 },
         },
       })
@@ -104,10 +133,25 @@ export default function FlightReservationPage({ go }) {
       <FlightsMenu go={go} />
       <div className="hero-card">
         <h2>Flight Reservation</h2>
-        <p>Airlines need every traveler's full name and date of birth, exactly as they appear on their ID or passport. Add each traveler below, then send us the PDF — or download it for your records.</p>
+        <p>Tell us your trip below, then add every traveler — airlines need each traveler's full name and date of birth, exactly as they appear on their ID or passport. When you're done, send us the PDF — or download it for your records.</p>
       </div>
       <div className="form-card wide">
         <form ref={formRef} className="traveler-form" onSubmit={e => e.preventDefault()}>
+          <div className="trip-tabs">
+            {['One Way', 'Round Trip', 'Multi City'].map(t => (
+              <button key={t} type="button" className={tripType === t ? 'active' : ''} onClick={() => setTripType(t)}>{t}</button>
+            ))}
+          </div>
+          <div className="row">
+            <AirportInput label="From" placeholder="Type city or airport" value={trip.from} onChange={v => setTripField('from', v)} />
+            <AirportInput label="To" placeholder="Type city or airport" value={trip.to} onChange={v => setTripField('to', v)} />
+          </div>
+          <div className="row">
+            <label>Depart<input required type="date" value={trip.depart} onChange={e => setTripField('depart', e.target.value)} /></label>
+            {tripType === 'Round Trip' && (
+              <label>Return<input type="date" value={trip.return} onChange={e => setTripField('return', e.target.value)} /></label>
+            )}
+          </div>
           {travelers.map((t, i) => (
             <fieldset key={i} className="traveler-card">
               <legend>Traveler {i + 1}</legend>

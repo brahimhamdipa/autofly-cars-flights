@@ -7,7 +7,7 @@ import CartCheckout from './CartCheckout'
 // My Cart page — the exact same cart/checkout as the "Your cart" section on
 // the Groceries shop page (shared CartCheckout component + shared cart).
 export default function GroceryCartPage({ go }) {
-  const { count } = useCart()
+  const { count, lastOrder } = useCart()
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -34,13 +34,13 @@ export default function GroceryCartPage({ go }) {
       </div>
       {loading && <div className="hero-card"><p>Loading your cart...</p></div>}
       {loadError && <div className="hero-card"><p>Couldn't load your cart: {loadError}</p></div>}
-      {!loading && !loadError && count === 0 && (
+      {!loading && !loadError && count === 0 && !lastOrder && (
         <div className="hero-card">
           <p>Your cart is empty.</p>
           <button onClick={() => go && go('groceries')}>Browse Groceries</button>
         </div>
       )}
-      {!loading && !loadError && count > 0 && (
+      {!loading && !loadError && (count > 0 || lastOrder) && (
         <CartCheckout products={products} onOrderPlaced={loadProducts} />
       )}
     </div>

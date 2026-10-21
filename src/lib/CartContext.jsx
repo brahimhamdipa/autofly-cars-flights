@@ -7,6 +7,10 @@ const CartCtx = createContext(null)
 const STORAGE_KEY = 'autofly-grocery-cart'
 
 export function CartProvider({ children }) {
+  // lastOrder survives the cart being cleared, so the order confirmation
+  // stays on screen even when the checkout component would otherwise
+  // unmount (e.g. the My Cart page hides it for an empty cart).
+  const [lastOrder, setLastOrder] = useState(null)
   const [cart, setCartState] = useState(() => {
     try {
       const v = JSON.parse(localStorage.getItem(STORAGE_KEY))
@@ -25,11 +29,13 @@ export function CartProvider({ children }) {
     [cart]
   )
 
-  const add = (id, qty, max) =>
+  const add = (id, qty, max) => {
+    setLastOrder(null)
     setCartState(c => {
       const next = (c[id] || 0) + qty
       return { ...c, [id]: max ? Math.min(max, next) : next }
     })
+  }
 
   const setQty = (id, qty, max) =>
     setCartState(c => {
@@ -42,7 +48,7 @@ export function CartProvider({ children }) {
   const clearCart = () => setCartState({})
 
   return (
-    <CartCtx.Provider value={{ cart, count, add, setQty, clearCart }}>
+    <CartCtx.Provider value={{ cart, count, add, setQty, clearCart, lastOrder, setLastOrder }}>
       {children}
     </CartCtx.Provider>
   )

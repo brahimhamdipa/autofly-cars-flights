@@ -10,11 +10,10 @@ export const priceOf = (p) => Number(p.sale_price ?? p.price)
 // order (stock-safe RPC + owner email). Used BOTH on the Groceries shop
 // page and on the My Cart page so the two never drift apart.
 export default function CartCheckout({ products, onOrderPlaced }) {
-  const { cart, setQty, clearCart } = useCart()
+  const { cart, setQty, clearCart, lastOrder, setLastOrder } = useCart()
   const [fulfillment, setFulfillment] = useState('delivery')
   const [customer, setCustomer] = useState({ name: '', email: '', phone: '', address: '' })
   const [status, setStatus] = useState('')
-  const [placed, setPlaced] = useState(null)
   const [placing, setPlacing] = useState(false)
 
   const byId = useMemo(() => Object.fromEntries((products || []).map(p => [p.id, p])), [products])
@@ -66,7 +65,7 @@ export default function CartCheckout({ products, onOrderPlaced }) {
       } catch (mailErr) {
         console.warn('Order email failed:', mailErr.message)
       }
-      setPlaced({ id: data.order_id, total: data.total, fulfillment })
+      setLastOrder({ id: data.order_id, total: data.total, fulfillment })
       clearCart()
       setStatus('')
       if (onOrderPlaced) onOrderPlaced() // refresh product stock counts
@@ -77,12 +76,12 @@ export default function CartCheckout({ products, onOrderPlaced }) {
     setPlacing(false)
   }
 
-  if (placed) {
+  if (lastOrder) {
     return (
       <div className="hero-card">
-        <h2>✓ Order #{placed.id} received!</h2>
-        <p>Thank you — your order total is <b>{money(placed.total)}</b> ({placed.fulfillment}). We've emailed the details to our team and will contact you shortly to confirm {placed.fulfillment === 'delivery' ? 'your delivery' : 'your pickup'} and payment.</p>
-        <button onClick={() => setPlaced(null)}>Continue shopping</button>
+        <h2>✓ Order #{lastOrder.id} received!</h2>
+        <p>Thank you — your order total is <b>{money(lastOrder.total)}</b> ({lastOrder.fulfillment}). We've emailed the details to our team and will contact you shortly to confirm {lastOrder.fulfillment === 'delivery' ? 'your delivery' : 'your pickup'} and payment.</p>
+        <button onClick={() => setLastOrder(null)}>Continue shopping</button>
       </div>
     )
   }

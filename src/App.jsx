@@ -14,6 +14,7 @@ import MachinesPage from './components/MachinesPage'
 import GroceryCartPage from './components/GroceryCartPage'
 import GrocerySoonPage from './components/GrocerySoonPage'
 import GroceryContactPage from './components/GroceryContactPage'
+import AdminPage from './components/AdminPage'
 import { CartProvider } from './lib/CartContext'
 import logoUrl from './assets/logo.webp'
 import './index.css'
@@ -89,9 +90,11 @@ export default function App() {
         {tab === 'clothes' && <ClothesPage />}
         {tab === 'machines' && <MachinesPage />}
         {tab === 'about' && <AboutPage />}
+        {tab === 'admin' && <AdminPage />}
       </main>
       <footer className="footer">
         <p>AutoFly.us.com — Cars, Flights & More — All in One Place</p>
+        <p className="footer-admin"><a onClick={() => go('admin')}>🔐 Admin</a></p>
       </footer>
     </div>
   )

@@ -106,6 +106,50 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .cart-fab:hover { background: #f9fafb; }
 .cart-fab-count { position: absolute; top: -5px; right: -5px; background: #ea580c; color: #ffffff; font-size: 11px; font-weight: 800; min-width: 19px; height: 19px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 5px; border: 2px solid #ffffff; box-sizing: border-box; }
 .menu-count { background: #ea580c; color: #ffffff; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 1px; }
+.footer-admin { margin-top: 2px; }
+.footer-admin a { color: #9ca3af; font-size: 12.5px; cursor: pointer; }
+.footer-admin a:hover { color: #d1d5db; }
+.admin-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+.admin-pick { display: flex; flex-direction: column; gap: 6px; }
+.admin-select { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 15px; background: white; min-width: 260px; }
+.admin-actions { display: flex; gap: 8px; }
+.btn-soft { background: #e5e7eb; color: #111827; }
+.btn-soft:hover { background: #d1d5db; }
+.admin-h3 { margin: 20px 0 10px; font-size: 17px; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+.stat-card { background: white; border-radius: 14px; box-shadow: 0 2px 10px rgba(17, 24, 39, 0.06); padding: 14px; }
+.stat-value { font-size: 24px; font-weight: 800; }
+.stat-label { font-size: 13px; color: #374151; font-weight: 600; }
+.stat-sub { font-size: 12px; color: #6b7280; margin-top: 2px; }
+.table-wrap { overflow-x: auto; background: white; border-radius: 14px; box-shadow: 0 2px 10px rgba(17, 24, 39, 0.06); margin-top: 10px; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.admin-table th { text-align: left; background: #f8fafc; color: #374151; padding: 9px 10px; border-bottom: 1px solid #e5e7eb; white-space: nowrap; }
+.admin-table td { padding: 8px 10px; border-bottom: 1px solid #f1f2f5; vertical-align: top; max-width: 260px; overflow: hidden; text-overflow: ellipsis; }
+.admin-table select { padding: 5px 7px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 13px; background: white; }
+.cell-bad { color: #dc2626; font-weight: 800; }
+.cell-warn { color: #ea580c; font-weight: 700; }
+.thumb-sm { width: 46px; height: 46px; object-fit: cover; border-radius: 8px; display: inline-block; }
+.thumb-empty { background: #f3f4f6; text-align: center; line-height: 46px; font-size: 20px; }
+.btn-mini { padding: 5px 11px; font-size: 12.5px; border-radius: 999px; }
+.btn-danger { background: #fee2e2; color: #b91c1c; }
+.btn-danger:hover { background: #fecaca; }
+.check-row { display: flex; align-items: center; gap: 8px; font-size: 14.5px; }
+.check-row input { width: 18px; height: 18px; }
+.img-upload-box { border: 1px dashed #cbd5e1; border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.img-thumbs { display: flex; gap: 10px; flex-wrap: wrap; }
+.img-thumb { position: relative; display: inline-block; }
+.img-thumb img { width: 74px; height: 74px; object-fit: cover; border-radius: 10px; border: 1px solid #e5e7eb; }
+.img-thumb button { position: absolute; top: -7px; right: -7px; width: 22px; height: 22px; border-radius: 50%; background: #dc2626; color: white; padding: 0; font-size: 12px; line-height: 1; }
+.upload-btn { display: inline-block; background: #2563eb; color: white; padding: 10px 16px; border-radius: 999px; font-weight: 600; font-size: 14px; cursor: pointer; align-self: flex-start; }
+.upload-btn:hover { background: #1d4ed8; }
+@media print {
+  .header, .footer, .no-print { display: none !important; }
+  .main { padding: 0 !important; }
+  body { background: #ffffff; }
+  .table-wrap, .stat-card, .hero-card { box-shadow: none !important; border: 1px solid #e5e7eb; }
+  .admin-table { font-size: 10.5px; }
+  .admin-table td { max-width: none; overflow: visible; }
+}
 .car-submenu-wrap { position: relative; margin-bottom: 14px; }
 .car-submenu-btn { width: 44px; height: 44px; padding: 0; border-radius: 50%; background: white; border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(17,24,39,.08); display: inline-flex; align-items: center; justify-content: center; }
 .car-submenu-btn:hover { background: #f9fafb; }

@@ -15,6 +15,7 @@ create table if not exists grocery_products (
   sale_price numeric(10,2),
   unit text default 'each',
   image_url text default '',
+  images jsonb not null default '[]'::jsonb,
   stock int not null default 0,
   sku text default '',
   brand text default '',

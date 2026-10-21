@@ -72,7 +72,8 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .airport-list li:hover, .airport-list li.active { background: #eff6ff; }
 .airport-main { font-size: 14px; font-weight: 600; color: #1a1d26; }
 .airport-sub { font-size: 12px; font-weight: 400; color: #6b7280; }
-.g-photo { height: 170px; background: linear-gradient(135deg, #e0f2fe, #fef3c7); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.g-photo { position: relative; height: 170px; background: linear-gradient(135deg, #e0f2fe, #fef3c7); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.g-photo > img { cursor: zoom-in; }
 .g-photo img { width: 100%; height: 100%; object-fit: cover; }
 .g-emoji { font-size: 68px; }
 .g-card .card-body { gap: 6px; }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase, NOTIFY_EMAIL } from '../lib/supabaseClient'
+import { Lightbox } from './CarSection'
 
 const CATEGORY_EMOJI = { 'Fresh Fish': '🐟', 'Produce': '🥑', 'Dairy & Eggs': '🥚', 'Bakery': '🍞' }
 const money = (n) => `$${Number(n || 0).toFixed(2)}`
@@ -13,14 +14,33 @@ function StockLine({ stock }) {
 
 function ProductCard({ product, onAdd }) {
   const [qty, setQty] = useState(1)
+  const [idx, setIdx] = useState(0)
+  const [zoom, setZoom] = useState(false)
   const out = product.stock <= 0
+  // Multiple pictures per product (DB `images` list; falls back to the
+  // legacy single image_url). Slideshow works exactly like the Cars cards.
+  const gallery = Array.isArray(product.images) && product.images.length > 0
+    ? product.images
+    : (product.image_url ? [product.image_url] : [])
+  const n = gallery.length
+  const safeIdx = n ? idx % n : 0
   return (
     <div className="card g-card">
       <div className="g-photo">
-        {product.image_url
-          ? <img src={product.image_url} alt={product.name} />
-          : <span className="g-emoji">{CATEGORY_EMOJI[product.category] || '🛒'}</span>}
+        {n > 0 ? (
+          <img src={gallery[safeIdx]} alt={product.name} onClick={() => setZoom(true)} title="Click to enlarge" />
+        ) : (
+          <span className="g-emoji">{CATEGORY_EMOJI[product.category] || '🛒'}</span>
+        )}
+        {n > 1 && (
+          <>
+            <button type="button" className="slide-btn prev" onClick={() => setIdx(i => (i - 1 + n) % n)} aria-label="Previous photo">‹</button>
+            <button type="button" className="slide-btn next" onClick={() => setIdx(i => (i + 1) % n)} aria-label="Next photo">›</button>
+            <span className="slide-count">{safeIdx + 1} / {n}</span>
+          </>
+        )}
       </div>
+      {zoom && n > 0 && <Lightbox images={gallery} start={safeIdx} onClose={() => setZoom(false)} />}
       <div className="card-body">
         <h3>{product.name}</h3>
         <StockLine stock={product.stock} />

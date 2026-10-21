@@ -74,7 +74,7 @@ export async function submitCarInquiry({ carName, name, email, phone, message })
   }
 }
 
-function Lightbox({ images, start, onClose }) {
+export function Lightbox({ images, start, onClose }) {
   const [idx, setIdx] = useState(start)
   const n = images.length
   useEffect(() => {

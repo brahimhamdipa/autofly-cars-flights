@@ -23,6 +23,8 @@ export default function AdminPage() {
   const [password, setPassword] = useState('')
   const [authMsg, setAuthMsg] = useState('')
   const [section, setSection] = useState('dashboard')
+  const [newPassword, setNewPassword] = useState('')
+  const [pwMsg, setPwMsg] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
@@ -55,6 +57,24 @@ export default function AdminPage() {
 
   const signOut = async () => { await supabase.auth.signOut() }
 
+  const sendReset = async () => {
+    if (!email.trim()) { setAuthMsg('Type your admin email above first, then tap Forgot password.'); return }
+    setAuthMsg('Sending password reset email...')
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: 'https://autofly.us.com' })
+    if (error) { setAuthMsg('Error: ' + error.message); return }
+    setAuthMsg('✓ Reset email sent. Tap the link in that email — you will come back to this site already logged in — then set your new password with the "Change password" box at the top of the Admin page.')
+  }
+
+  const changePassword = async (e) => {
+    e.preventDefault()
+    if (newPassword.length < 6) { setPwMsg('Password must be at least 6 characters.'); return }
+    setPwMsg('Saving...')
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) { setPwMsg('Error: ' + error.message); return }
+    setNewPassword('')
+    setPwMsg('✓ Password changed.')
+  }
+
   if (session === undefined) {
     return <div className="hero-card"><p>Loading admin...</p></div>
   }
@@ -73,7 +93,7 @@ export default function AdminPage() {
           {authMsg && <p className="status">{authMsg}</p>}
           <p className="hint">
             {mode === 'login'
-              ? <>First time here? <a onClick={() => { setMode('signup'); setAuthMsg('') }}>Create your admin account</a> — use your own email and a password you choose. Never share it in chat.</>
+              ? <>First time here? <a onClick={() => { setMode('signup'); setAuthMsg('') }}>Create your admin account</a> — use your own email and a password you choose. Never share it in chat.<br /><a onClick={sendReset}>Forgot your password?</a></>
               : <>Already created it? <a onClick={() => { setMode('login'); setAuthMsg('') }}>Back to log in</a></>}
           </p>
         </form>
@@ -106,6 +126,12 @@ export default function AdminPage() {
         </div>
       </div>
       <p className="hint no-print">Printing makes a clean report of whatever section you're viewing — on iPhone: Print → pinch out / share → Save to Files as PDF.</p>
+      <form className="pw-row no-print" onSubmit={changePassword}>
+        <span>🔑 Change password:</span>
+        <input type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+        <button type="submit" className="btn-mini">Change password</button>
+        {pwMsg && <span className="status">{pwMsg}</span>}
+      </form>
       {section === 'dashboard' && <AdminDashboard />}
       {section === 'products' && <AdminProducts />}
       {section === 'orders' && <AdminOrders />}

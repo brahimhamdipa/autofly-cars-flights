@@ -22,6 +22,7 @@ export default function CarsMenu({ go }) {
       </button>
       {open && (
         <div className="car-submenu">
+          <button onClick={() => pick('cars')}>Buy a Car</button>
           <button onClick={() => pick('rent')}>Rent a Car</button>
           <button onClick={() => pick('sell')}>Sell a Car</button>
           <button onClick={() => pick('testdrive')}>Info/Test drive a Car</button>

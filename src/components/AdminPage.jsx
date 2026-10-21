@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
-import { ADMIN_EMAIL, isAdminUser } from '../lib/admin'
+import { isAdminUser } from '../lib/admin'
 import AdminDashboard from './AdminDashboard'
 import AdminProducts from './AdminProducts'
 import AdminOrders from './AdminOrders'
@@ -19,7 +19,8 @@ const SECTIONS = [
 export default function AdminPage() {
   const [session, setSession] = useState(undefined) // undefined = still loading
   const [mode, setMode] = useState('login') // login | signup
-  const [email, setEmail] = useState(ADMIN_EMAIL)
+  // Not pre-filled: the admin's email address stays off the public page.
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [authMsg, setAuthMsg] = useState('')
   const [section, setSection] = useState('dashboard')
@@ -41,7 +42,10 @@ export default function AdminPage() {
         if (error) throw error
         setAuthMsg('')
       } else {
-        const { data, error } = await supabase.auth.signUp({ email, password })
+        const { data, error } = await supabase.auth.signUp({
+          email, password,
+          options: { emailRedirectTo: 'https://autofly.us.com' },
+        })
         if (error) throw error
         if (data.session) {
           setAuthMsg('')

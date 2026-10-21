@@ -72,6 +72,34 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .airport-list li:hover, .airport-list li.active { background: #eff6ff; }
 .airport-main { font-size: 14px; font-weight: 600; color: #1a1d26; }
 .airport-sub { font-size: 12px; font-weight: 400; color: #6b7280; }
+.g-photo { height: 170px; background: linear-gradient(135deg, #e0f2fe, #fef3c7); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.g-photo img { width: 100%; height: 100%; object-fit: cover; }
+.g-emoji { font-size: 68px; }
+.g-card .card-body { gap: 6px; }
+.stock { font-size: 13px; font-weight: 600; margin: 0; }
+.stock.ok { color: #15803d; }
+.stock.low { color: #ea580c; }
+.stock.out { color: #dc2626; }
+.g-price { font-size: 20px; font-weight: 800; color: #111827; margin: 2px 0; }
+.g-was { font-size: 14px; font-weight: 500; color: #9ca3af; text-decoration: line-through; margin-right: 7px; }
+.g-unit { font-size: 13px; font-weight: 500; color: #6b7280; }
+.g-buyrow { display: flex; gap: 10px; align-items: stretch; margin-top: 6px; }
+.g-buyrow > button { flex: 1; }
+.qty-stepper { display: inline-flex; align-items: center; gap: 2px; border: 1px solid #d1d5db; border-radius: 999px; padding: 2px; background: white; }
+.qty-stepper button { background: #f3f4f6; color: #111827; width: 30px; height: 30px; border-radius: 50%; padding: 0; font-size: 16px; line-height: 1; }
+.qty-stepper button:hover { background: #e5e7eb; }
+.qty-stepper span { min-width: 26px; text-align: center; font-weight: 700; }
+.cart-card { display: flex; flex-direction: column; gap: 12px; }
+.cart-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-bottom: 1px solid #f1f2f5; padding-bottom: 10px; }
+.cart-name { flex: 1; min-width: 160px; font-weight: 600; }
+.cart-name small { color: #6b7280; font-weight: 400; }
+.cart-line-total { font-weight: 700; min-width: 64px; text-align: right; }
+.cart-remove { background: #fee2e2; color: #b91c1c; padding: 6px 12px; font-size: 12.5px; border-radius: 999px; }
+.cart-remove:hover { background: #fecaca; }
+.cart-total { font-size: 17px; margin: 0; }
+.fulfill-tabs { margin-top: 0; }
+.addr-box { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+.addr-box p { margin: 4px 0 0; }
 .car-submenu-wrap { position: relative; margin-bottom: 14px; }
 .car-submenu-btn { width: 44px; height: 44px; padding: 0; border-radius: 50%; background: white; border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(17,24,39,.08); display: inline-flex; align-items: center; justify-content: center; }
 .car-submenu-btn:hover { background: #f9fafb; }

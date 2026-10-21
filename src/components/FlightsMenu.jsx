@@ -25,6 +25,7 @@ export default function FlightsMenu({ go }) {
         <div className="car-submenu">
           <button onClick={() => pick('flights')}>Flight Estimation</button>
           <button onClick={() => pick('reserve')}>Flight Reservation</button>
+          <button onClick={() => pick('flight-contact')}>Contact Us</button>
         </div>
       )}
     </div>

@@ -10,8 +10,8 @@ export default function ContactPage({ go }) {
     e.preventDefault()
     setStatus('Sending your message...')
     try {
-      await submitCarInquiry({ carName: 'Contact Us', name: form.name, email: form.email, phone: form.phone, message: form.message })
-      setStatus('✓ Sent! Thanks for reaching out — we\'ll get back to you shortly.')
+      await submitCarInquiry({ carName: 'Contact Us (Cars Department)', name: form.name, email: form.email, phone: form.phone, message: form.message })
+      setStatus('✓ Sent! Thanks for reaching out — our Cars Department will get back to you shortly.')
       setForm({ name: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -23,7 +23,7 @@ export default function ContactPage({ go }) {
       <CarsMenu go={go} />
       <div className="hero-card">
         <h2>Contact Us</h2>
-        <p>Questions, feedback, or a request — good or bad, we want to hear it. Send us a message below and we'll get back to you.</p>
+        <p>You're contacting our <b>Cars Department</b>. Questions, feedback, or a request — good or bad, we want to hear it. Send us a message below and we'll get back to you.</p>
       </div>
       <form className="form-card wide" onSubmit={handleSubmit}>
         <div className="row">

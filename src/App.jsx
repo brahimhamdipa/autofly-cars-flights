@@ -8,6 +8,7 @@ import SellPage from './components/SellPage'
 import TestDrivePage from './components/TestDrivePage'
 import ContactPage from './components/ContactPage'
 import FlightReservationPage from './components/FlightReservationPage'
+import FlightContactPage from './components/FlightContactPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
 
@@ -27,7 +28,7 @@ export default function App() {
   const go = (t) => { setTab(t); setMoreOpen(false) }
   const inMore = tab === 'groceries' || tab === 'about'
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
-  const inFlights = ['flights', 'reserve'].includes(tab)
+  const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
   return (
     <div className="app">
@@ -58,6 +59,7 @@ export default function App() {
         {tab === 'contact' && <ContactPage go={go} />}
         {tab === 'flights' && <FlightSection go={go} />}
         {tab === 'reserve' && <FlightReservationPage go={go} />}
+        {tab === 'flight-contact' && <FlightContactPage go={go} />}
         {tab === 'groceries' && <GroceriesPage />}
         {tab === 'about' && <AboutPage />}
       </main>

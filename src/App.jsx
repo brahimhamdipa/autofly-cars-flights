@@ -9,6 +9,8 @@ import TestDrivePage from './components/TestDrivePage'
 import ContactPage from './components/ContactPage'
 import FlightReservationPage from './components/FlightReservationPage'
 import FlightContactPage from './components/FlightContactPage'
+import ClothesPage from './components/ClothesPage'
+import MachinesPage from './components/MachinesPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
 
@@ -26,7 +28,7 @@ export default function App() {
   }, [])
 
   const go = (t) => { setTab(t); setMoreOpen(false) }
-  const inMore = tab === 'groceries' || tab === 'about'
+  const inMore = ['groceries', 'clothes', 'machines', 'about'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -45,6 +47,8 @@ export default function App() {
             {moreOpen && (
               <span className="dropdown-menu">
                 <a onClick={() => go('groceries')}>Groceries</a>
+                <a onClick={() => go('clothes')}>Clothes</a>
+                <a onClick={() => go('machines')}>Machines</a>
                 <a onClick={() => go('about')}>About Us</a>
               </span>
             )}
@@ -61,6 +65,8 @@ export default function App() {
         {tab === 'reserve' && <FlightReservationPage go={go} />}
         {tab === 'flight-contact' && <FlightContactPage go={go} />}
         {tab === 'groceries' && <GroceriesPage />}
+        {tab === 'clothes' && <ClothesPage />}
+        {tab === 'machines' && <MachinesPage />}
         {tab === 'about' && <AboutPage />}
       </main>
       <footer className="footer">

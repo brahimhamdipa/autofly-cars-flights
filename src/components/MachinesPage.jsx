@@ -1,3 +1,5 @@
+import NotifyMe from './NotifyMe'
+
 export default function MachinesPage() {
   return (
     <div>
@@ -13,6 +15,7 @@ export default function MachinesPage() {
         <p>🌱 Garden & outdoor — lawn mowers, trimmers, and outdoor machines.</p>
         <p className="hint">This service isn't live yet. Check back soon — or send us a message through the Contact Us page and tell us what machine you're looking for, and we'll try to source it for you.</p>
       </div>
+      <NotifyMe topic="Machines" />
     </div>
   )
 }

@@ -1,3 +1,5 @@
+import NotifyMe from './NotifyMe'
+
 export default function ClothesPage() {
   return (
     <div>
@@ -11,8 +13,9 @@ export default function ClothesPage() {
         <p>👕 Everyday clothing — men, women, and kids: shirts, pants, dresses, jackets, and more.</p>
         <p>👟 Shoes & accessories — sneakers, boots, bags, belts, and the finishing touches.</p>
         <p>📦 Easy delivery — starting in select areas across the US, growing city by city.</p>
-        <p className="hint">This service isn't live yet. Check back soon — or send us a message through the Contact Us page and ask to be first to know when clothes launch in your area.</p>
+        <p className="hint">This service isn't live yet. Check back soon — or join the launch list below and be first to know when clothes launch in your area.</p>
       </div>
+      <NotifyMe topic="Clothes" />
     </div>
   )
 }

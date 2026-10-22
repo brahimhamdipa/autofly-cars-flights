@@ -11,6 +11,7 @@ import FlightReservationPage from './components/FlightReservationPage'
 import FlightContactPage from './components/FlightContactPage'
 import ClothesPage from './components/ClothesPage'
 import MachinesPage from './components/MachinesPage'
+import ServicesPage from './components/ServicesPage'
 import GroceryCartPage from './components/GroceryCartPage'
 import GrocerySoonPage from './components/GrocerySoonPage'
 import GroceryContactPage from './components/GroceryContactPage'
@@ -34,7 +35,7 @@ export default function App() {
 
   const go = (t) => { setTab(t); setMoreOpen(false) }
   const GROCERY_TABS = ['groceries', 'grocery-cart', 'lunches', 'meats', 'grocery-contact']
-  const inMore = [...GROCERY_TABS, 'clothes', 'machines', 'about'].includes(tab)
+  const inShopping = [...GROCERY_TABS, 'clothes', 'machines', 'services', 'about'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -45,21 +46,34 @@ export default function App() {
           <img className="brand-logo" src={logoUrl} alt="AutoFly.us.com" />
           <span className="tagline">Cars, Flights & More — All in One Place</span>
         </div>
-        <nav>
-          <button className={inCars ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
-          <button className={inFlights ? 'active' : ''} onClick={() => go('flights')}>Flights</button>
-          <span className="dropdown" ref={moreRef}>
-            <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
-            {moreOpen && (
-              <span className="dropdown-menu">
-                <a onClick={() => go('groceries')}>Groceries</a>
-                <a onClick={() => go('clothes')}>Clothes</a>
-                <a onClick={() => go('machines')}>Machines</a>
-                <a onClick={() => go('about')}>About Us</a>
-              </span>
-            )}
-          </span>
-        </nav>
+        <div className="header-right">
+          <nav>
+            <button className={inCars ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
+            <button className={inFlights ? 'active' : ''} onClick={() => go('flights')}>Flights</button>
+            <span className="dropdown" ref={moreRef}>
+              <button className={inShopping ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>Shopping ▾</button>
+              {moreOpen && (
+                <span className="dropdown-menu">
+                  <a onClick={() => go('groceries')}>Groceries</a>
+                  <a onClick={() => go('clothes')}>Clothes</a>
+                  <a onClick={() => go('machines')}>Machines</a>
+                  <a onClick={() => go('services')}>Services</a>
+                  <a onClick={() => go('about')}>About Us</a>
+                </span>
+              )}
+            </span>
+          </nav>
+          <div className="lang-row" aria-label="Language and region">
+            <a className="lang active" href="https://autofly.us.com">En</a>
+            <span className="lang soon" title="Coming soon">Fr</span>
+            <span className="lang soon" title="Coming soon">Ma</span>
+            <span className="lang soon" title="Coming soon">De</span>
+            <span className="lang soon" title="Coming soon">Es</span>
+            <span className="lang soon" title="Coming soon">Mx</span>
+            <span className="lang soon" title="Coming soon">Do</span>
+            <span className="lang soon" title="Coming soon">Ca</span>
+          </div>
+        </div>
       </header>
       <main className="main">
         {tab === 'cars' && <CarSection go={go} />}
@@ -89,6 +103,7 @@ export default function App() {
         )}
         {tab === 'clothes' && <ClothesPage />}
         {tab === 'machines' && <MachinesPage />}
+        {tab === 'services' && <ServicesPage />}
         {tab === 'about' && <AboutPage />}
         {tab === 'admin' && <AdminPage />}
       </main>

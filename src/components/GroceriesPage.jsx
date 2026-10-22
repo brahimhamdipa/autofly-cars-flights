@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { Lightbox } from './CarSection'
 import { useCart } from '../lib/CartContext'
@@ -6,6 +6,77 @@ import { GroceryTopBar } from './GroceryMenu'
 import CartCheckout, { money, priceOf } from './CartCheckout'
 
 const CATEGORY_EMOJI = { 'Fresh Fish': '🐟', 'Produce': '🥑', 'Dairy & Eggs': '🥚', 'Bakery': '🍞' }
+
+// Accent-insensitive text match helper (same idea as the Cars picker).
+const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+
+// Type-to-filter product picker — same behavior as the "Info / Test drive
+// a Car" car picker: typing narrows the drop list (starts-with matches
+// first), tap / arrows / Enter pick an item, and the grid filters live.
+function ProductPicker({ products, value, onChange }) {
+  const [open, setOpen] = useState(false)
+  const [highlight, setHighlight] = useState(-1)
+
+  const results = useMemo(() => {
+    const q = norm((value || '').trim())
+    if (!q) return products.slice(0, 10)
+    const starts = products.filter(p => norm(p.name).startsWith(q))
+    const contains = products.filter(p => !norm(p.name).startsWith(q) && norm(p.name).includes(q))
+    return [...starts, ...contains].slice(0, 10)
+  }, [products, value])
+
+  const pick = (p) => {
+    onChange(p.name)
+    setOpen(false)
+    setHighlight(-1)
+  }
+
+  const onKeyDown = (e) => {
+    if (!open || results.length === 0) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setHighlight(h => Math.min(h + 1, results.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlight(h => Math.max(h - 1, 0))
+    } else if (e.key === 'Enter' && highlight >= 0) {
+      e.preventDefault()
+      pick(results[highlight])
+    } else if (e.key === 'Escape') {
+      setOpen(false)
+    }
+  }
+
+  return (
+    <div className="airport-wrap">
+      <input
+        placeholder="Search items (e.g. Salmon)"
+        value={value}
+        autoComplete="off"
+        onChange={e => { onChange(e.target.value); setOpen(true); setHighlight(-1) }}
+        onFocus={() => setOpen(true)}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onKeyDown={onKeyDown}
+      />
+      {open && results.length > 0 && (
+        <ul className="airport-list">
+          {results.map((p, i) => (
+            <li
+              key={p.id}
+              className={i === highlight ? 'active' : ''}
+              onMouseDown={e => { e.preventDefault(); pick(p) }}
+            >
+              <span className="airport-main">{p.name}</span>
+              <span className="airport-sub">
+                {[p.category || '', `${money(priceOf(p))} / ${p.unit}`, p.stock > 0 ? `${p.stock} in stock` : 'Out of stock'].filter(Boolean).join(' — ')}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 function StockLine({ stock }) {
   if (stock <= 0) return <p className="stock out">Out of stock</p>
@@ -69,6 +140,8 @@ export default function GroceriesPage({ go }) {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
+  const [filterText, setFilterText] = useState('')
+  const [maxPrice, setMaxPrice] = useState('')
   const { add } = useCart()
 
   const loadProducts = async () => {
@@ -86,6 +159,16 @@ export default function GroceriesPage({ go }) {
 
   const addToCart = (product, qty) => add(product.id, qty, product.stock)
 
+  // Live grid filtering: name (accent-insensitive contains) + max price on
+  // the effective price (sale price when there is one), same as Cars.
+  const q = norm(filterText.trim())
+  const cap = parseFloat(maxPrice)
+  const visible = products.filter(p =>
+    (!q || norm(p.name).includes(q) || norm(p.category).includes(q)) &&
+    (isNaN(cap) || priceOf(p) <= cap)
+  )
+  const filtersActive = q !== '' || !isNaN(cap)
+
   return (
     <div>
       <GroceryTopBar go={go} />
@@ -93,6 +176,15 @@ export default function GroceriesPage({ go }) {
         <span className="tag">Now Open</span>
         <h2>Groceries & fresh fish</h2>
         <p>Fresh groceries and fresh fish in select areas across the US. Add items to your cart, choose delivery or pickup, and send your order — we handle the rest.</p>
+        {!loading && !loadError && products.length > 0 && (
+          <div className="filters">
+            <ProductPicker products={products} value={filterText} onChange={setFilterText} />
+            <input className="max-price" placeholder="Max price ($)" type="number" min="0" value={maxPrice} onChange={e => setMaxPrice(e.target.value)} />
+            {filtersActive && (
+              <button type="button" className="clear-filters" onClick={() => { setFilterText(''); setMaxPrice('') }}>✕ Clear</button>
+            )}
+          </div>
+        )}
       </div>
 
       {loading && <div className="hero-card"><p>Loading products...</p></div>}
@@ -100,9 +192,12 @@ export default function GroceriesPage({ go }) {
       {!loading && !loadError && products.length === 0 && (
         <div className="hero-card"><p>No products yet — check back soon.</p></div>
       )}
+      {!loading && !loadError && products.length > 0 && visible.length === 0 && (
+        <div className="hero-card"><p>No items match your search. Try a different name or a higher max price.</p></div>
+      )}
 
       <div className="grid">
-        {products.map(p => <ProductCard key={p.id} product={p} onAdd={addToCart} />)}
+        {visible.map(p => <ProductCard key={p.id} product={p} onAdd={addToCart} />)}
       </div>
 
       {/* Same shared cart/checkout as the My Cart page — kept here too. */}

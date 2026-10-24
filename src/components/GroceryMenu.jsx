@@ -25,9 +25,10 @@ export default function GroceryMenu({ go }) {
       {open && (
         <div className="car-submenu">
           <button onClick={() => pick('grocery-cart')}>My Cart <span className="menu-count">{count}</span></button>
-          <button onClick={() => pick('groceries')}>Groceries</button>
+          <button onClick={() => pick('groceries')}>General</button>
           <button onClick={() => pick('lunches')}>Lunches/Snacks</button>
           <button onClick={() => pick('meats')}>Meats</button>
+          <button onClick={() => pick('clothes')}>Clothes</button>
           <button onClick={() => pick('grocery-contact')}>Contact Us</button>
         </div>
       )}

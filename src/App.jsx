@@ -10,8 +10,9 @@ import ContactPage from './components/ContactPage'
 import FlightReservationPage from './components/FlightReservationPage'
 import FlightContactPage from './components/FlightContactPage'
 import ClothesPage from './components/ClothesPage'
-import MachinesPage from './components/MachinesPage'
 import ServicesPage from './components/ServicesPage'
+import ServicesSoonPage from './components/ServicesSoonPage'
+import ServicesContactPage from './components/ServicesContactPage'
 import GroceryCartPage from './components/GroceryCartPage'
 import GrocerySoonPage from './components/GrocerySoonPage'
 import GroceryContactPage from './components/GroceryContactPage'
@@ -35,7 +36,7 @@ export default function App() {
 
   const go = (t) => { setTab(t); setMoreOpen(false) }
   const GROCERY_TABS = ['groceries', 'grocery-cart', 'lunches', 'meats', 'grocery-contact']
-  const inShopping = [...GROCERY_TABS, 'clothes', 'machines', 'services', 'about'].includes(tab)
+  const inShopping = [...GROCERY_TABS, 'clothes', 'services', 'services-home', 'services-business', 'services-contact', 'about'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -55,8 +56,6 @@ export default function App() {
               {moreOpen && (
                 <span className="dropdown-menu">
                   <a onClick={() => go('groceries')}>Groceries</a>
-                  <a onClick={() => go('clothes')}>Clothes</a>
-                  <a onClick={() => go('machines')}>Machines</a>
                   <a onClick={() => go('services')}>Services</a>
                   <a onClick={() => go('about')}>About Us</a>
                 </span>
@@ -64,14 +63,17 @@ export default function App() {
             </span>
           </nav>
           <div className="lang-row" aria-label="Language and region">
-            <a className="lang active" href="https://autofly.us.com">En</a>
-            <span className="lang soon" title="Coming soon">Fr</span>
-            <span className="lang soon" title="Coming soon">Ma</span>
-            <span className="lang soon" title="Coming soon">De</span>
-            <span className="lang soon" title="Coming soon">Es</span>
-            <span className="lang soon" title="Coming soon">Mx</span>
-            <span className="lang soon" title="Coming soon">Do</span>
-            <span className="lang soon" title="Coming soon">Ca</span>
+            <a className="lang active" href="https://autofly.us.com">US</a>
+            <span className="lang soon" title="Coming soon">FR</span>
+            <span className="lang soon" title="Coming soon">MA</span>
+            <span className="lang soon" title="Coming soon">DE</span>
+            <span className="lang soon" title="Coming soon">ES</span>
+            <span className="lang soon" title="Coming soon">MX</span>
+            <span className="lang soon" title="Coming soon">DO</span>
+            <span className="lang soon" title="Coming soon">CA</span>
+            <span className="lang soon" title="Coming soon">BE</span>
+            <span className="lang soon" title="Coming soon">IT</span>
+            <span className="lang soon" title="Coming soon">IN</span>
           </div>
         </div>
       </header>
@@ -102,8 +104,18 @@ export default function App() {
           </CartProvider>
         )}
         {tab === 'clothes' && <ClothesPage />}
-        {tab === 'machines' && <MachinesPage />}
-        {tab === 'services' && <ServicesPage />}
+        {tab === 'services' && <ServicesPage go={go} />}
+        {tab === 'services-home' && (
+          <ServicesSoonPage go={go} title="Home Services" emoji="🏠" topic="Home Services"
+            intro="Help around your home is coming to AutoFly — cleaning, repairs, and everyday household services, booked in the same place as everything else."
+            items={['Home cleaning & deep cleaning', 'Handyman & small repairs', 'Painting & decorating', 'Gardening & yard work', 'Moving & hauling help', 'Appliance installation & fixes']} />
+        )}
+        {tab === 'services-business' && (
+          <ServicesSoonPage go={go} title="Business Services" emoji="💼" topic="Business Services"
+            intro="Services for your business are coming to AutoFly — the practical help that keeps a company running, from paperwork to promotion."
+            items={['Bookkeeping & invoicing help', 'Marketing & social media', 'Business websites & online shops', 'Logo & branding design', 'Admin & virtual assistance', 'Translation & documents']} />
+        )}
+        {tab === 'services-contact' && <ServicesContactPage go={go} />}
         {tab === 'about' && <AboutPage />}
         {tab === 'admin' && <AdminPage />}
       </main>

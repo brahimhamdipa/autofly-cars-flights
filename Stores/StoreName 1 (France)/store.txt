@@ -1,0 +1,10 @@
+ID_Store_Number: ST-001
+Store Name: Paris Fresh Market
+Phone Number: +33 1 42 60 00 01
+Email: paris@autofly.us.com
+Address: 12 Rue de la Paix
+City: Paris
+Country: France
+Zip Code: 75002
+Hours: Monday - Saturday, 8:00 AM - 8:00 PM
+About the Store: A friendly neighborhood market in the heart of Paris. Fresh bread every morning, local cheeses, fruits, vegetables and everyday groceries, with staff who speak French and English.

@@ -43,6 +43,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
+        <div className="header-row">
         <div className="brand">
           <img className="brand-logo" src={logoUrl} alt="AutoFly.us.com" />
           <span className="tagline">Cars, Flights & More — All in One Place</span>
@@ -74,6 +75,8 @@ export default function App() {
             <span className="lang soon" title="Coming soon">IT</span>
           </div>
         </div>
+        </div>
+        <div className="announce-bar">AutoFly officially opens in 2027 — cars, flights, groceries &amp; services, all in one place</div>
       </header>
       <main className="main">
         {tab === 'cars' && <CarSection go={go} />}

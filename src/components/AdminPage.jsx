@@ -5,18 +5,20 @@ import AdminDashboard from './AdminDashboard'
 import AdminProducts from './AdminProducts'
 import AdminOrders from './AdminOrders'
 import AdminSubmissions from './AdminSubmissions'
+import AdminStores from './admin/AdminStores'
 
 const SECTIONS = [
   ['dashboard', '📊 Dashboard & Reports'],
   ['products', '🛒 Products & Stock'],
   ['orders', '🧾 Orders'],
   ['submissions', '✉️ Form Submissions (Cars / Flights / Contact / Notify)'],
+  ['stores', '🏬 Physical Stores'],
 ]
 
 // Admin area: email + password login (Supabase Auth). Only the owner's
 // email is authorized — the database enforces the same rule, so this UI
 // gate is just the visible half of the protection.
-export default function AdminPage() {
+export default function AdminPage({ onViewStore }) {
   const [session, setSession] = useState(undefined) // undefined = still loading
   const [mode, setMode] = useState('login') // login | signup
   // Not pre-filled: the admin's email address stays off the public page.
@@ -144,6 +146,7 @@ export default function AdminPage() {
       {section === 'products' && <AdminProducts />}
       {section === 'orders' && <AdminOrders />}
       {section === 'submissions' && <AdminSubmissions />}
+      {section === 'stores' && <AdminStores onViewStore={onViewStore} />}
     </div>
   )
 }

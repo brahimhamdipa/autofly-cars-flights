@@ -70,10 +70,8 @@ export default function App() {
             <span className="lang soon" title="Coming soon">ES</span>
             <span className="lang soon" title="Coming soon">MX</span>
             <span className="lang soon" title="Coming soon">DO</span>
-            <span className="lang soon" title="Coming soon">CA</span>
             <span className="lang soon" title="Coming soon">BE</span>
             <span className="lang soon" title="Coming soon">IT</span>
-            <span className="lang soon" title="Coming soon">IN</span>
           </div>
         </div>
       </header>

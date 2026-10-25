@@ -16,6 +16,8 @@ import ServicesContactPage from './components/ServicesContactPage'
 import GroceryCartPage from './components/GroceryCartPage'
 import GrocerySoonPage from './components/GrocerySoonPage'
 import GroceryContactPage from './components/GroceryContactPage'
+import StoresSection from './components/StoresSection'
+import StoreDetailPage from './components/StoreDetailPage'
 import AdminPage from './components/AdminPage'
 import { CartProvider } from './lib/CartContext'
 import logoUrl from './assets/logo.webp'
@@ -23,6 +25,7 @@ import './index.css'
 
 export default function App() {
   const [tab, setTab] = useState('cars')
+  const [storeId, setStoreId] = useState(null)
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef(null)
 
@@ -35,7 +38,13 @@ export default function App() {
   }, [])
 
   const go = (t) => { setTab(t); setMoreOpen(false) }
-  const GROCERY_TABS = ['groceries', 'grocery-cart', 'lunches', 'meats', 'grocery-contact']
+  // Open a store's own page by ID_Store_Number (also shareable as #store/<id>).
+  const openStore = (id) => { setStoreId(id); setTab('store-detail'); setMoreOpen(false); window.location.hash = 'store/' + id }
+  useEffect(() => {
+    const m = window.location.hash.match(/^#store\/(.+)$/)
+    if (m) { setStoreId(decodeURIComponent(m[1])); setTab('store-detail') }
+  }, [])
+  const GROCERY_TABS = ['groceries', 'grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail']
   const inShopping = [...GROCERY_TABS, 'clothes', 'services', 'services-home', 'services-business', 'services-contact', 'about'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
@@ -56,7 +65,7 @@ export default function App() {
               <button className={inShopping ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>Shopping ▾</button>
               {moreOpen && (
                 <span className="dropdown-menu">
-                  <a onClick={() => go('groceries')}>Groceries</a>
+                  <a onClick={() => go('stores')}>Groceries</a>
                   <a onClick={() => go('services')}>Services</a>
                   <a onClick={() => go('about')}>About Us</a>
                 </span>
@@ -102,6 +111,8 @@ export default function App() {
                 items={['Fresh beef cuts', 'Chicken — whole & parts', 'Lamb & goat', 'Ground meats', 'Marinated & ready-to-cook', 'Halal options']} />
             )}
             {tab === 'grocery-contact' && <GroceryContactPage go={go} />}
+            {tab === 'stores' && <StoresSection go={go} onShop={openStore} />}
+            {tab === 'store-detail' && <StoreDetailPage storeId={storeId} go={go} />}
           </CartProvider>
         )}
         {tab === 'clothes' && <ClothesPage />}
@@ -118,7 +129,7 @@ export default function App() {
         )}
         {tab === 'services-contact' && <ServicesContactPage go={go} />}
         {tab === 'about' && <AboutPage />}
-        {tab === 'admin' && <AdminPage />}
+        {tab === 'admin' && <AdminPage go={go} onViewStore={openStore} />}
       </main>
       <footer className="footer">
         <p>AutoFly.us.com — Cars, Flights & More — All in One Place</p>

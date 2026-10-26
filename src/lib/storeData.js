@@ -25,18 +25,42 @@ export async function loadProvider(id) {
 }
 
 // Items with their provider + category joined. Filters: providerId,
-// categorySlug (e.g. 'store-products'), activeOnly (default true).
-export async function loadItems({ providerId, categorySlug, activeOnly = true } = {}) {
+// categorySlug (e.g. 'store-products'), activeOnly (default true),
+// onlineFilter: true = only items sold on the Online Store page,
+// false = only items NOT sold online, null/undefined = all items.
+export async function loadItems({ providerId, categorySlug, activeOnly = true, onlineFilter } = {}) {
   let q = supabase.from('store_items')
     .select('*, provider:store_providers(id, name, country, city), category:store_categories(id, name, slug)')
     .order('name')
   if (providerId) q = q.eq('provider_id', providerId)
   if (activeOnly) q = q.eq('is_active', true)
+  if (onlineFilter === true) q = q.eq('online', true)
+  if (onlineFilter === false) q = q.eq('online', false)
   let { data, error } = await q
   if (error) throw error
   if (categorySlug) {
     data = (data || []).filter(i => i.category && i.category.slug === categorySlug)
   }
+  return data || []
+}
+
+// One item with provider + category (the item detail page).
+export async function loadItem(id) {
+  const { data, error } = await supabase.from('store_items')
+    .select('*, provider:store_providers(id, name, country, city, phone, address), category:store_categories(id, name, slug)')
+    .eq('id', id)
+    .single()
+  if (error) throw error
+  return data
+}
+
+// Store items by id (used by the unified cart to resolve its lines).
+export async function loadItemsByIds(ids) {
+  if (!ids || ids.length === 0) return []
+  const { data, error } = await supabase.from('store_items')
+    .select('*, provider:store_providers(id, name, country, city)')
+    .in('id', ids)
+  if (error) throw error
   return data || []
 }
 

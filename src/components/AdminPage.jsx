@@ -11,14 +11,26 @@ import AdminStoreReports from './admin/AdminStoreReports'
 import AdminChat from './admin/AdminChat'
 
 const SECTIONS = [
-  ['dashboard', '📊 Dashboard & Reports'],
+  ['dashboard', '📊 Dashboard'],
   ['products', '🛒 Products & Stock'],
   ['orders', '🧾 Orders'],
-  ['submissions', '✉️ Form Submissions (Cars / Flights / Contact / Notify)'],
-  ['store-add', '➕ Add: Provider / Item / Category'],
-  ['store-manage', '✏️ Manage: Providers / Items / Categories'],
+  ['submissions', '✉️ Form Submissions'],
+  ['store-add', '➕ Add'],
+  ['store-manage', '✏️ Manage'],
   ['store-reports', '📄 Store Reports'],
   ['chat', '💬 Chat'],
+]
+
+// Sections grouped so the menu stays short: tapping a group opens its
+// first section, and the section row switches within the group. Every
+// section and what it does is unchanged — only the navigation moved
+// from one long dropdown into two sticky rows that stay on screen
+// while scrolling, so a long form never traps you at the bottom.
+const GROUPS = [
+  ['Overview', ['dashboard']],
+  ['Shop', ['products', 'orders']],
+  ['Stores', ['store-add', 'store-manage', 'store-reports']],
+  ['Messages', ['submissions', 'chat']],
 ]
 
 // Admin area: email + password login (Supabase Auth). Only the owner's
@@ -127,14 +139,34 @@ export default function AdminPage() {
     )
   }
 
+  const groupOf = (s) => GROUPS.find(([, secs]) => secs.includes(s)) || GROUPS[0]
+  const activeGroup = groupOf(section)
+  const labelOf = (v) => (SECTIONS.find(([val]) => val === v) || [v, v])[1]
+
   return (
     <div>
-      <div className="admin-head no-print">
-        <div className="admin-pick">
-          <label htmlFor="admin-section"><b>Admin — choose what to manage:</b></label>
-          <select id="admin-section" className="admin-select" value={section} onChange={e => setSection(e.target.value)}>
-            {SECTIONS.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-          </select>
+      <div className="admin-nav no-print">
+        <div className="admin-groups">
+          {GROUPS.map(([label, secs]) => (
+            <button
+              key={label} type="button"
+              className={activeGroup[0] === label ? 'active' : ''}
+              onClick={() => setSection(secs[0])}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <div className="admin-sections">
+          {activeGroup[1].map(v => (
+            <button
+              key={v} type="button"
+              className={section === v ? 'active' : ''}
+              onClick={() => setSection(v)}
+            >
+              {labelOf(v)}
+            </button>
+          ))}
         </div>
         <div className="admin-actions">
           <button type="button" onClick={() => window.print()}>🖨 Print / Save PDF</button>
@@ -156,6 +188,7 @@ export default function AdminPage() {
       {section === 'store-manage' && <AdminStoreManage />}
       {section === 'store-reports' && <AdminStoreReports />}
       {section === 'chat' && <AdminChat />}
+      <button type="button" className="admin-to-top no-print" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Top</button>
     </div>
   )
 }

@@ -3,20 +3,19 @@ import { Lightbox } from './CarSection'
 import { GroceryTopBar } from './GroceryMenu'
 import { useCart } from '../lib/CartContext'
 import { loadItem, money } from '../lib/storeData'
-import { StockLine, HoldModal } from './StoreBits'
+import { StockLine } from './StoreBits'
 
 // Item detail page: tapping any store item anywhere on the site lands
-// here — big pictures, price, stock, description, the store it belongs
-// to, and the two things a buyer wants: Add to cart and Hold the item.
-// This fixes the old dead end where an item found on a category page
-// (e.g. the AutoFly T-Shirt on Clothes) vanished on the store's order
-// page, which only listed "Store products".
+// here — big pictures, price, stock, the FULL description, the store it
+// belongs to, and the same two buttons as the item's card: Add to cart
+// and Shop with us. This fixes the old dead end where an item found on
+// a category page (e.g. the AutoFly T-Shirt on Clothes) vanished on the
+// store's order page, which only listed "Store products".
 export default function ItemDetailPage({ itemId, go, goBack }) {
   const [item, setItem] = useState(null)
   const [error, setError] = useState('')
   const [idx, setIdx] = useState(0)
   const [zoom, setZoom] = useState(false)
-  const [hold, setHold] = useState(false)
   const [added, setAdded] = useState(false)
   const { addStore, count } = useCart()
 
@@ -79,32 +78,27 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
                   {item.provider.phone ? ` · ${item.provider.phone}` : ''}
                 </p>
               )}
-              <div className="store-actions">
-                <button
-                  disabled={out}
-                  onClick={() => { addStore(item); setAdded(true) }}
-                >
-                  {out ? 'Out of stock' : '🛒 Add to cart'}
-                </button>
-                <button className="btn-soft" onClick={() => setHold(true)}>Hold the item</button>
-              </div>
-              {added && (
-                <p className="status">
-                  ✓ Added to your cart. <button type="button" className="link-btn" onClick={() => go('grocery-cart')}>View My Cart ({count})</button>
-                </p>
-              )}
-              <div className="store-actions">
-                <button type="button" className="btn-soft" onClick={() => go('store-order', item.provider_id)}>Order from this store</button>
-                <button type="button" className="btn-soft" onClick={() => go('store-detail', item.provider_id)}>About this store</button>
+              <div className="form-card item-buy-box">
+                <div className="store-actions">
+                  <button
+                    disabled={out}
+                    onClick={() => { addStore(item); setAdded(true) }}
+                  >
+                    {out ? 'Out of stock' : '🛒 Add to cart'}
+                  </button>
+                  <button type="button" className="btn-soft" onClick={() => go('store-detail', item.provider_id)}>Shop with us</button>
+                </div>
+                {added && (
+                  <p className="status">
+                    ✓ Added to your cart. <button type="button" className="link-btn" onClick={() => go('grocery-cart')}>View My Cart ({count})</button>
+                  </p>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {hold && item && (
-        <HoldModal item={item} providerName={item.provider?.name || 'Store'} onClose={() => setHold(false)} />
-      )}
     </div>
   )
 }

@@ -94,7 +94,7 @@ export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
                 <h3 className="clickable-title" onClick={() => go('item-detail', item.id)}>{item.name}</h3>
                 <p className="g-price">{money(item.price)}</p>
                 <StockLine stock={item.stock} />
-                {item.description && <p className="car-desc">{item.description}</p>}
+                {item.description && <p className="car-desc desc-clamp">{item.description}</p>}
                 {item.provider && <p className="hint">🏬 {item.provider.name}{item.provider.country ? ` · ${item.provider.country}` : ''}</p>}
                 <p className="item-badges">
                   {item.delivery && <span className="badge">🚚 Delivery</span>}

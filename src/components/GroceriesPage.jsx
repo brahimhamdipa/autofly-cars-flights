@@ -78,7 +78,7 @@ export default function GroceriesPage({ go }) {
               <div className="card-body">
                 <h3 className="clickable-title" onClick={() => go('item-detail', item.id)}>{item.name}</h3>
                 <StockLine stock={item.stock} />
-                {item.description && <p className="car-desc">{item.description}</p>}
+                {item.description && <p className="car-desc desc-clamp">{item.description}</p>}
                 <p className="g-price">{money(item.price)}</p>
                 {item.provider && <p className="hint">🏬 {item.provider.name}{item.provider.country ? ` · ${item.provider.country}` : ''}</p>}
                 <p className="item-badges">

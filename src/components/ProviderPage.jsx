@@ -5,7 +5,7 @@ import { loadProvider } from '../lib/storeData'
 
 // One page per store, keyed by provider ID. Reached from "Shop with us"
 // on the Physical Stores list (or a shared #store/<id> link).
-export default function ProviderPage({ providerId, go }) {
+export default function ProviderPage({ providerId, go, goBack }) {
   const [store, setStore] = useState(null)
   const [error, setError] = useState('')
   const [idx, setIdx] = useState(0)
@@ -24,7 +24,7 @@ export default function ProviderPage({ providerId, go }) {
         <div className="hero-card">
           <h2>Store not found</h2>
           <p>There is no store with ID <b>{providerId}</b>. It may have been renamed or removed.{error ? ` (${error})` : ''}</p>
-          <button onClick={() => go('stores')}>← Back to all stores</button>
+          <button onClick={goBack || (() => go('stores'))}>← Back</button>
         </div>
       </div>
     )
@@ -49,7 +49,7 @@ export default function ProviderPage({ providerId, go }) {
       <GroceryTopBar go={go} />
 
       <div className="hero-card">
-        <button className="link-btn" onClick={() => go('stores')}>← All stores</button>
+        {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
         <h2>🏬 {store.name}</h2>
         <p className="hint">Store ID: <b>{store.id}</b>{store.city || store.country ? ` · ${[store.city, store.country].filter(Boolean).join(', ')}` : ''}</p>
       </div>

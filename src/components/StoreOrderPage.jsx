@@ -3,14 +3,14 @@ import { Lightbox } from './CarSection'
 import { GroceryTopBar } from './GroceryMenu'
 import { useCart } from '../lib/CartContext'
 import { loadProvider, loadItems, money } from '../lib/storeData'
-import { StockLine, HoldModal } from './StoreBits'
+import { StockLine } from './StoreBits'
 
 // "Order from us" page for one store: ALL of this provider's active
 // items (not just "Store products"), with category tabs to narrow down.
 // Adding goes to the ONE site-wide cart (grouped by store at checkout).
 // This fixes the old dead end where an item found on a category page
 // vanished here because only "Store products" were listed.
-function ItemCard({ item, onAdd, onHold, onOpen }) {
+function ItemCard({ item, onAdd, onOpen }) {
   const [idx, setIdx] = useState(0)
   const [zoom, setZoom] = useState(false)
   const images = item.pics || []
@@ -36,7 +36,7 @@ function ItemCard({ item, onAdd, onHold, onOpen }) {
         <h3 className="clickable-title" onClick={onOpen}>{item.name}</h3>
         <p className="g-price">{money(item.price)}</p>
         <StockLine stock={item.stock} />
-        {item.description && <p className="car-desc">{item.description}</p>}
+        {item.description && <p className="car-desc desc-clamp">{item.description}</p>}
         {item.category && <p className="hint">{item.category.name}</p>}
         <p className="item-badges">
           {item.delivery && <span className="badge">🚚 Delivery</span>}
@@ -45,7 +45,6 @@ function ItemCard({ item, onAdd, onHold, onOpen }) {
         <div className="item-actions">
           <button disabled={out} onClick={() => onAdd(item)}>{out ? 'Out of stock' : 'Add to cart'}</button>
           <button className="btn-soft" onClick={onOpen}>View details →</button>
-          <button className="btn-soft" onClick={() => onHold(item)}>Hold the item</button>
         </div>
       </div>
       {zoom && n > 0 && <Lightbox images={images} start={idx} onClose={() => setZoom(false)} />}
@@ -53,13 +52,12 @@ function ItemCard({ item, onAdd, onHold, onOpen }) {
   )
 }
 
-export default function StoreOrderPage({ providerId, go }) {
+export default function StoreOrderPage({ providerId, go, goBack }) {
   const [provider, setProvider] = useState(null)
   const [items, setItems] = useState(null)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
   const [catFilter, setCatFilter] = useState('all')
-  const [holdItem, setHoldItem] = useState(null)
   const [justAdded, setJustAdded] = useState('')
   const { addStore, count } = useCart()
 
@@ -97,9 +95,9 @@ export default function StoreOrderPage({ providerId, go }) {
       <GroceryTopBar go={go} />
 
       <div className="hero-card">
-        <button className="link-btn" onClick={() => go('store-detail', providerId)}>← Back to {provider ? provider.name : 'store'}</button>
+        {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
         <h2>🛒 Order from {provider ? provider.name : 'this store'}</h2>
-        <p>Everything this store sells — tap an item for details, add it to your cart, or hold it. Your cart groups each store's items into their own section at checkout.</p>
+        <p>Everything this store sells — tap an item for details or add it to your cart. Your cart groups each store's items into their own section at checkout.</p>
         {count > 0 && (
           <p><button type="button" className="link-btn" onClick={() => go('grocery-cart')}>🛒 View My Cart ({count})</button></p>
         )}
@@ -132,15 +130,10 @@ export default function StoreOrderPage({ providerId, go }) {
             key={item.id}
             item={item}
             onAdd={addToCart}
-            onHold={setHoldItem}
             onOpen={() => go('item-detail', item.id)}
           />
         ))}
       </div>
-
-      {holdItem && (
-        <HoldModal item={holdItem} providerName={provider?.name || 'Store'} onClose={() => setHoldItem(null)} />
-      )}
     </div>
   )
 }

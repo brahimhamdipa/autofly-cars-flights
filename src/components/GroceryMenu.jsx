@@ -15,7 +15,7 @@ export default function GroceryMenu({ go }) {
     return () => window.removeEventListener('pointerdown', onDown)
   }, [open ])
 
-  const pick = (page) => { setOpen(false); if (go) go(page) }
+  const pick = (page, param) => { setOpen(false); if (go) go(page, param) }
 
   return (
     <div className="car-submenu-wrap" ref={ref}>
@@ -27,9 +27,9 @@ export default function GroceryMenu({ go }) {
           <button onClick={() => pick('grocery-cart')}>My Cart <span className="menu-count">{count}</span></button>
           <button onClick={() => pick('stores')}>Physical Stores</button>
           <button onClick={() => pick('groceries')}>Online Store</button>
-          <button onClick={() => pick('lunches')}>Lunches/Snacks</button>
-          <button onClick={() => pick('meats')}>Meats</button>
-          <button onClick={() => pick('clothes')}>Clothes</button>
+          <button onClick={() => pick('category', 'snacks-lunches')}>Lunches/Snacks</button>
+          <button onClick={() => pick('category', 'meats')}>Meats</button>
+          <button onClick={() => pick('category', 'clothes')}>Clothes</button>
           <button onClick={() => pick('grocery-contact')}>Contact Us</button>
         </div>
       )}

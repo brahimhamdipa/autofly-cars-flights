@@ -4,6 +4,8 @@ import { Lightbox } from './CarSection'
 import { useCart } from '../lib/CartContext'
 import { GroceryTopBar } from './GroceryMenu'
 import CartCheckout, { money, priceOf } from './CartCheckout'
+import { loadItems } from '../lib/storeData'
+import { StockLine } from './StoreBits'
 
 const CATEGORY_EMOJI = { 'Fresh Fish': '🐟', 'Produce': '🥑', 'Dairy & Eggs': '🥚', 'Bakery': '🍞' }
 
@@ -78,12 +80,6 @@ function ProductPicker({ products, value, onChange }) {
   )
 }
 
-function StockLine({ stock }) {
-  if (stock <= 0) return <p className="stock out">Out of stock</p>
-  if (stock <= 10) return <p className="stock low">Only {stock} left in stock</p>
-  return <p className="stock ok">{stock} available in stock</p>
-}
-
 function ProductCard({ product, onAdd }) {
   const [qty, setQty] = useState(1)
   const [idx, setIdx] = useState(0)
@@ -142,7 +138,9 @@ export default function GroceriesPage({ go }) {
   const [loadError, setLoadError] = useState('')
   const [filterText, setFilterText] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
-  const { add } = useCart()
+  const [onlineItems, setOnlineItems] = useState([])
+  const [onlineQuery, setOnlineQuery] = useState('')
+  const { addGrocery, addStore } = useCart()
 
   const loadProducts = async () => {
     const { data, error } = await supabase
@@ -156,8 +154,11 @@ export default function GroceriesPage({ go }) {
     setLoading(false)
   }
   useEffect(() => { loadProducts() }, [])
+  useEffect(() => {
+    loadItems({ onlineFilter: true }).then(setOnlineItems).catch(() => {})
+  }, [])
 
-  const addToCart = (product, qty) => add(product.id, qty, product.stock)
+  const addToCart = (product, qty) => addGrocery(product, qty)
 
   // Live grid filtering: name (accent-insensitive contains) + max price on
   // the effective price (sale price when there is one), same as Cars.
@@ -168,6 +169,11 @@ export default function GroceriesPage({ go }) {
     (isNaN(cap) || priceOf(p) <= cap)
   )
   const filtersActive = q !== '' || !isNaN(cap)
+
+  const oq = norm(onlineQuery.trim())
+  const visibleOnline = onlineItems.filter(i =>
+    !oq || norm(i.name).includes(oq) || norm(i.provider?.name).includes(oq)
+  )
 
   return (
     <div>
@@ -198,6 +204,52 @@ export default function GroceriesPage({ go }) {
 
       <div className="grid">
         {visible.map(p => <ProductCard key={p.id} product={p} onAdd={addToCart} />)}
+      </div>
+
+      {/* Store items flagged "sold online": same shop, same cart. */}
+      <div className="hero-card">
+        <h2>🌐 From our stores — also available online</h2>
+        <p>Items from the physical stores that are sold online here. They go into the same cart, grouped under their store at checkout.</p>
+        <div className="filters">
+          <input placeholder="Search store items (e.g. bread, Paris)" value={onlineQuery} onChange={e => setOnlineQuery(e.target.value)} />
+        </div>
+        {onlineItems.length > 0 && <p className="hint">{visibleOnline.length} item{visibleOnline.length === 1 ? '' : 's'}</p>}
+      </div>
+      {onlineItems.length === 0 && (
+        <div className="hero-card"><p>No store items are flagged for online sale yet — tick "Sell this item on the Online Store" on an item in Admin.</p></div>
+      )}
+      <div className="grid">
+        {visibleOnline.map(item => {
+          const images = item.pics || []
+          const out = item.stock !== null && item.stock !== undefined && item.stock <= 0
+          return (
+            <div className="card g-card" key={item.id}>
+              <div className="g-photo">
+                {images.length > 0 ? (
+                  <img src={images[0]} alt={item.name} onClick={() => go('item-detail', item.id)} title="Click for details" />
+                ) : (
+                  <span className="g-emoji">🛒</span>
+                )}
+              </div>
+              <div className="card-body">
+                <h3 className="clickable-title" onClick={() => go('item-detail', item.id)}>{item.name}</h3>
+                <StockLine stock={item.stock} />
+                {item.description && <p className="car-desc">{item.description}</p>}
+                <p className="g-price">{money(item.price)}</p>
+                {item.provider && <p className="hint">🏬 {item.provider.name}{item.provider.country ? ` · ${item.provider.country}` : ''}</p>}
+                <p className="item-badges">
+                  {item.delivery && <span className="badge">🚚 Delivery</span>}
+                  {item.pickup && <span className="badge">🏪 Pickup</span>}
+                </p>
+                <div className="g-buyrow">
+                  <button type="button" disabled={out} onClick={() => addStore(item)}>
+                    {out ? 'Out of stock' : 'Add to cart'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* Same shared cart/checkout as the My Cart page — kept here too. */}

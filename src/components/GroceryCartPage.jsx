@@ -30,17 +30,17 @@ export default function GroceryCartPage({ go }) {
       <GroceryTopBar go={go} />
       <div className="hero-card">
         <h2>🛒 My Cart</h2>
-        <p>Everything you've added from the Groceries shop is here. Choose delivery or pickup, send your order, and we'll take it from there.</p>
+        <p>Everything you've added from anywhere on the site is here, grouped by store. Each store's order is placed separately — choose delivery or pickup per store, send your orders, and we'll take it from there.</p>
       </div>
       {loading && <div className="hero-card"><p>Loading your cart...</p></div>}
       {loadError && <div className="hero-card"><p>Couldn't load your cart: {loadError}</p></div>}
-      {!loading && !loadError && count === 0 && !lastOrder && (
+      {!loading && !loadError && count === 0 && (!lastOrder || lastOrder.length === 0) && (
         <div className="hero-card">
           <p>Your cart is empty.</p>
           <button onClick={() => go && go('groceries')}>Browse Groceries</button>
         </div>
       )}
-      {!loading && !loadError && (count > 0 || lastOrder) && (
+      {!loading && !loadError && (count > 0 || (lastOrder && lastOrder.length > 0)) && (
         <CartCheckout products={products} onOrderPlaced={loadProducts} />
       )}
     </div>

@@ -86,7 +86,7 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
                 >
                   {out ? 'Out of stock' : '🛒 Add to cart'}
                 </button>
-//                <button className="btn-soft" onClick={() => setHold(true)}>Hold the item</button>
+                <button className="btn-soft" onClick={() => setHold(true)}>Hold the item</button>
               </div>
               {added && (
                 <p className="status">

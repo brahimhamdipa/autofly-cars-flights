@@ -97,7 +97,7 @@ export default function StoreOrderPage({ providerId, go }) {
       <GroceryTopBar go={go} />
 
       <div className="hero-card">
-        <button className="link-btn" onClick={goBack}>← Back</button>
+        <button className="link-btn" onClick={() => go('store-detail', providerId)}>← Back to {provider ? provider.name : 'store'}</button>
         <h2>🛒 Order from {provider ? provider.name : 'this store'}</h2>
         <p>Everything this store sells — tap an item for details, add it to your cart, or hold it. Your cart groups each store's items into their own section at checkout.</p>
         {count > 0 && (

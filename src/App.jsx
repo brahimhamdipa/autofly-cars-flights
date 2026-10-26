@@ -16,8 +16,10 @@ import ServicesContactPage from './components/ServicesContactPage'
 import GroceryCartPage from './components/GroceryCartPage'
 import GrocerySoonPage from './components/GrocerySoonPage'
 import GroceryContactPage from './components/GroceryContactPage'
-import StoresSection from './components/StoresSection'
-import StoreDetailPage from './components/StoreDetailPage'
+import ProvidersPage from './components/ProvidersPage'
+import ProviderPage from './components/ProviderPage'
+import StoreOrderPage from './components/StoreOrderPage'
+import CategoryPage from './components/CategoryPage'
 import AdminPage from './components/AdminPage'
 import { CartProvider } from './lib/CartContext'
 import logoUrl from './assets/logo.webp'
@@ -25,7 +27,9 @@ import './index.css'
 
 export default function App() {
   const [tab, setTab] = useState('cars')
-  const [storeId, setStoreId] = useState(null)
+  const [providerId, setProviderId] = useState(null)
+  const [orderProviderId, setOrderProviderId] = useState(null)
+  const [categorySlug, setCategorySlug] = useState(null)
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef(null)
 
@@ -37,14 +41,20 @@ export default function App() {
     return () => document.removeEventListener('mousedown', close)
   }, [])
 
-  const go = (t) => { setTab(t); setMoreOpen(false) }
-  // Open a store's own page by ID_Store_Number (also shareable as #store/<id>).
-  const openStore = (id) => { setStoreId(id); setTab('store-detail'); setMoreOpen(false); window.location.hash = 'store/' + id }
+  // go(tab, param): param carries the store/category for detail, order
+  // and category pages (e.g. go('store-detail', 3), go('category', 'meats')).
+  const go = (t, param) => {
+    if (t === 'store-detail') setProviderId(param)
+    if (t === 'store-order') setOrderProviderId(param)
+    if (t === 'category') setCategorySlug(param)
+    setTab(t); setMoreOpen(false)
+    if (t === 'store-detail' && param) window.location.hash = 'store/' + param
+  }
   useEffect(() => {
     const m = window.location.hash.match(/^#store\/(.+)$/)
-    if (m) { setStoreId(decodeURIComponent(m[1])); setTab('store-detail') }
+    if (m) { setProviderId(decodeURIComponent(m[1])); setTab('store-detail') }
   }, [])
-  const GROCERY_TABS = ['groceries', 'grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail']
+  const GROCERY_TABS = ['groceries', 'grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category']
   const inShopping = [...GROCERY_TABS, 'clothes', 'services', 'services-home', 'services-business', 'services-contact', 'about'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
@@ -111,8 +121,10 @@ export default function App() {
                 items={['Fresh beef cuts', 'Chicken — whole & parts', 'Lamb & goat', 'Ground meats', 'Marinated & ready-to-cook', 'Halal options']} />
             )}
             {tab === 'grocery-contact' && <GroceryContactPage go={go} />}
-            {tab === 'stores' && <StoresSection go={go} onShop={openStore} />}
-            {tab === 'store-detail' && <StoreDetailPage storeId={storeId} go={go} />}
+            {tab === 'stores' && <ProvidersPage go={go} onShop={(id) => go('store-detail', id)} />}
+            {tab === 'store-detail' && <ProviderPage providerId={providerId} go={go} />}
+            {tab === 'store-order' && <StoreOrderPage providerId={orderProviderId} go={go} />}
+            {tab === 'category' && <CategoryPage slug={categorySlug} go={go} />}
           </CartProvider>
         )}
         {tab === 'clothes' && <ClothesPage />}
@@ -129,7 +141,7 @@ export default function App() {
         )}
         {tab === 'services-contact' && <ServicesContactPage go={go} />}
         {tab === 'about' && <AboutPage />}
-        {tab === 'admin' && <AdminPage go={go} onViewStore={openStore} />}
+        {tab === 'admin' && <AdminPage />}
       </main>
       <footer className="footer">
         <p>AutoFly.us.com — Cars, Flights & More — All in One Place</p>

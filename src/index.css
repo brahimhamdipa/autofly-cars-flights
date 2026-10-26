@@ -216,3 +216,15 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .store-btn:hover { background: #1d4ed8; color: white; }
 .code-block { background: #111827; color: #e5e7eb; padding: 14px; border-radius: 10px; font-size: 12.5px; line-height: 1.6; overflow-x: auto; white-space: pre-wrap; }
 @media (max-width: 640px) { .store-detail { grid-template-columns: 1fr; } .store-photos img { height: 220px !important; } }
+.item-badges { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+.badge { display: inline-block; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; padding: 3px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.item-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.item-actions button { flex: 1; min-width: 120px; }
+.store-cart { margin-bottom: 24px; }
+.cart-line { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #f1f2f5; }
+.receipt { border: 2px solid #a7f3d0; }
+.report-links { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+.report-links button { background: #e5e7eb; color: #111827; }
+.report-links button.active { background: #111827; color: white; }
+.pic-list { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; font-size: 12px; color: #6b7280; word-break: break-all; }
+.pic-list span { display: flex; justify-content: space-between; align-items: center; gap: 8px; }

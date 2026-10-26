@@ -20,6 +20,8 @@ import ProvidersPage from './components/ProvidersPage'
 import ProviderPage from './components/ProviderPage'
 import StoreOrderPage from './components/StoreOrderPage'
 import CategoryPage from './components/CategoryPage'
+import ItemDetailPage from './components/ItemDetailPage'
+import ChatWidget from './components/ChatWidget'
 import AdminPage from './components/AdminPage'
 import { CartProvider } from './lib/CartContext'
 import logoUrl from './assets/logo.webp'
@@ -30,6 +32,7 @@ export default function App() {
   const [providerId, setProviderId] = useState(null)
   const [orderProviderId, setOrderProviderId] = useState(null)
   const [categorySlug, setCategorySlug] = useState(null)
+  const [itemId, setItemId] = useState(null)
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef(null)
 
@@ -47,6 +50,7 @@ export default function App() {
     if (t === 'store-detail') setProviderId(param)
     if (t === 'store-order') setOrderProviderId(param)
     if (t === 'category') setCategorySlug(param)
+    if (t === 'item-detail') setItemId(param)
     setTab(t); setMoreOpen(false)
     if (t === 'store-detail' && param) window.location.hash = 'store/' + param
   }
@@ -54,7 +58,7 @@ export default function App() {
     const m = window.location.hash.match(/^#store\/(.+)$/)
     if (m) { setProviderId(decodeURIComponent(m[1])); setTab('store-detail') }
   }, [])
-  const GROCERY_TABS = ['groceries', 'grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category']
+  const GROCERY_TABS = ['groceries', 'grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'general-products', 'item-detail']
   const inShopping = [...GROCERY_TABS, 'clothes', 'services', 'services-home', 'services-business', 'services-contact', 'about'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
@@ -125,6 +129,14 @@ export default function App() {
             {tab === 'store-detail' && <ProviderPage providerId={providerId} go={go} />}
             {tab === 'store-order' && <StoreOrderPage providerId={orderProviderId} go={go} />}
             {tab === 'category' && <CategoryPage slug={categorySlug} go={go} />}
+            {tab === 'general-products' && (
+              <CategoryPage
+                slug="store-products" go={go} onlineFilter={false}
+                title="Groceries / General Products"
+                intro="Store items that are not sold on the Online Store page — browse them here, tap an item for details, or add it to your cart from its store."
+              />
+            )}
+            {tab === 'item-detail' && <ItemDetailPage itemId={itemId} go={go} />}
           </CartProvider>
         )}
         {tab === 'clothes' && <ClothesPage />}
@@ -147,6 +159,7 @@ export default function App() {
         <p>AutoFly.us.com — Cars, Flights & More — All in One Place</p>
         <p className="footer-admin"><a onClick={() => go('admin')}>🔐 Admin</a></p>
       </footer>
+      <ChatWidget />
     </div>
   )
 }

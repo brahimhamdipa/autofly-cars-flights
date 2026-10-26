@@ -45,6 +45,12 @@ button:hover { background: #1d4ed8; }
 .card-body h3 { margin: 4px 0; }
 .price { font-weight: 800; font-size: 18px; color: #dc2626; }
 .car-desc { color: #4b5563; font-size: 14px; }
+/* Listing cards show only the first 3 lines of a description; the
+   detail page shows the whole thing (no clamp there). */
+.desc-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+/* Detail page buy box: its own section, like the other cards. */
+.item-buy-box { margin-top: 16px; }
+.item-buy-box .store-actions { margin-top: 0; }
 .slideshow { position: relative; background: #111827; }
 .slideshow img { width: 100%; height: 190px; object-fit: cover; display: block; cursor: zoom-in; }
 .no-photo { height: 190px; display: flex; align-items: center; justify-content: center; color: #9ca3af; }
@@ -119,10 +125,14 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .cart-fab:hover { background: #f9fafb; }
 .cart-fab-count { position: absolute; top: -5px; right: -5px; background: #ea580c; color: #ffffff; font-size: 11px; font-weight: 800; min-width: 19px; height: 19px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 5px; border: 2px solid #ffffff; box-sizing: border-box; }
 .menu-count { background: #ea580c; color: #ffffff; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 1px; }
-.footer-admin { margin-top: 2px; }
-.footer-admin a { color: #9ca3af; font-size: 12.5px; cursor: pointer; }
-.footer-admin a:hover { color: #d1d5db; }
 .admin-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+/* Admin navigation: two sticky rows that stay on screen while a long
+   form scrolls — groups on top, sections of the active group below. */
+.admin-nav { position: sticky; top: 0; z-index: 55; background: #fff; border-bottom: 1px solid #e5e7eb; padding: 10px 0 12px; margin: 0 0 10px; display: flex; flex-direction: column; gap: 8px; }
+.admin-groups, .admin-sections { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
+.admin-groups button, .admin-sections button { background: #f3f4f6; color: #111827; border: 1px solid #e5e7eb; border-radius: 999px; padding: 8px 14px; font-size: 14px; white-space: nowrap; }
+.admin-groups button.active, .admin-sections button.active { background: #111827; color: #fff; border-color: #111827; }
+.admin-to-top { position: fixed; left: 12px; bottom: 12px; z-index: 55; background: #111827; color: #fff; border-radius: 999px; padding: 10px 16px; box-shadow: 0 4px 16px rgba(0,0,0,.25); }
 .admin-pick { display: flex; flex-direction: column; gap: 6px; }
 .admin-select { padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 10px; font-size: 15px; background: white; min-width: 260px; }
 .admin-actions { display: flex; gap: 8px; }

@@ -28,7 +28,10 @@ import logoUrl from './assets/logo.webp'
 import './index.css'
 
 export default function App() {
-  const [tab, setTab] = useState('cars')
+  // The admin page has no visible link anywhere: it opens only by
+  // typing autofly.us.com/admin (see vercel.json rewrite).
+  const [tab, setTab] = useState(() =>
+    window.location.pathname.replace(/\/$/, '') === '/admin' ? 'admin' : 'cars')
   const [providerId, setProviderId] = useState(null)
   const [orderProviderId, setOrderProviderId] = useState(null)
   const [categorySlug, setCategorySlug] = useState(null)
@@ -57,6 +60,11 @@ export default function App() {
     if (t === 'item-detail') setItemId(param)
     setTab(t); setMoreOpen(false)
     if (t === 'store-detail' && param) window.location.hash = 'store/' + param
+    // Keep the address bar honest for the hidden admin route: entering
+    // admin shows /admin, leaving it returns to /.
+    const onAdmin = window.location.pathname.replace(/\/$/, '') === '/admin'
+    if (t === 'admin' && !onAdmin) window.history.replaceState(null, '', '/admin')
+    else if (t !== 'admin' && onAdmin) window.history.replaceState(null, '', '/')
   }
   // Back to the page the customer actually came from (or nowhere on a
   // fresh load, in which case pages hide their back link).
@@ -138,8 +146,8 @@ export default function App() {
             )}
             {tab === 'grocery-contact' && <GroceryContactPage go={go} />}
             {tab === 'stores' && <ProvidersPage go={go} onShop={(id) => go('store-detail', id)} />}
-            {tab === 'store-detail' && <ProviderPage providerId={providerId} go={go} />}
-            {tab === 'store-order' && <StoreOrderPage providerId={orderProviderId} go={go} />}
+            {tab === 'store-detail' && <ProviderPage providerId={providerId} go={go} goBack={goBack} />}
+            {tab === 'store-order' && <StoreOrderPage providerId={orderProviderId} go={go} goBack={goBack} />}
             {tab === 'category' && <CategoryPage slug={categorySlug} go={go} />}
             {tab === 'general-products' && (
               <CategoryPage
@@ -169,7 +177,6 @@ export default function App() {
       </main>
       <footer className="footer">
         <p>AutoFly.us.com — Cars, Flights & More — All in One Place</p>
-        <p className="footer-admin"><a onClick={() => go('admin')}>🔐 Admin</a></p>
       </footer>
       <ChatWidget />
     </div>

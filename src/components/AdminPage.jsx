@@ -8,6 +8,7 @@ import AdminSubmissions from './AdminSubmissions'
 import AdminStoreAdd from './admin/AdminStoreAdd'
 import AdminStoreManage from './admin/AdminStoreManage'
 import AdminStoreReports from './admin/AdminStoreReports'
+import AdminChat from './admin/AdminChat'
 
 const SECTIONS = [
   ['dashboard', '📊 Dashboard & Reports'],
@@ -17,6 +18,7 @@ const SECTIONS = [
   ['store-add', '➕ Add: Provider / Item / Category'],
   ['store-manage', '✏️ Manage: Providers / Items / Categories'],
   ['store-reports', '📄 Store Reports'],
+  ['chat', '💬 Chat'],
 ]
 
 // Admin area: email + password login (Supabase Auth). Only the owner's
@@ -153,6 +155,7 @@ export default function AdminPage() {
       {section === 'store-add' && <AdminStoreAdd />}
       {section === 'store-manage' && <AdminStoreManage />}
       {section === 'store-reports' && <AdminStoreReports />}
+      {section === 'chat' && <AdminChat />}
     </div>
   )
 }

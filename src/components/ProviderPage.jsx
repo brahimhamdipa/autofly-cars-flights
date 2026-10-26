@@ -1,0 +1,92 @@
+import { useEffect, useState } from 'react'
+import { Lightbox } from './CarSection'
+import { GroceryTopBar } from './GroceryMenu'
+import { loadProvider } from '../lib/storeData'
+
+// One page per store, keyed by provider ID. Reached from "Shop with us"
+// on the Physical Stores list (or a shared #store/<id> link).
+export default function ProviderPage({ providerId, go }) {
+  const [store, setStore] = useState(null)
+  const [error, setError] = useState('')
+  const [idx, setIdx] = useState(0)
+  const [zoom, setZoom] = useState(false)
+
+  useEffect(() => {
+    setStore(null)
+    setError('')
+    loadProvider(providerId).then(setStore).catch(e => setError(e.message))
+  }, [providerId])
+
+  if (error) {
+    return (
+      <div>
+        <GroceryTopBar go={go} />
+        <div className="hero-card">
+          <h2>Store not found</h2>
+          <p>There is no store with ID <b>{providerId}</b>. It may have been renamed or removed.{error ? ` (${error})` : ''}</p>
+          <button onClick={() => go('stores')}>← Back to all stores</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!store) {
+    return (
+      <div>
+        <GroceryTopBar go={go} />
+        <div className="hero-card"><p>Loading store...</p></div>
+      </div>
+    )
+  }
+
+  const images = store.pics || []
+  const n = images.length
+  const fullAddress = [store.address, store.city, store.zip, store.country].filter(Boolean).join(', ')
+  const mapsUrl = fullAddress ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(fullAddress)}` : null
+
+  return (
+    <div>
+      <GroceryTopBar go={go} />
+
+      <div className="hero-card">
+        <button className="link-btn" onClick={() => go('stores')}>← All stores</button>
+        <h2>🏬 {store.name}</h2>
+        <p className="hint">Store ID: <b>{store.id}</b>{store.city || store.country ? ` · ${[store.city, store.country].filter(Boolean).join(', ')}` : ''}</p>
+      </div>
+
+      <div className="store-detail">
+        <div className="slideshow store-photos">
+          {n > 0 ? (
+            <img src={images[idx]} alt={store.name} onClick={() => setZoom(true)} title="Click to enlarge" />
+          ) : (
+            <div className="no-photo">No photos yet</div>
+          )}
+          {n > 1 && (
+            <>
+              <button className="slide-btn prev" onClick={() => setIdx(i => (i - 1 + n) % n)} aria-label="Previous photo">‹</button>
+              <button className="slide-btn next" onClick={() => setIdx(i => (i + 1) % n)} aria-label="Next photo">›</button>
+              <span className="slide-count">{idx + 1} / {n}</span>
+            </>
+          )}
+        </div>
+
+        <div className="form-card wide store-info">
+          <h3>Visit us</h3>
+          {store.address && <p><b>Address:</b> {store.address}</p>}
+          {(store.city || store.zip || store.country) && <p><b>City / Zip / Country:</b> {[store.city, store.zip, store.country].filter(Boolean).join(', ')}</p>}
+          {store.phone && <p><b>Phone:</b> <a href={`tel:${store.phone.replace(/[^+0-9]/g, '')}`}>{store.phone}</a></p>}
+          {store.email && <p><b>Email:</b> <a href={`mailto:${store.email}`}>{store.email}</a></p>}
+          {store.hours && <p><b>Hours:</b> {store.hours}</p>}
+          {store.about && <p>{store.about}</p>}
+          <div className="store-actions">
+            {store.phone && <a className="store-btn" href={`tel:${store.phone.replace(/[^+0-9]/g, '')}`}>📞 Call the store</a>}
+            {mapsUrl && <a className="store-btn" href={mapsUrl} target="_blank" rel="noreferrer">🗺️ Get directions</a>}
+            <button className="store-btn" onClick={() => go('store-order', store.id)}>🛒 Order from us</button>
+          </div>
+        </div>
+      </div>
+
+      {zoom && n > 0 && <Lightbox images={images} start={idx} onClose={() => setZoom(false)} />}
+    </div>
+  )
+}

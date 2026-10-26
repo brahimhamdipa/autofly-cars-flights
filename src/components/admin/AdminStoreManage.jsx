@@ -58,6 +58,7 @@ export default function AdminStoreManage() {
     e.preventDefault()
     const { id, created_at, provider, category, ...fields } = draft
     if (fields.price !== undefined) fields.price = Number(fields.price)
+    if (fields.stock !== undefined) fields.stock = fields.stock === '' || fields.stock === null ? null : Number(fields.stock)
     if (fields.provider_id !== undefined) fields.provider_id = Number(fields.provider_id)
     if (fields.category_id !== undefined) fields.category_id = Number(fields.category_id)
     if (table !== 'categories') fields.updated_at = new Date().toISOString()
@@ -88,7 +89,7 @@ export default function AdminStoreManage() {
           <thead>
             <tr>
               <th>ID</th><th>Name</th>
-              {table === 'items' && <><th>Price</th><th>Provider</th><th>Category</th><th>Delivery</th><th>Pickup</th><th>Shown</th></>}
+              {table === 'items' && <><th>Price</th><th>Provider</th><th>Category</th><th>Delivery</th><th>Pickup</th><th>Shown</th><th>Online</th><th>Stock</th></>}
               {table === 'providers' && <><th>City</th><th>Country</th><th>Photos</th></>}
               {table === 'categories' && <th>Link name</th>}
               <th>Edit</th><th>Delete</th>
@@ -107,6 +108,8 @@ export default function AdminStoreManage() {
                     <td>{r.delivery ? 'Yes' : 'No'}</td>
                     <td>{r.pickup ? 'Yes' : 'No'}</td>
                     <td>{r.is_active ? 'Yes' : 'Hidden'}</td>
+                    <td>{r.online ? 'Yes' : 'No'}</td>
+                    <td>{r.stock === null || r.stock === undefined ? '—' : r.stock}</td>
                   </>
                 )}
                 {table === 'providers' && <><td>{r.city}</td><td>{r.country}</td><td>{(r.pics || []).length}</td></>}
@@ -155,6 +158,8 @@ export default function AdminStoreManage() {
             <label><input type="checkbox" checked={!!edit.delivery} onChange={e => setEdit({ ...edit, delivery: e.target.checked })} /> Delivery available</label>
             <label><input type="checkbox" checked={!!edit.pickup} onChange={e => setEdit({ ...edit, pickup: e.target.checked })} /> Pickup available</label>
             <label><input type="checkbox" checked={!!edit.is_active} onChange={e => setEdit({ ...edit, is_active: e.target.checked })} /> Show this item on the site</label>
+            <label><input type="checkbox" checked={!!edit.online} onChange={e => setEdit({ ...edit, online: e.target.checked })} /> Sell this item on the Online Store page</label>
+            <input placeholder="Stock (empty = not tracked)" type="number" min="0" value={edit.stock ?? ''} onChange={e => setEdit({ ...edit, stock: e.target.value })} />
             <PicField pics={edit.pics || []} setPics={pics => setEdit({ ...edit, pics })} />
             <button type="submit">Save changes</button>
           </form>

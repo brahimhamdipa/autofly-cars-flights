@@ -90,7 +90,7 @@ export default function AdminStoreReports() {
             <thead>
               <tr>
                 {report === 'providers' && <><th>ID</th><th>Name</th><th>Phone</th><th>City</th><th>Country</th><th>Photos</th></>}
-                {(report === 'items' || report === 'items-providers') && <><th>ID</th><th>Item</th><th>Price</th><th>Category</th><th>Provider</th><th>Delivery</th><th>Pickup</th><th>Shown</th></>}
+                {(report === 'items' || report === 'items-providers') && <><th>ID</th><th>Item</th><th>Price</th><th>Category</th><th>Provider</th><th>Delivery</th><th>Pickup</th><th>Shown</th><th>Online</th><th>Stock</th></>}
                 {report === 'providers-items' && <><th>ID</th><th>Provider</th><th>Country</th><th>Items</th></>}
                 {report === 'orders' && <><th>ID</th><th>Store</th><th>Customer</th><th>Fulfillment</th><th>Total</th><th>Status</th><th>Date</th></>}
                 {report === 'holds' && <><th>ID</th><th>Item</th><th>Store</th><th>Customer</th><th>Status</th><th>Date</th></>}
@@ -103,7 +103,8 @@ export default function AdminStoreReports() {
                   {(report === 'items' || report === 'items-providers') && (
                     <><td>{r.id}</td><td>{r.name}</td><td>{money(r.price)}</td><td>{r.category?.name}</td>
                     <td>{report === 'items-providers' ? `${r.provider?.name || ''}${r.provider?.phone ? ` (${r.provider.phone})` : ''}` : (r.provider?.name || r.provider_id)}</td>
-                    <td>{r.delivery ? 'Yes' : 'No'}</td><td>{r.pickup ? 'Yes' : 'No'}</td><td>{r.is_active ? 'Yes' : 'Hidden'}</td></>
+                    <td>{r.delivery ? 'Yes' : 'No'}</td><td>{r.pickup ? 'Yes' : 'No'}</td><td>{r.is_active ? 'Yes' : 'Hidden'}</td>
+                    <td>{r.online ? 'Yes' : 'No'}</td><td>{r.stock === null || r.stock === undefined ? '—' : r.stock}</td></>
                   )}
                   {report === 'providers-items' && (
                     <><td>{r.id}</td><td>{r.name}</td><td>{r.country}</td>

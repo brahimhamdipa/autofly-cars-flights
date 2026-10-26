@@ -19,7 +19,7 @@ export default function AdminStoreAdd() {
   }, [])
 
   const [p, setP] = useState({ name: '', phone: '', email: '', address: '', city: '', country: '', zip: '', hours: '', about: '', pics: [] })
-  const [it, setIt] = useState({ provider_id: '', category_id: '', name: '', price: '', description: '', delivery_address: '', pickup_address: '', delivery: true, pickup: true, is_active: true, pics: [] })
+  const [it, setIt] = useState({ provider_id: '', category_id: '', name: '', price: '', description: '', delivery_address: '', pickup_address: '', delivery: true, pickup: true, is_active: true, online: false, stock: '', pics: [] })
   const [cat, setCat] = useState({ name: '' })
 
   const saveProvider = async (e) => {
@@ -42,7 +42,9 @@ export default function AdminStoreAdd() {
       provider_id: Number(it.provider_id), category_id: Number(it.category_id), name: it.name,
       price: Number(it.price), description: it.description, delivery_address: it.delivery_address,
       pickup_address: it.pickup_address, delivery: it.delivery, pickup: it.pickup,
-      is_active: it.is_active, pics: it.pics,
+      is_active: it.is_active, online: it.online,
+      stock: it.stock === '' ? null : Number(it.stock),
+      pics: it.pics,
     })
     if (error) { setStatus('Error: ' + error.message); return }
     setStatus(`✓ Item "${it.name}" saved.`)
@@ -109,6 +111,8 @@ export default function AdminStoreAdd() {
             <label><input type="checkbox" checked={it.delivery} onChange={e => setIt({ ...it, delivery: e.target.checked })} /> Delivery available</label>
             <label><input type="checkbox" checked={it.pickup} onChange={e => setIt({ ...it, pickup: e.target.checked })} /> Pickup available</label>
             <label><input type="checkbox" checked={it.is_active} onChange={e => setIt({ ...it, is_active: e.target.checked })} /> Show this item on the site (uncheck to hide it)</label>
+            <label><input type="checkbox" checked={it.online} onChange={e => setIt({ ...it, online: e.target.checked })} /> Sell this item on the Online Store page (otherwise it shows on "Groceries / General Products" for Store products)</label>
+            <input placeholder="Stock (how many available — leave empty if not tracked, e.g. services)" type="number" min="0" value={it.stock} onChange={e => setIt({ ...it, stock: e.target.value })} />
             <PicField pics={it.pics} setPics={pics => setIt({ ...it, pics })} />
             <button type="submit">Save item</button>
           </form>

@@ -1,38 +1,105 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { supabase, NOTIFY_EMAIL } from '../lib/supabaseClient'
 import { useCart } from '../lib/CartContext'
+import { loadItemsByIds, placeStoreOrder, emailReceipt, buildReceiptPdf, money } from '../lib/storeData'
 
-export const money = (n) => `$${Number(n || 0).toFixed(2)}`
+export { money }
 export const priceOf = (p) => Number(p.sale_price ?? p.price)
 
-// The "Your cart" section: cart lines, Delivery/Pickup choice (showing the
-// per-item addresses stored in the DB), customer details, and placing the
-// order (stock-safe RPC + owner email). Used BOTH on the Groceries shop
-// page and on the My Cart page so the two never drift apart.
+// The unified "Your cart" section: EVERYTHING the customer added —
+// grocery products and store items alike — grouped into sections, one
+// per store (plus an "Online Store" section for grocery products). Each
+// section has its own lines, totals, Delivery/Pickup choice and its own
+// "Place order" button, because each store's order is placed separately
+// (and each store's items only offer the fulfillment they support).
+// Used BOTH on the Groceries shop page and on the My Cart page so the
+// two never drift apart.
 export default function CartCheckout({ products, onOrderPlaced }) {
-  const { cart, setQty, clearCart, lastOrder, setLastOrder } = useCart()
-  const [fulfillment, setFulfillment] = useState('delivery')
+  const { cart, setQty, removeSection, lastOrder, setLastOrder } = useCart()
   const [customer, setCustomer] = useState({ name: '', email: '', phone: '', address: '' })
-  const [status, setStatus] = useState('')
-  const [placing, setPlacing] = useState(false)
+  const [chosen, setChosen] = useState({}) // sectionKey -> 'delivery' | 'pickup'
+  const [placing, setPlacing] = useState({})
+  const [sectionStatus, setSectionStatus] = useState({})
+  const [storeItems, setStoreItems] = useState([])
 
-  const byId = useMemo(() => Object.fromEntries((products || []).map(p => [p.id, p])), [products])
-  const cartItems = Object.entries(cart)
-    .map(([id, qty]) => ({ product: byId[id], qty }))
+  const groceryById = useMemo(() => Object.fromEntries((products || []).map(p => [p.id, p])), [products])
+
+  const groceryLines = Object.entries(cart)
+    .filter(([k]) => k.startsWith('g:'))
+    .map(([k, qty]) => ({ key: k, product: groceryById[k.slice(2)], qty }))
     .filter(x => x.product && x.qty > 0)
-  const total = cartItems.reduce((s, x) => s + priceOf(x.product) * x.qty, 0)
-  const pickupAddresses = [...new Set(cartItems.map(x => x.product.pickup_address).filter(Boolean))]
-  const deliveryFrom = [...new Set(cartItems.map(x => x.product.delivery_address).filter(Boolean))]
 
-  const placeOrder = async (e) => {
-    e.preventDefault()
-    if (cartItems.length === 0) return
-    if (fulfillment === 'delivery' && !customer.address.trim()) {
-      setStatus('Please enter your delivery address.')
+  const storeIds = useMemo(
+    () => Object.keys(cart).filter(k => k.startsWith('s:')).map(k => Number(k.slice(2))),
+    [cart]
+  )
+  useEffect(() => {
+    if (storeIds.length === 0) { setStoreItems([]); return }
+    let alive = true
+    loadItemsByIds(storeIds).then(data => { if (alive) setStoreItems(data) }).catch(() => {})
+    return () => { alive = false }
+  }, [storeIds.join(',')])
+
+  const storeById = useMemo(() => Object.fromEntries(storeItems.map(i => [i.id, i])), [storeItems])
+  const storeLines = Object.entries(cart)
+    .filter(([k]) => k.startsWith('s:'))
+    .map(([k, qty]) => ({ key: k, item: storeById[Number(k.slice(2))], qty }))
+    .filter(x => x.item && x.qty > 0)
+
+  // Sections: grocery first, then one per store, in cart order.
+  const sections = useMemo(() => {
+    const out = []
+    if (groceryLines.length > 0) {
+      out.push({
+        key: 'grocery', kind: 'grocery', title: 'Online Store', providerId: null,
+        lines: groceryLines.map(l => ({
+          key: l.key, name: l.product.name, unit: l.product.unit,
+          price: priceOf(l.product), qty: l.qty, stock: l.product.stock,
+          delivery: true, pickup: true,
+          delivery_address: l.product.delivery_address, pickup_address: l.product.pickup_address,
+        })),
+      })
+    }
+    const byProvider = {}
+    for (const l of storeLines) {
+      const pid = l.item.provider_id
+      if (!byProvider[pid]) {
+        byProvider[pid] = {
+          key: 'store-' + pid, kind: 'store', title: l.item.provider?.name || 'Store', providerId: pid, lines: [],
+        }
+        out.push(byProvider[pid])
+      }
+      byProvider[pid].lines.push({
+        key: l.key, name: l.item.name, unit: null,
+        price: Number(l.item.price), qty: l.qty, stock: l.item.stock,
+        delivery: l.item.delivery, pickup: l.item.pickup,
+        delivery_address: l.item.delivery_address, pickup_address: l.item.pickup_address,
+      })
+    }
+    return out
+  }, [groceryLines, storeLines])
+
+  const effFulfillment = (section) => {
+    const canDeliver = section.lines.every(l => l.delivery)
+    const canPickup = section.lines.every(l => l.pickup)
+    const want = chosen[section.key]
+    if (want === 'delivery' && canDeliver) return 'delivery'
+    if (want === 'pickup' && canPickup) return 'pickup'
+    return canDeliver ? 'delivery' : 'pickup'
+  }
+
+  const placeGrocery = async (section) => {
+    const fulfillment = effFulfillment(section)
+    if (!customer.name.trim() || !customer.email.trim()) {
+      setSectionStatus(s => ({ ...s, [section.key]: 'Please enter your name and email.' }))
       return
     }
-    setPlacing(true)
-    setStatus('Placing your order...')
+    if (fulfillment === 'delivery' && !customer.address.trim()) {
+      setSectionStatus(s => ({ ...s, [section.key]: 'Please enter your delivery address.' }))
+      return
+    }
+    setPlacing(p => ({ ...p, [section.key]: true }))
+    setSectionStatus(s => ({ ...s, [section.key]: 'Placing your order...' }))
     try {
       const { data, error } = await supabase.rpc('place_grocery_order', {
         p_customer_name: customer.name,
@@ -40,10 +107,9 @@ export default function CartCheckout({ products, onOrderPlaced }) {
         p_customer_phone: customer.phone,
         p_fulfillment: fulfillment,
         p_delivery_address: fulfillment === 'delivery' ? customer.address : '',
-        p_items: cartItems.map(x => ({ id: x.product.id, qty: x.qty })),
+        p_items: section.lines.map(l => ({ id: Number(l.key.slice(2)), qty: l.qty })),
       })
       if (error) throw error
-      // Email the owner the full order (same as every other form on the site).
       try {
         await supabase.functions.invoke('send-notification', {
           body: {
@@ -51,90 +117,169 @@ export default function CartCheckout({ products, onOrderPlaced }) {
             subject: `New grocery order #${data.order_id} — ${money(data.total)}`,
             table: 'grocery_orders',
             record: {
-              order_id: data.order_id,
-              customer_name: customer.name,
-              customer_email: customer.email,
-              customer_phone: customer.phone,
-              fulfillment,
+              order_id: data.order_id, customer_name: customer.name, customer_email: customer.email,
+              customer_phone: customer.phone, fulfillment,
               delivery_address: fulfillment === 'delivery' ? customer.address : '',
-              items: data.items,
-              total: data.total,
+              items: data.items, total: data.total,
             },
           },
         })
       } catch (mailErr) {
         console.warn('Order email failed:', mailErr.message)
       }
-      setLastOrder({ id: data.order_id, total: data.total, fulfillment })
-      clearCart()
-      setStatus('')
-      if (onOrderPlaced) onOrderPlaced() // refresh product stock counts
+      setLastOrder(prev => [...(prev || []), { kind: 'grocery', id: data.order_id, total: data.total, fulfillment }])
+      removeSection(section.lines.map(l => l.key))
+      setSectionStatus(s => ({ ...s, [section.key]: '' }))
+      if (onOrderPlaced) onOrderPlaced()
     } catch (err) {
-      setStatus('Error: ' + err.message)
+      setSectionStatus(s => ({ ...s, [section.key]: 'Error: ' + err.message }))
       if (onOrderPlaced) onOrderPlaced()
     }
-    setPlacing(false)
+    setPlacing(p => ({ ...p, [section.key]: false }))
   }
 
-  if (lastOrder) {
-    return (
-      <div className="hero-card">
-        <h2>✓ Order #{lastOrder.id} received!</h2>
-        <p>Thank you — your order total is <b>{money(lastOrder.total)}</b> ({lastOrder.fulfillment}). We've emailed the details to our team and will contact you shortly to confirm {lastOrder.fulfillment === 'delivery' ? 'your delivery' : 'your pickup'} and payment.</p>
-        <button onClick={() => setLastOrder(null)}>Continue shopping</button>
-      </div>
-    )
+  const placeStore = async (section) => {
+    const fulfillment = effFulfillment(section)
+    if (!customer.name.trim() || !customer.email.trim()) {
+      setSectionStatus(s => ({ ...s, [section.key]: 'Please enter your name and email.' }))
+      return
+    }
+    if (fulfillment === 'delivery' && !customer.address.trim()) {
+      setSectionStatus(s => ({ ...s, [section.key]: 'Please enter your delivery address.' }))
+      return
+    }
+    setPlacing(p => ({ ...p, [section.key]: true }))
+    setSectionStatus(s => ({ ...s, [section.key]: 'Placing your order...' }))
+    try {
+      const res = await placeStoreOrder({
+        providerId: section.providerId, name: customer.name, email: customer.email, phone: customer.phone,
+        fulfillment, deliveryAddress: customer.address,
+        cart: section.lines.map(l => ({ id: Number(l.key.slice(2)), qty: l.qty })),
+      })
+      const pdf = buildReceiptPdf({
+        kind: 'order', refId: res.order_id, storeName: section.title,
+        customer, lines: res.items, total: res.total,
+        fulfillment, deliveryAddress: customer.address,
+      })
+      const record = {
+        order_id: res.order_id, store: section.title, customer: customer.name,
+        customer_email: customer.email, customer_phone: customer.phone,
+        fulfillment, delivery_address: customer.address, items: res.items, total: res.total,
+      }
+      try {
+        await emailReceipt({ subject: `New store order #${res.order_id} — ${section.title}`, record, pdfBase64: pdf.base64, filename: `receipt-order-${res.order_id}.pdf` })
+      } catch { /* order is saved; email retry is a bonus */ }
+      setLastOrder(prev => [...(prev || []), { kind: 'store', id: res.order_id, total: res.total, fulfillment, storeName: section.title, pdf, record }])
+      removeSection(section.lines.map(l => l.key))
+      setSectionStatus(s => ({ ...s, [section.key]: '' }))
+    } catch (err) {
+      setSectionStatus(s => ({ ...s, [section.key]: 'Error: ' + err.message }))
+    }
+    setPlacing(p => ({ ...p, [section.key]: false }))
   }
 
-  if (cartItems.length === 0) return null
+  const resendReceipt = async (r) => {
+    await emailReceipt({
+      subject: `Receipt order #${r.id} — ${r.storeName}`,
+      record: r.record, pdfBase64: r.pdf.base64, filename: `receipt-order-${r.id}.pdf`,
+    })
+    alert('Receipt emailed to the store owner.')
+  }
+
+  const receipts = lastOrder || []
+  if (sections.length === 0 && receipts.length === 0) return null
 
   return (
-    <form className="form-card wide cart-card" onSubmit={placeOrder}>
-      <h3>🛒 Your cart</h3>
-      {cartItems.map(({ product, qty }) => (
-        <div key={product.id} className="cart-row">
-          <span className="cart-name">{product.name} <small>({money(priceOf(product))} / {product.unit})</small></span>
-          <span className="qty-stepper">
-            <button type="button" onClick={() => setQty(product.id, qty - 1, product.stock)} aria-label="Less">−</button>
-            <span>{qty}</span>
-            <button type="button" onClick={() => setQty(product.id, qty + 1, product.stock)} aria-label="More">+</button>
-          </span>
-          <span className="cart-line-total">{money(priceOf(product) * qty)}</span>
-          <button type="button" className="cart-remove" onClick={() => setQty(product.id, 0)}>Remove</button>
-        </div>
-      ))}
-      <p className="cart-total">Total: <b>{money(total)}</b></p>
-
-      <div className="trip-tabs fulfill-tabs">
-        <button type="button" className={fulfillment === 'delivery' ? 'active' : ''} onClick={() => setFulfillment('delivery')}>🚚 Delivery</button>
-        <button type="button" className={fulfillment === 'pickup' ? 'active' : ''} onClick={() => setFulfillment('pickup')}>🏪 Pickup</button>
-      </div>
-
-      {fulfillment === 'pickup' && pickupAddresses.length > 0 && (
-        <div className="addr-box">
-          <b>Pickup address{pickupAddresses.length > 1 ? 'es' : ''}:</b>
-          {pickupAddresses.map(a => <p key={a}>📍 {a}</p>)}
-        </div>
-      )}
-      {fulfillment === 'delivery' && (
-        <>
-          {deliveryFrom.length > 0 && (
-            <div className="addr-box">
-              <b>Your order ships from:</b>
-              {deliveryFrom.map(a => <p key={a}>📍 {a}</p>)}
+    <div>
+      {receipts.length > 0 && (
+        <div className="hero-card receipt">
+          {receipts.map((r, i) => (
+            <div key={i}>
+              <h3>✓ Order #{r.id} received!</h3>
+              <p>
+                Thank you — your {r.kind === 'store' ? `${r.storeName} ` : ''}order total is <b>{money(r.total)}</b> ({r.fulfillment}).
+                We've emailed the details to our team and will contact you shortly to confirm {r.fulfillment === 'delivery' ? 'your delivery' : 'your pickup'} and payment.
+              </p>
+              {r.kind === 'store' && (
+                <div className="store-actions">
+                  <button type="button" onClick={() => r.pdf.download(`receipt-order-${r.id}.pdf`)}>⬇️ Download receipt</button>
+                  <button type="button" className="btn-soft" onClick={() => resendReceipt(r)}>✉️ Email receipt</button>
+                </div>
+              )}
             </div>
-          )}
-          <textarea required placeholder="Your delivery address" value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })} />
-        </>
+          ))}
+          <div className="store-actions">
+            <button type="button" className="btn-soft" onClick={() => setLastOrder(null)}>Continue shopping</button>
+          </div>
+        </div>
       )}
 
-      <div className="row">
-        <input required placeholder="Your name" value={customer.name} onChange={e => setCustomer({ ...customer, name: e.target.value })} />
-        <input required placeholder="Email" type="email" value={customer.email} onChange={e => setCustomer({ ...customer, email: e.target.value })} />
-      </div>
-      <input placeholder="Phone" value={customer.phone} onChange={e => setCustomer({ ...customer, phone: e.target.value })} />
-      <button type="submit" disabled={placing}>{placing ? 'Placing order...' : `Place order — ${money(total)}`}</button>
-      {status && <p className="status">{status}</p>}
-    </form>
+      {sections.length > 0 && (
+        <div className="form-card wide cart-card">
+          <h3>🛒 Your cart</h3>
+          <p className="hint">Everything you've added, grouped by store. Each store's order is placed separately.</p>
+
+          <div className="row">
+            <input required placeholder="Your name" value={customer.name} onChange={e => setCustomer({ ...customer, name: e.target.value })} />
+            <input required placeholder="Email" type="email" value={customer.email} onChange={e => setCustomer({ ...customer, email: e.target.value })} />
+          </div>
+          <input placeholder="Phone" value={customer.phone} onChange={e => setCustomer({ ...customer, phone: e.target.value })} />
+          <textarea placeholder="Your delivery address (needed for delivery orders)" value={customer.address} onChange={e => setCustomer({ ...customer, address: e.target.value })} />
+
+          {sections.map(section => {
+            const fulfillment = effFulfillment(section)
+            const canDeliver = section.lines.every(l => l.delivery)
+            const canPickup = section.lines.every(l => l.pickup)
+            const total = section.lines.reduce((s, l) => s + l.price * l.qty, 0)
+            const pickupAddresses = [...new Set(section.lines.map(l => l.pickup_address).filter(Boolean))]
+            const deliveryFrom = [...new Set(section.lines.map(l => l.delivery_address).filter(Boolean))]
+            return (
+              <div key={section.key} className="cart-section">
+                <h4>🏬 {section.title}</h4>
+                {section.lines.map(l => (
+                  <div key={l.key} className="cart-row">
+                    <span className="cart-name">{l.name} <small>({money(l.price)}{l.unit ? ` / ${l.unit}` : ''})</small></span>
+                    <span className="qty-stepper">
+                      <button type="button" onClick={() => setQty(l.key, l.qty - 1, l.stock ?? undefined)} aria-label="Less">−</button>
+                      <span>{l.qty}</span>
+                      <button type="button" onClick={() => setQty(l.key, l.qty + 1, l.stock ?? undefined)} aria-label="More">+</button>
+                    </span>
+                    <span className="cart-line-total">{money(l.price * l.qty)}</span>
+                    <button type="button" className="cart-remove" onClick={() => setQty(l.key, 0)}>Remove</button>
+                  </div>
+                ))}
+                <p className="cart-total">Section total: <b>{money(total)}</b></p>
+
+                <div className="trip-tabs fulfill-tabs">
+                  {canDeliver && <button type="button" className={fulfillment === 'delivery' ? 'active' : ''} onClick={() => setChosen(c => ({ ...c, [section.key]: 'delivery' }))}>🚚 Delivery</button>}
+                  {canPickup && <button type="button" className={fulfillment === 'pickup' ? 'active' : ''} onClick={() => setChosen(c => ({ ...c, [section.key]: 'pickup' }))}>🏪 Pickup</button>}
+                </div>
+                {!canDeliver && !canPickup && <p className="hint">Nothing in this section supports delivery or pickup — remove those items to continue.</p>}
+                {fulfillment === 'pickup' && pickupAddresses.length > 0 && (
+                  <div className="addr-box">
+                    <b>Pickup address{pickupAddresses.length > 1 ? 'es' : ''}:</b>
+                    {pickupAddresses.map(a => <p key={a}>📍 {a}</p>)}
+                  </div>
+                )}
+                {fulfillment === 'delivery' && deliveryFrom.length > 0 && (
+                  <div className="addr-box">
+                    <b>Your order ships from:</b>
+                    {deliveryFrom.map(a => <p key={a}>📍 {a}</p>)}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  disabled={placing[section.key] || (!canDeliver && !canPickup)}
+                  onClick={() => section.kind === 'grocery' ? placeGrocery(section) : placeStore(section)}
+                >
+                  {placing[section.key] ? 'Placing order...' : `Place ${section.title} order — ${money(total)}`}
+                </button>
+                {sectionStatus[section.key] && <p className="status">{sectionStatus[section.key]}</p>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }

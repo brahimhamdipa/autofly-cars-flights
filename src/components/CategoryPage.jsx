@@ -1,31 +1,40 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Lightbox } from './CarSection'
 import { GroceryTopBar } from './GroceryMenu'
+import { useCart } from '../lib/CartContext'
 import { loadItems, loadCategories, money } from '../lib/storeData'
+import { StockLine } from './StoreBits'
 
 // Category page: every submenu category link queries the Items table
-// filtered by category (and only active items). Each item shows its store,
-// and leads back to that store's page or its "Order from us" page —
-// there is deliberately no cart here, so carts never mix providers.
-export default function CategoryPage({ slug, go }) {
+// filtered by category (and only active items). Each item shows its
+// store, opens its detail page on tap, and can go straight into the one
+// site-wide cart — the cart groups each store's items into their own
+// section at checkout, so nothing gets mixed up.
+//
+// Props: slug (category link name), onlineFilter (true/false/null —
+// used by the "Groceries / General Products" page for items NOT sold
+// online), title / intro overrides for that page.
+export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
   const [category, setCategory] = useState(null)
   const [items, setItems] = useState(null)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
   const [zoom, setZoom] = useState(null)
+  const [justAdded, setJustAdded] = useState('')
+  const { addStore } = useCart()
 
   useEffect(() => {
-    setCategory(null); setItems(null); setError('')
+    setCategory(null); setItems(null); setError(''); setJustAdded('')
     loadCategories()
       .then(cats => cats.find(c => c.slug === slug) || null)
       .then(cat => {
         setCategory(cat)
-        if (cat) return loadItems({ categorySlug: slug })
+        if (cat) return loadItems({ categorySlug: slug, onlineFilter })
         return []
       })
       .then(setItems)
       .catch(e => setError(e.message))
-  }, [slug])
+  }, [slug, onlineFilter])
 
   const filtered = useMemo(() => {
     if (!items) return []
@@ -37,16 +46,23 @@ export default function CategoryPage({ slug, go }) {
     )
   }, [items, query])
 
+  const addToCart = (item) => {
+    addStore(item)
+    setJustAdded(item.name)
+    setTimeout(() => setJustAdded(''), 4000)
+  }
+
   return (
     <div>
       <GroceryTopBar go={go} />
 
       <div className="hero-card">
-        <h2>{category ? category.name : 'Category'}</h2>
-        <p>Items in this category, from all stores. Search by name, price, store or country.</p>
+        <h2>{title || (category ? category.name : 'Category')}</h2>
+        <p>{intro || 'Items in this category, from all stores. Search by name, price, store or country. Tap an item for details.'}</p>
         <div className="filters">
           <input placeholder="Search items (e.g. lamb, 22, Morocco)" value={query} onChange={e => setQuery(e.target.value)} />
         </div>
+        {justAdded && <p className="status">✓ "{justAdded}" added to your cart.</p>}
         {items && <p className="hint">{filtered.length} item{filtered.length === 1 ? '' : 's'} found</p>}
       </div>
 
@@ -54,7 +70,7 @@ export default function CategoryPage({ slug, go }) {
         <div className="hero-card"><p>Couldn't load items: {error}. If the store tables are not set up yet, run <b>supabase/store-tables.sql</b> in the Supabase SQL editor.</p></div>
       )}
       {!error && items === null && <div className="hero-card"><p>Loading items...</p></div>}
-      {!error && category === null && items !== null && (
+      {!error && category === null && items !== null && !title && (
         <div className="hero-card"><p>Unknown category. Pick one from the submenu.</p></div>
       )}
       {!error && items && filtered.length === 0 && category && (
@@ -64,6 +80,7 @@ export default function CategoryPage({ slug, go }) {
       <div className="grid">
         {filtered.map(item => {
           const images = item.pics || []
+          const out = item.stock !== null && item.stock !== undefined && item.stock <= 0
           return (
             <div className="card" key={item.id}>
               <div className="slideshow">
@@ -74,8 +91,9 @@ export default function CategoryPage({ slug, go }) {
                 )}
               </div>
               <div className="card-body">
-                <h3>{item.name}</h3>
-                <p className="price">{money(item.price)}</p>
+                <h3 className="clickable-title" onClick={() => go('item-detail', item.id)}>{item.name}</h3>
+                <p className="g-price">{money(item.price)}</p>
+                <StockLine stock={item.stock} />
                 {item.description && <p className="car-desc">{item.description}</p>}
                 {item.provider && <p className="hint">🏬 {item.provider.name}{item.provider.country ? ` · ${item.provider.country}` : ''}</p>}
                 <p className="item-badges">
@@ -83,8 +101,8 @@ export default function CategoryPage({ slug, go }) {
                   {item.pickup && <span className="badge">🏪 Pickup</span>}
                 </p>
                 <div className="item-actions">
-                  <button onClick={() => go('store-detail', item.provider_id)}>Shop with us</button>
-                  <button className="btn-soft" onClick={() => go('store-order', item.provider_id)}>Order from this store</button>
+                  <button disabled={out} onClick={() => addToCart(item)}>{out ? 'Out of stock' : 'Add to cart'}</button>
+                  <button className="btn-soft" onClick={() => go('store-detail', item.provider_id)}>Shop with us</button>
                 </div>
               </div>
             </div>

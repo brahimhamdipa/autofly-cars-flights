@@ -11,7 +11,7 @@ import { StockLine, HoldModal } from './StoreBits'
 // This fixes the old dead end where an item found on a category page
 // (e.g. the AutoFly T-Shirt on Clothes) vanished on the store's order
 // page, which only listed "Store products".
-export default function ItemDetailPage({ itemId, go }) {
+export default function ItemDetailPage({ itemId, go, goBack }) {
   const [item, setItem] = useState(null)
   const [error, setError] = useState('')
   const [idx, setIdx] = useState(0)
@@ -40,7 +40,7 @@ export default function ItemDetailPage({ itemId, go }) {
       {!error && item && (
         <div>
           <div className="hero-card">
-            <button className="link-btn" onClick={() => go('store-detail', item.provider_id)}>← Back to {item.provider?.name || 'store'}</button>
+            {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
             <h2>{item.name}</h2>
             {item.category && <p className="hint">{item.category.name}{item.provider ? ` · 🏬 ${item.provider.name}` : ''}</p>}
           </div>

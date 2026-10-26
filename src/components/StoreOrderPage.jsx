@@ -44,6 +44,7 @@ function ItemCard({ item, onAdd, onHold, onOpen }) {
         </p>
         <div className="item-actions">
           <button disabled={out} onClick={() => onAdd(item)}>{out ? 'Out of stock' : 'Add to cart'}</button>
+          <button className="btn-soft" onClick={onOpen}>View details →</button>
           <button className="btn-soft" onClick={() => onHold(item)}>Hold the item</button>
         </div>
       </div>

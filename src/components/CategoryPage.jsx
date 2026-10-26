@@ -102,6 +102,7 @@ export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
                 </p>
                 <div className="item-actions">
                   <button disabled={out} onClick={() => addToCart(item)}>{out ? 'Out of stock' : 'Add to cart'}</button>
+                  <button className="btn-soft" onClick={() => go('item-detail', item.id)}>View details →</button>
                   <button className="btn-soft" onClick={() => go('store-detail', item.provider_id)}>Shop with us</button>
                 </div>
               </div>

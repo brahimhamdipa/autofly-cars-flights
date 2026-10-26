@@ -33,6 +33,9 @@ export default function App() {
   const [orderProviderId, setOrderProviderId] = useState(null)
   const [categorySlug, setCategorySlug] = useState(null)
   const [itemId, setItemId] = useState(null)
+  // Previous page snapshot, so detail pages can offer a real "← Back"
+  // to wherever the customer came from (not always the store).
+  const [prev, setPrev] = useState(null)
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRef = useRef(null)
 
@@ -47,6 +50,7 @@ export default function App() {
   // go(tab, param): param carries the store/category for detail, order
   // and category pages (e.g. go('store-detail', 3), go('category', 'meats')).
   const go = (t, param) => {
+    setPrev({ tab, providerId, orderProviderId, categorySlug, itemId })
     if (t === 'store-detail') setProviderId(param)
     if (t === 'store-order') setOrderProviderId(param)
     if (t === 'category') setCategorySlug(param)
@@ -54,6 +58,14 @@ export default function App() {
     setTab(t); setMoreOpen(false)
     if (t === 'store-detail' && param) window.location.hash = 'store/' + param
   }
+  // Back to the page the customer actually came from (or nowhere on a
+  // fresh load, in which case pages hide their back link).
+  const goBack = prev ? () => {
+    setTab(prev.tab); setProviderId(prev.providerId); setOrderProviderId(prev.orderProviderId)
+    setCategorySlug(prev.categorySlug); setItemId(prev.itemId); setMoreOpen(false)
+    if (prev.tab === 'store-detail' && prev.providerId) window.location.hash = 'store/' + prev.providerId
+    else if (window.location.hash) window.location.hash = ''
+  } : null
   useEffect(() => {
     const m = window.location.hash.match(/^#store\/(.+)$/)
     if (m) { setProviderId(decodeURIComponent(m[1])); setTab('store-detail') }
@@ -136,7 +148,7 @@ export default function App() {
                 intro="Store items that are not sold on the Online Store page — browse them here, tap an item for details, or add it to your cart from its store."
               />
             )}
-            {tab === 'item-detail' && <ItemDetailPage itemId={itemId} go={go} />}
+            {tab === 'item-detail' && <ItemDetailPage itemId={itemId} go={go} goBack={goBack} />}
           </CartProvider>
         )}
         {tab === 'clothes' && <ClothesPage />}

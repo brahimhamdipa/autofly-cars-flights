@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
+import { shrinkImage } from '../lib/storeUpload'
 import { money, priceOf } from './CartCheckout'
 
 const CATEGORIES = ['Groceries', 'Fresh Fish', 'Produce', 'Dairy & Eggs', 'Bakery', 'Meats', 'Lunches/Snacks', 'Drinks', 'Snacks', 'Household', 'Other']
@@ -62,9 +63,10 @@ export default function AdminProducts() {
     const urls = []
     try {
       for (const file of files) {
-        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+        const up = await shrinkImage(file)
+        const safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_')
         const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safe}`
-        const { error } = await supabase.storage.from('product-images').upload(path, file)
+        const { error } = await supabase.storage.from('product-images').upload(path, up)
         if (error) throw error
         const { data } = supabase.storage.from('product-images').getPublicUrl(path)
         urls.push(data.publicUrl)

@@ -145,7 +145,7 @@ export default function App() {
                 items={['Fresh beef cuts', 'Chicken — whole & parts', 'Lamb & goat', 'Ground meats', 'Marinated & ready-to-cook', 'Halal options']} />
             )}
             {tab === 'grocery-contact' && <GroceryContactPage go={go} />}
-            {tab === 'stores' && <ProvidersPage go={go} onShop={(id) => go('store-detail', id)} />}
+            {tab === 'stores' && <ProvidersPage go={go} onShop={(id) => go('store-order', id)} onView={(id) => go('store-detail', id)} />}
             {tab === 'store-detail' && <ProviderPage providerId={providerId} go={go} goBack={goBack} />}
             {tab === 'store-order' && <StoreOrderPage providerId={orderProviderId} go={go} goBack={goBack} />}
             {tab === 'category' && <CategoryPage slug={categorySlug} go={go} />}

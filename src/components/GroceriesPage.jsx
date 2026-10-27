@@ -15,6 +15,9 @@ const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u
 // the grocery products table, the Products & Stock admin section and
 // grocery orders are all untouched, and items already in a cart still
 // check out fine (the cart below still resolves grocery products).
+// Each card has Add to cart, View details, and — like the category
+// pages — a "Shop with us" button opening that store's order page
+// (all its products, with search).
 export default function GroceriesPage({ go }) {
   const [products, setProducts] = useState([])
   const [onlineItems, setOnlineItems] = useState([])
@@ -90,6 +93,7 @@ export default function GroceriesPage({ go }) {
                     {out ? 'Out of stock' : 'Add to cart'}
                   </button>
                   <button type="button" className="btn-soft" onClick={() => go('item-detail', item.id)}>View details →</button>
+                  <button type="button" className="btn-soft" onClick={() => go('store-order', item.provider_id)}>Shop with us</button>
                 </div>
               </div>
             </div>

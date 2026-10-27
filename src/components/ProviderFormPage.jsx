@@ -73,15 +73,15 @@ export default function ProviderFormPage({ slug, goBack }) {
       }
       return
     }
-    setStatus(`✓ Item saved (id ${data.item_id}). Submit another one below, or close this page when you are done.`)
+    setStatus(`✓ Item sent for approval (id ${data.item_id}). It will appear on the store once AutoFly approves it. Submit another one below, or close this page when you are done.`)
     setItem(blankItem())
     try {
       await supabase.functions.invoke('send-notification', {
         body: {
           to: NOTIFY_EMAIL,
-          subject: `New provider item — ${authed.providerName}`,
+          subject: `New provider item to approve — ${authed.providerName}`,
           table: 'store_items',
-          record: { store: authed.providerName, ...item, item_id: data.item_id },
+          record: { store: authed.providerName, status: 'Pending approval — approve in Admin → Stores → Manage → Items', ...item, item_id: data.item_id },
         },
       })
     } catch (err) {
@@ -95,7 +95,7 @@ export default function ProviderFormPage({ slug, goBack }) {
         {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
         <h2>📝 Provider form</h2>
         {authed
-          ? <p>Add items for <b>{authed.providerName}</b> — each submit adds one item to the store.</p>
+          ? <p>Add items for <b>{authed.providerName}</b> — each submit sends one item for approval; it appears on the store once AutoFly approves it.</p>
           : <p>Log in with the username and password AutoFly gave you for this form.</p>}
       </div>
 

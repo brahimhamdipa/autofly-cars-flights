@@ -106,3 +106,36 @@ export function CategoryForm({ draft, setDraft, onSubmit, submitLabel, onCancel 
     </form>
   )
 }
+
+// The provider-form editor, shared by Stores → Add ("Create Provider
+// Form") and Stores → Manage ("Provider Forms"). One form per store
+// (one-to-one): providers that already have a form are shown disabled
+// in the list, except the row being edited, whose own provider stays
+// selectable. f is the word the store types after autofly.us.com/;
+// p is a throwaway password the owner invents for the store — never
+// his own password — and it is shown here in plain text so he can
+// copy it to the store.
+export function ProviderFormEditor({ draft, setDraft, onSubmit, submitLabel, onCancel, providers, takenProviderIds }) {
+  const taken = takenProviderIds || []
+  return (
+    <form onSubmit={onSubmit} className="form-card">
+      <select required value={draft.provider_id || ''} onChange={e => setDraft({ ...draft, provider_id: e.target.value })}>
+        <option value="">— Store provider —</option>
+        {providers.map(pr => {
+          const disabled = taken.includes(pr.id) && String(pr.id) !== String(draft.provider_id)
+          return <option key={pr.id} value={pr.id} disabled={disabled}>{pr.name}{disabled ? ' — already has a form' : ''}</option>
+        })}
+      </select>
+      <input required placeholder="Form name — the word after autofly.us.com/ (e.g. paris-form)" value={draft.f || ''} onChange={e => setDraft({ ...draft, f: e.target.value })} />
+      <p className="hint">The store will open autofly.us.com/{(draft.f || 'form-name').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} and log in there.</p>
+      <input required placeholder="Username for the store" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
+      <input required placeholder="Password for the store" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
+      <p className="hint">Use a throwaway password you invent for this store — never your own password. Only you can see it here.</p>
+      <input placeholder="Note for yourself (optional — not shown to the store)" value={draft.comment || ''} onChange={e => setDraft({ ...draft, comment: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}

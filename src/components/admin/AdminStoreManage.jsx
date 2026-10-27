@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { loadProviders, loadCategories } from '../../lib/storeData'
-import { ProviderForm, ItemForm, CategoryForm } from './StoreFormBits'
+import { ProviderForm, ItemForm, CategoryForm, ProviderFormEditor } from './StoreFormBits'
 import { money } from '../../lib/storeData'
 
 // Editing/Deleting section: one page per table, same pattern as the
@@ -14,12 +14,14 @@ const TABLES = [
   ['providers', 'Providers', 'store_providers'],
   ['items', 'Items', 'store_items'],
   ['categories', 'Categories', 'store_categories'],
+  ['forms', 'Provider Forms', 'providersForm'],
 ]
 const slugify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 
 const blankDraft = (table) => {
   if (table === 'providers') return { name: '', phone: '', email: '', address: '', city: '', country: '', zip: '', hours: '', about: '', pics: [], holdorder: false, payorder: true }
   if (table === 'items') return { provider_id: '', category_id: '', name: '', price: '', description: '', delivery_address: '', pickup_address: '', delivery: true, pickup: true, is_active: true, online: false, stock: '', pics: [] }
+  if (table === 'forms') return { provider_id: '', f: '', u: '', p: '', comment: '' }
   return { name: '' }
 }
 
@@ -38,6 +40,7 @@ export default function AdminStoreManage() {
     setRows(null)
     let q = supabase.from(tableName).select('*').order('name')
     if (table === 'items') q = supabase.from(tableName).select('*, provider:store_providers(name), category:store_categories(name)').order('name')
+    if (table === 'forms') q = supabase.from(tableName).select('*').order('f')
     q.then(({ data, error }) => {
       if (error) { setStatus('Error: ' + error.message); setRows([]) }
       else setRows(data || [])
@@ -62,10 +65,11 @@ export default function AdminStoreManage() {
   }, [rows, query])
 
   const remove = async (row) => {
-    if (!window.confirm(`Delete "${row.name}"? This cannot be undone.`)) return
+    const label = table === 'forms' ? row.f : row.name
+    if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return
     const { error } = await supabase.from(tableName).delete().eq('id', row.id)
-    if (error) { setStatus('Cannot delete: ' + error.message + (table !== 'items' ? ' — delete or move its items first.' : '')); return }
-    setStatus(`✓ Deleted "${row.name}".`)
+    if (error) { setStatus('Cannot delete: ' + error.message + (table === 'providers' || table === 'categories' ? ' — delete or move its items first.' : '')); return }
+    setStatus(`✓ Deleted "${label}".`)
     reload()
   }
 
@@ -82,6 +86,11 @@ export default function AdminStoreManage() {
       fields.holdorder = !!fields.holdorder
       fields.payorder = fields.payorder !== false
     }
+    if (table === 'forms') {
+      fields.f = slugify(fields.f || '')
+      if (!fields.f) { setStatus('Error: the form name has to contain a letter or number.'); return }
+      if (fields.f === 'admin') { setStatus('Error: "admin" is reserved — pick another form name.'); return }
+    }
     const q = id
       ? supabase.from(tableName).update(fields).eq('id', id)
       : supabase.from(tableName).insert(fields)
@@ -92,8 +101,9 @@ export default function AdminStoreManage() {
     reload()
   }
 
-  const formTitle = draft.id ? `Edit ${table === 'providers' ? 'provider' : table === 'items' ? 'item' : 'category'} — ${draft.name}` : `New ${table === 'providers' ? 'provider' : table === 'items' ? 'item' : 'category'}`
-  const submitLabel = draft.id ? 'Save changes' : `Save ${table === 'providers' ? 'provider' : table === 'items' ? 'item' : 'category'}`
+  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : 'category'
+  const formTitle = draft.id ? `Edit ${kindLabel} — ${table === 'forms' ? draft.f : draft.name}` : `New ${kindLabel}`
+  const submitLabel = draft.id ? 'Save changes' : `Save ${kindLabel}`
 
   return (
     <div>
@@ -123,15 +133,21 @@ export default function AdminStoreManage() {
         <CategoryForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
           onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
       )}
+      {table === 'forms' && (
+        <ProviderFormEditor draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+          onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} providers={providers}
+          takenProviderIds={(rows || []).filter(r => r.id !== draft.id).map(r => r.provider_id)} />
+      )}
 
       <div className="hero-card">
         <table className="admin-table">
           <thead>
             <tr>
-              <th>ID</th><th>Name</th>
+              <th>ID</th><th>{table === 'forms' ? 'Store' : 'Name'}</th>
               {table === 'items' && <><th>Price</th><th>Provider</th><th>Category</th><th>Delivery</th><th>Pickup</th><th>Shown</th><th>Online</th><th>Stock</th></>}
               {table === 'providers' && <><th>City</th><th>Country</th><th>Photos</th><th>Hold orders</th><th>Pay orders</th></>}
               {table === 'categories' && <th>Link name</th>}
+              {table === 'forms' && <><th>Form address</th><th>Username</th><th>Comment</th></>}
               <th>Edit</th><th>Delete</th>
             </tr>
           </thead>
@@ -139,7 +155,7 @@ export default function AdminStoreManage() {
             {filtered.map(r => (
               <tr key={r.id}>
                 <td>{r.id}</td>
-                <td>{r.name}</td>
+                <td>{table === 'forms' ? (providers.find(pr => pr.id === r.provider_id)?.name || r.provider_id) : r.name}</td>
                 {table === 'items' && (
                   <>
                     <td>{money(r.price)}</td>
@@ -154,6 +170,7 @@ export default function AdminStoreManage() {
                 )}
                 {table === 'providers' && <><td>{r.city}</td><td>{r.country}</td><td>{(r.pics || []).length}</td><td>{r.holdorder ? 'Yes' : 'No'}</td><td>{r.payorder !== false ? 'Yes' : 'No'}</td></>}
                 {table === 'categories' && <td>{r.slug}</td>}
+                {table === 'forms' && <><td><a href={`/${r.f}`} target="_blank" rel="noreferrer">autofly.us.com/{r.f}</a></td><td>{r.u}</td><td>{r.comment}</td></>}
                 <td><button type="button" className="btn-mini" onClick={() => setDraft({ ...r })}>Edit</button></td>
                 <td><button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button></td>
               </tr>

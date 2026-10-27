@@ -9,7 +9,10 @@ import { StockLine } from './StoreBits'
 // filtered by category (and only active items). Each item shows its
 // store, opens its detail page on tap, and can go straight into the one
 // site-wide cart — the cart groups each store's items into their own
-// section at checkout, so nothing gets mixed up.
+// section at checkout, so nothing gets mixed up. "Shop with us" opens
+// the store's order page (all that store's products, with search) —
+// the same page the Physical Stores list opens, not the store's
+// about page.
 //
 // Props: slug (category link name), onlineFilter (true/false/null —
 // used by the "Groceries / General Products" page for items NOT sold
@@ -103,7 +106,7 @@ export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
                 <div className="item-actions">
                   <button disabled={out} onClick={() => addToCart(item)}>{out ? 'Out of stock' : 'Add to cart'}</button>
                   <button className="btn-soft" onClick={() => go('item-detail', item.id)}>View details →</button>
-                  <button className="btn-soft" onClick={() => go('store-detail', item.provider_id)}>Shop with us</button>
+                  <button className="btn-soft" onClick={() => go('store-order', item.provider_id)}>Shop with us</button>
                 </div>
               </div>
             </div>

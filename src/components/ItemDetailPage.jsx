@@ -6,11 +6,13 @@ import { loadItem, money } from '../lib/storeData'
 import { StockLine } from './StoreBits'
 
 // Item detail page: tapping any store item anywhere on the site lands
-// here — big pictures, price, stock, the FULL description, the store it
-// belongs to, and the same two buttons as the item's card: Add to cart
-// and Shop with us. This fixes the old dead end where an item found on
-// a category page (e.g. the AutoFly T-Shirt on Clothes) vanished on the
-// store's order page, which only listed "Store products".
+// here. Laid out like the store page (ProviderPage): ONE section with
+// the pictures on top, then price, stock, the FULL description, the
+// store it belongs to, and the buttons in one row — Add to cart (blue)
+// and About store (gray, opens the store's about page). This fixes the
+// old dead end where an item found on a category page (e.g. the
+// AutoFly T-Shirt on Clothes) vanished on the store's order page,
+// which only listed "Store products".
 export default function ItemDetailPage({ itemId, go, goBack }) {
   const [item, setItem] = useState(null)
   const [error, setError] = useState('')
@@ -44,9 +46,8 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
             {item.category && <p className="hint">{item.category.name}{item.provider ? ` · 🏬 ${item.provider.name}` : ''}</p>}
           </div>
 
-          <div className="store-detail">
-            <div className="store-photos">
-              <div className="slideshow">
+          <div className="form-card wide store-info">
+            <div className="slideshow store-photos">
                 {n > 0 ? (
                   <img src={images[idx]} alt={item.name} onClick={() => setZoom(true)} title="Click to enlarge" />
                 ) : (
@@ -59,11 +60,9 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
                     <span className="slide-count">{idx + 1} / {n}</span>
                   </>
                 )}
-              </div>
-              {zoom && n > 0 && <Lightbox images={images} start={idx} onClose={() => setZoom(false)} />}
             </div>
-            <div className="store-info">
-              <p className="g-price">{money(item.price)}</p>
+
+            <p className="g-price">{money(item.price)}</p>
               <StockLine stock={item.stock} />
               {item.description && <p>{item.description}</p>}
               <p className="item-badges">
@@ -78,24 +77,23 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
                   {item.provider.phone ? ` · ${item.provider.phone}` : ''}
                 </p>
               )}
-              <div className="form-card item-buy-box">
-                <div className="store-actions">
-                  <button
-                    disabled={out}
-                    onClick={() => { addStore(item); setAdded(true) }}
-                  >
-                    {out ? 'Out of stock' : '🛒 Add to cart'}
-                  </button>
-                  <button type="button" className="btn-soft" onClick={() => go('store-detail', item.provider_id)}>Shop with us</button>
-                </div>
-                {added && (
-                  <p className="status">
-                    ✓ Added to your cart. <button type="button" className="link-btn" onClick={() => go('grocery-cart')}>View My Cart ({count})</button>
-                  </p>
-                )}
-              </div>
+            <div className="item-actions">
+              <button
+                disabled={out}
+                onClick={() => { addStore(item); setAdded(true) }}
+              >
+                {out ? 'Out of stock' : '🛒 Add to cart'}
+              </button>
+              <button type="button" className="btn-soft" onClick={() => go('store-detail', item.provider_id)}>About store</button>
             </div>
+            {added && (
+              <p className="status">
+                ✓ Added to your cart. <button type="button" className="link-btn" onClick={() => go('grocery-cart')}>View My Cart ({count})</button>
+              </p>
+            )}
           </div>
+
+          {zoom && n > 0 && <Lightbox images={images} start={idx} onClose={() => setZoom(false)} />}
         </div>
       )}
 

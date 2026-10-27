@@ -1,19 +1,10 @@
 import { useState } from 'react'
 import { uploadStorePictures, removeStorePictureUrl } from '../../lib/storeUpload'
 
-// Shared bits for the store admin forms: a popup shell and a
-// multi-picture uploader (1, 3 or more pictures per record).
-export function Modal({ title, onClose, children }) {
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
-        <h3>{title}</h3>
-        {children}
-      </div>
-    </div>
-  )
-}
+// Shared bits for the store admin forms. All store admin forms live
+// inline on the page now (no popups): the Add section shows blank
+// forms, and the Manage section shows the same form above its table,
+// filled with the row being edited (or blank for a new row).
 
 export function PicField({ pics, setPics }) {
   const [uploading, setUploading] = useState(false)
@@ -45,5 +36,73 @@ export function PicField({ pics, setPics }) {
         </div>
       )}
     </div>
+  )
+}
+
+export function ProviderForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form onSubmit={onSubmit} className="form-card">
+      <input required placeholder="Store name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
+      <input placeholder="Phone" value={draft.phone || ''} onChange={e => setDraft({ ...draft, phone: e.target.value })} />
+      <input placeholder="Email" type="email" value={draft.email || ''} onChange={e => setDraft({ ...draft, email: e.target.value })} />
+      <input placeholder="Address" value={draft.address || ''} onChange={e => setDraft({ ...draft, address: e.target.value })} />
+      <input placeholder="City" value={draft.city || ''} onChange={e => setDraft({ ...draft, city: e.target.value })} />
+      <input placeholder="Country" value={draft.country || ''} onChange={e => setDraft({ ...draft, country: e.target.value })} />
+      <input placeholder="Zip code" value={draft.zip || ''} onChange={e => setDraft({ ...draft, zip: e.target.value })} />
+      <input placeholder="Hours" value={draft.hours || ''} onChange={e => setDraft({ ...draft, hours: e.target.value })} />
+      <textarea placeholder="About the store" value={draft.about || ''} onChange={e => setDraft({ ...draft, about: e.target.value })} />
+      <label><input type="checkbox" checked={!!draft.holdorder} onChange={e => setDraft({ ...draft, holdorder: e.target.checked })} /> Hold orders: show the gray "Hold Order / Pay at store" button in the cart for this store</label>
+      <label><input type="checkbox" checked={draft.payorder !== false} onChange={e => setDraft({ ...draft, payorder: e.target.checked })} /> Pay orders: show the blue "Place order" button in the cart for this store</label>
+      <PicField pics={draft.pics || []} setPics={pics => setDraft({ ...draft, pics })} />
+      <div className="store-actions">
+        <button type="submit">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, providers, categories }) {
+  return (
+    <form onSubmit={onSubmit} className="form-card">
+      <select required value={draft.provider_id || ''} onChange={e => setDraft({ ...draft, provider_id: e.target.value })}>
+        <option value="">— Provider —</option>
+        {providers.map(pr => <option key={pr.id} value={pr.id}>{pr.name}</option>)}
+      </select>
+      <select required value={draft.category_id || ''} onChange={e => setDraft({ ...draft, category_id: e.target.value })}>
+        <option value="">— Category —</option>
+        {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+      </select>
+      <input required placeholder="Item name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
+      <input required placeholder="Price" type="number" step="0.01" min="0" value={draft.price ?? ''} onChange={e => setDraft({ ...draft, price: e.target.value })} />
+      <textarea placeholder="Description" value={draft.description || ''} onChange={e => setDraft({ ...draft, description: e.target.value })} />
+      <input placeholder="Delivery address (where delivery comes from)" value={draft.delivery_address || ''} onChange={e => setDraft({ ...draft, delivery_address: e.target.value })} />
+      <input placeholder="Pickup address (where to pick up)" value={draft.pickup_address || ''} onChange={e => setDraft({ ...draft, pickup_address: e.target.value })} />
+      <label><input type="checkbox" checked={!!draft.delivery} onChange={e => setDraft({ ...draft, delivery: e.target.checked })} /> Delivery available</label>
+      <label><input type="checkbox" checked={!!draft.pickup} onChange={e => setDraft({ ...draft, pickup: e.target.checked })} /> Pickup available</label>
+      <label><input type="checkbox" checked={!!draft.is_active} onChange={e => setDraft({ ...draft, is_active: e.target.checked })} /> Show this item on the site (uncheck to hide it)</label>
+      <label><input type="checkbox" checked={!!draft.online} onChange={e => setDraft({ ...draft, online: e.target.checked })} /> Sell this item on the Online Store page (otherwise it shows on "Groceries / General Products" for Store products)</label>
+      <input placeholder="Stock (how many available — leave empty if not tracked, e.g. services)" type="number" min="0" value={draft.stock ?? ''} onChange={e => setDraft({ ...draft, stock: e.target.value })} />
+      <PicField pics={draft.pics || []} setPics={pics => setDraft({ ...draft, pics })} />
+      <div className="store-actions">
+        <button type="submit">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function CategoryForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form onSubmit={onSubmit} className="form-card">
+      <input required placeholder="Category name (e.g. Bakery)" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
+      {draft.id
+        ? <p className="hint">Link name stays "{draft.slug}" — renaming here does not change existing links.</p>
+        : <p className="hint">The category's link name is made from this automatically (e.g. "Bakery" → bakery).</p>}
+      <div className="store-actions">
+        <button type="submit">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
   )
 }

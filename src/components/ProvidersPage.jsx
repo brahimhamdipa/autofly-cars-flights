@@ -6,7 +6,10 @@ import { loadProviders } from '../lib/storeData'
 // Physical Stores list — data now comes from the store_providers table
 // (replaces the old Stores/*/store.txt folders). Search matches name,
 // country, city, zip code, phone, about text and provider ID.
-function ProviderCard({ store, onShop }) {
+// Cards look like Online Store cards: picture, name, place, a 3-line
+// description, then a blue "Shop with us" (the store's order page) and
+// a gray "View details →" (the store page itself).
+function ProviderCard({ store, onShop, onView }) {
   const [idx, setIdx] = useState(0)
   const [zoom, setZoom] = useState(false)
   const images = store.pics || []
@@ -32,15 +35,18 @@ function ProviderCard({ store, onShop }) {
         <h3>{store.name}</h3>
         {place && <p>📍 {place}{store.zip ? ` ${store.zip}` : ''}</p>}
         {store.phone && <p>📞 {store.phone}</p>}
-        {store.about && <p className="car-desc">{store.about}</p>}
-        <button onClick={() => onShop(store.id)}>Shop with us</button>
+        {store.about && <p className="car-desc desc-clamp">{store.about}</p>}
+        <div className="item-actions">
+          <button onClick={() => onShop(store.id)}>Shop with us</button>
+          <button className="btn-soft" onClick={() => onView(store.id)}>View details →</button>
+        </div>
       </div>
       {zoom && n > 0 && <Lightbox images={images} start={idx} onClose={() => setZoom(false)} />}
     </div>
   )
 }
 
-export default function ProvidersPage({ go, onShop }) {
+export default function ProvidersPage({ go, onShop, onView }) {
   const [stores, setStores] = useState(null)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
@@ -82,7 +88,7 @@ export default function ProvidersPage({ go, onShop }) {
 
       <div className="grid">
         {filtered.map(store => (
-          <ProviderCard key={store.id} store={store} onShop={onShop} />
+          <ProviderCard key={store.id} store={store} onShop={onShop} onView={onView} />
         ))}
       </div>
     </div>

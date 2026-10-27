@@ -3,8 +3,13 @@ import { Lightbox } from './CarSection'
 import { GroceryTopBar } from './GroceryMenu'
 import { loadProvider } from '../lib/storeData'
 
-// One page per store, keyed by provider ID. Reached from "Shop with us"
-// on the Physical Stores list (or a shared #store/<id> link).
+// One page per store, keyed by provider ID. Reached from "View details"
+// on the Physical Stores list (or a shared #store/<id> link). Ordering
+// happens from the list's "Shop with us" button, which opens the store's
+// order page directly — there is no order button on this page anymore.
+// Layout: hero on top, then one section with the pictures above the
+// "Visit us" details, and Call (blue) / Get directions (gray) buttons
+// arranged like the Online Store card buttons.
 export default function ProviderPage({ providerId, go, goBack }) {
   const [store, setStore] = useState(null)
   const [error, setError] = useState('')
@@ -54,7 +59,7 @@ export default function ProviderPage({ providerId, go, goBack }) {
         <p className="hint">Store ID: <b>{store.id}</b>{store.city || store.country ? ` · ${[store.city, store.country].filter(Boolean).join(', ')}` : ''}</p>
       </div>
 
-      <div className="store-detail">
+      <div className="form-card wide store-info">
         <div className="slideshow store-photos">
           {n > 0 ? (
             <img src={images[idx]} alt={store.name} onClick={() => setZoom(true)} title="Click to enlarge" />
@@ -70,19 +75,16 @@ export default function ProviderPage({ providerId, go, goBack }) {
           )}
         </div>
 
-        <div className="form-card wide store-info">
-          <h3>Visit us</h3>
-          {store.address && <p><b>Address:</b> {store.address}</p>}
-          {(store.city || store.zip || store.country) && <p><b>City / Zip / Country:</b> {[store.city, store.zip, store.country].filter(Boolean).join(', ')}</p>}
-          {store.phone && <p><b>Phone:</b> <a href={`tel:${store.phone.replace(/[^+0-9]/g, '')}`}>{store.phone}</a></p>}
-          {store.email && <p><b>Email:</b> <a href={`mailto:${store.email}`}>{store.email}</a></p>}
-          {store.hours && <p><b>Hours:</b> {store.hours}</p>}
-          {store.about && <p>{store.about}</p>}
-          <div className="store-actions">
-            {store.phone && <a className="store-btn" href={`tel:${store.phone.replace(/[^+0-9]/g, '')}`}>📞 Call the store</a>}
-            {mapsUrl && <a className="store-btn" href={mapsUrl} target="_blank" rel="noreferrer">🗺️ Get directions</a>}
-            <button className="store-btn" onClick={() => go('store-order', store.id)}>🛒 Order from us</button>
-          </div>
+        <h3>Visit us</h3>
+        {store.address && <p><b>Address:</b> {store.address}</p>}
+        {(store.city || store.zip || store.country) && <p><b>City / Zip / Country:</b> {[store.city, store.zip, store.country].filter(Boolean).join(', ')}</p>}
+        {store.phone && <p><b>Phone:</b> <a href={`tel:${store.phone.replace(/[^+0-9]/g, '')}`}>{store.phone}</a></p>}
+        {store.email && <p><b>Email:</b> <a href={`mailto:${store.email}`}>{store.email}</a></p>}
+        {store.hours && <p><b>Hours:</b> {store.hours}</p>}
+        {store.about && <p>{store.about}</p>}
+        <div className="item-actions">
+          {store.phone && <a className="store-btn" href={`tel:${store.phone.replace(/[^+0-9]/g, '')}`}>📞 Call the store</a>}
+          {mapsUrl && <a className="store-btn btn-soft" href={mapsUrl} target="_blank" rel="noreferrer">🗺️ Get directions</a>}
         </div>
       </div>
 

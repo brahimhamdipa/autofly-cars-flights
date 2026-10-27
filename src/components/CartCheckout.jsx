@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase, NOTIFY_EMAIL } from '../lib/supabaseClient'
 import { useCart } from '../lib/CartContext'
-import { loadItemsByIds, placeStoreOrder, emailReceipt, buildReceiptPdf, money } from '../lib/storeData'
+import { loadItemsByIds, loadProviders, placeStoreOrder, placeStoreHoldOrder, emailReceipt, buildReceiptPdf, money } from '../lib/storeData'
 
 export { money }
 export const priceOf = (p) => Number(p.sale_price ?? p.price)
@@ -21,6 +21,17 @@ export default function CartCheckout({ products, onOrderPlaced }) {
   const [placing, setPlacing] = useState({})
   const [sectionStatus, setSectionStatus] = useState({})
   const [storeItems, setStoreItems] = useState([])
+  const [providers, setProviders] = useState([])
+
+  // The cart reads each store's order-mode flags: holdorder shows the
+  // gray Hold button, payorder shows the blue Place-order button.
+  useEffect(() => {
+    loadProviders().then(setProviders).catch(() => {})
+  }, [])
+  const providerFlags = useMemo(
+    () => Object.fromEntries(providers.map(p => [p.id, { holdorder: !!p.holdorder, payorder: p.payorder !== false }])),
+    [providers]
+  )
 
   const groceryById = useMemo(() => Object.fromEntries((products || []).map(p => [p.id, p])), [products])
 
@@ -178,10 +189,54 @@ export default function CartCheckout({ products, onOrderPlaced }) {
     setPlacing(p => ({ ...p, [section.key]: false }))
   }
 
+  // Hold a whole store section: same checks as placing the order, but
+  // the row is a hold — no payment is taken online, the customer pays
+  // at the store when arranging delivery/pickup.
+  const placeHold = async (section) => {
+    const fulfillment = effFulfillment(section)
+    if (!customer.name.trim() || !customer.email.trim()) {
+      setSectionStatus(s => ({ ...s, [section.key]: 'Please enter your name and email.' }))
+      return
+    }
+    if (fulfillment === 'delivery' && !customer.address.trim()) {
+      setSectionStatus(s => ({ ...s, [section.key]: 'Please enter your delivery address.' }))
+      return
+    }
+    setPlacing(p => ({ ...p, [section.key]: true }))
+    setSectionStatus(s => ({ ...s, [section.key]: 'Placing your hold...' }))
+    try {
+      const res = await placeStoreHoldOrder({
+        providerId: section.providerId, name: customer.name, email: customer.email, phone: customer.phone,
+        fulfillment, deliveryAddress: customer.address,
+        cart: section.lines.map(l => ({ id: Number(l.key.slice(2)), qty: l.qty })),
+      })
+      const pdf = buildReceiptPdf({
+        kind: 'hold', refId: res.order_id, storeName: section.title,
+        customer, lines: res.items, total: res.total,
+        fulfillment, deliveryAddress: customer.address,
+      })
+      const record = {
+        order_id: res.order_id, store: section.title, customer: customer.name,
+        customer_email: customer.email, customer_phone: customer.phone,
+        fulfillment, delivery_address: customer.address, items: res.items, total: res.total, is_hold: true,
+      }
+      try {
+        await emailReceipt({ subject: `New hold order #${res.order_id} — ${section.title}`, record, pdfBase64: pdf.base64, filename: `receipt-hold-${res.order_id}.pdf` })
+      } catch { /* hold is saved; email retry is a bonus */ }
+      setLastOrder(prev => [...(prev || []), { kind: 'store', hold: true, id: res.order_id, total: res.total, fulfillment, storeName: section.title, pdf, record }])
+      removeSection(section.lines.map(l => l.key))
+      setSectionStatus(s => ({ ...s, [section.key]: '' }))
+    } catch (err) {
+      setSectionStatus(s => ({ ...s, [section.key]: 'Error: ' + err.message }))
+    }
+    setPlacing(p => ({ ...p, [section.key]: false }))
+  }
+
   const resendReceipt = async (r) => {
+    const file = r.hold ? `receipt-hold-${r.id}.pdf` : `receipt-order-${r.id}.pdf`
     await emailReceipt({
-      subject: `Receipt order #${r.id} — ${r.storeName}`,
-      record: r.record, pdfBase64: r.pdf.base64, filename: `receipt-order-${r.id}.pdf`,
+      subject: `Receipt ${r.hold ? 'hold' : 'order'} #${r.id} — ${r.storeName}`,
+      record: r.record, pdfBase64: r.pdf.base64, filename: file,
     })
     alert('Receipt emailed to the store owner.')
   }
@@ -195,14 +250,16 @@ export default function CartCheckout({ products, onOrderPlaced }) {
         <div className="hero-card receipt">
           {receipts.map((r, i) => (
             <div key={i}>
-              <h3>✓ Order #{r.id} received!</h3>
+              <h3>✓ {r.hold ? `Hold #${r.id}` : `Order #${r.id}`} received!</h3>
               <p>
-                Thank you — your {r.kind === 'store' ? `${r.storeName} ` : ''}order total is <b>{money(r.total)}</b> ({r.fulfillment}).
-                We've emailed the details to our team and will contact you shortly to confirm {r.fulfillment === 'delivery' ? 'your delivery' : 'your pickup'} and payment.
+                Thank you — your {r.kind === 'store' ? `${r.storeName} ` : ''}{r.hold ? 'hold' : 'order'} total is <b>{money(r.total)}</b> ({r.fulfillment}).
+                {r.hold
+                  ? ` No payment was taken online — you pay at the store when you arrange ${r.fulfillment === 'delivery' ? 'your delivery' : 'your pickup'}.`
+                  : ` We've emailed the details to our team and will contact you shortly to confirm ${r.fulfillment === 'delivery' ? 'your delivery' : 'your pickup'} and payment.`}
               </p>
               {r.kind === 'store' && (
                 <div className="store-actions">
-                  <button type="button" onClick={() => r.pdf.download(`receipt-order-${r.id}.pdf`)}>⬇️ Download receipt</button>
+                  <button type="button" onClick={() => r.pdf.download(r.hold ? `receipt-hold-${r.id}.pdf` : `receipt-order-${r.id}.pdf`)}>⬇️ Download receipt</button>
                   <button type="button" className="btn-soft" onClick={() => resendReceipt(r)}>✉️ Email receipt</button>
                 </div>
               )}
@@ -267,13 +324,35 @@ export default function CartCheckout({ products, onOrderPlaced }) {
                     {deliveryFrom.map(a => <p key={a}>📍 {a}</p>)}
                   </div>
                 )}
-                <button
-                  type="button"
-                  disabled={placing[section.key] || (!canDeliver && !canPickup)}
-                  onClick={() => section.kind === 'grocery' ? placeGrocery(section) : placeStore(section)}
-                >
-                  {placing[section.key] ? 'Placing order...' : `Place ${section.title} order — ${money(total)}`}
-                </button>
+                {section.kind === 'grocery' ? (
+                  <button
+                    type="button"
+                    disabled={placing[section.key] || (!canDeliver && !canPickup)}
+                    onClick={() => placeGrocery(section)}
+                  >
+                    {placing[section.key] ? 'Placing order...' : `Place ${section.title} order — ${money(total)}`}
+                  </button>
+                ) : (() => {
+                  const flags = providerFlags[section.providerId] || { holdorder: false, payorder: true }
+                  const busy = placing[section.key] || (!canDeliver && !canPickup)
+                  return (
+                    <div className="cart-order-btns">
+                      {flags.payorder && (
+                        <button type="button" disabled={busy} onClick={() => placeStore(section)}>
+                          {placing[section.key] ? 'Placing order...' : `Place ${section.title} order — ${money(total)}`}
+                        </button>
+                      )}
+                      {flags.holdorder && (
+                        <button type="button" className="btn-soft" disabled={busy} onClick={() => placeHold(section)}>
+                          {placing[section.key] ? 'Placing hold...' : `Hold Order/Pay at ${section.title} Store — ${money(total)}`}
+                        </button>
+                      )}
+                      {!flags.payorder && !flags.holdorder && (
+                        <p className="hint">This store doesn't take orders online right now — please contact the store directly.</p>
+                      )}
+                    </div>
+                  )
+                })()}
                 {sectionStatus[section.key] && <p className="status">{sectionStatus[section.key]}</p>}
               </div>
             )

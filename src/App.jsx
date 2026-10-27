@@ -21,6 +21,7 @@ import ProviderPage from './components/ProviderPage'
 import StoreOrderPage from './components/StoreOrderPage'
 import CategoryPage from './components/CategoryPage'
 import ItemDetailPage from './components/ItemDetailPage'
+import ProviderFormPage from './components/ProviderFormPage'
 import ChatWidget from './components/ChatWidget'
 import AdminPage from './components/AdminPage'
 import { CartProvider } from './lib/CartContext'
@@ -29,9 +30,19 @@ import './index.css'
 
 export default function App() {
   // The admin page has no visible link anywhere: it opens only by
-  // typing autofly.us.com/admin (see vercel.json rewrite).
-  const [tab, setTab] = useState(() =>
-    window.location.pathname.replace(/\/$/, '') === '/admin' ? 'admin' : 'cars')
+  // typing autofly.us.com/admin (see vercel.json rewrite). A provider
+  // form opens the same way, at autofly.us.com/<form name>.
+  const [tab, setTab] = useState(() => {
+    const path = window.location.pathname.replace(/\/$/, '')
+    if (path === '/admin') return 'admin'
+    if (path !== '' && path !== '/') return 'provider-form'
+    return 'cars'
+  })
+  const [formSlug, setFormSlug] = useState(() => {
+    const path = window.location.pathname.replace(/\/$/, '')
+    if (path !== '' && path !== '/' && path !== '/admin') return decodeURIComponent(path.slice(1))
+    return null
+  })
   const [providerId, setProviderId] = useState(null)
   const [orderProviderId, setOrderProviderId] = useState(null)
   const [categorySlug, setCategorySlug] = useState(null)
@@ -53,24 +64,29 @@ export default function App() {
   // go(tab, param): param carries the store/category for detail, order
   // and category pages (e.g. go('store-detail', 3), go('category', 'meats')).
   const go = (t, param) => {
-    setPrev({ tab, providerId, orderProviderId, categorySlug, itemId })
+    setPrev({ tab, providerId, orderProviderId, categorySlug, itemId, formSlug })
     if (t === 'store-detail') setProviderId(param)
     if (t === 'store-order') setOrderProviderId(param)
     if (t === 'category') setCategorySlug(param)
     if (t === 'item-detail') setItemId(param)
+    if (t === 'provider-form') setFormSlug(param)
     setTab(t); setMoreOpen(false)
     if (t === 'store-detail' && param) window.location.hash = 'store/' + param
-    // Keep the address bar honest for the hidden admin route: entering
-    // admin shows /admin, leaving it returns to /.
-    const onAdmin = window.location.pathname.replace(/\/$/, '') === '/admin'
+    // Keep the address bar honest for the hidden routes: entering
+    // admin shows /admin, entering a provider form shows /<name>,
+    // leaving either returns to /.
+    const path = window.location.pathname.replace(/\/$/, '')
+    const onAdmin = path === '/admin'
+    const onForm = path !== '' && path !== '/' && !onAdmin
     if (t === 'admin' && !onAdmin) window.history.replaceState(null, '', '/admin')
-    else if (t !== 'admin' && onAdmin) window.history.replaceState(null, '', '/')
+    else if (t === 'provider-form' && param && !onForm) window.history.replaceState(null, '', '/' + param)
+    else if (t !== 'admin' && t !== 'provider-form' && (onAdmin || onForm)) window.history.replaceState(null, '', '/')
   }
   // Back to the page the customer actually came from (or nowhere on a
   // fresh load, in which case pages hide their back link).
   const goBack = prev ? () => {
     setTab(prev.tab); setProviderId(prev.providerId); setOrderProviderId(prev.orderProviderId)
-    setCategorySlug(prev.categorySlug); setItemId(prev.itemId); setMoreOpen(false)
+    setCategorySlug(prev.categorySlug); setItemId(prev.itemId); setFormSlug(prev.formSlug); setMoreOpen(false)
     if (prev.tab === 'store-detail' && prev.providerId) window.location.hash = 'store/' + prev.providerId
     else if (window.location.hash) window.location.hash = ''
   } : null
@@ -174,6 +190,7 @@ export default function App() {
         {tab === 'services-contact' && <ServicesContactPage go={go} />}
         {tab === 'about' && <AboutPage />}
         {tab === 'admin' && <AdminPage />}
+        {tab === 'provider-form' && <ProviderFormPage slug={formSlug} goBack={goBack} />}
       </main>
       <footer className="footer">
         <p>AutoFly.us.com — Cars, Flights & More — All in One Place</p>

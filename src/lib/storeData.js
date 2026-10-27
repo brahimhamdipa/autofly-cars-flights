@@ -89,6 +89,23 @@ export async function placeStoreHold({ itemId, name, email, phone }) {
   return data
 }
 
+// Hold a whole cart section with one store: same arguments as
+// placeStoreOrder, but the order row is marked is_hold and no payment
+// is expected — the customer pays at the store when arranging things.
+export async function placeStoreHoldOrder({ providerId, name, email, phone, fulfillment, deliveryAddress, cart }) {
+  const { data, error } = await supabase.rpc('place_store_hold_order', {
+    p_provider_id: providerId,
+    p_customer_name: name,
+    p_customer_email: email,
+    p_customer_phone: phone || '',
+    p_fulfillment: fulfillment,
+    p_delivery_address: deliveryAddress || '',
+    p_items: cart.map(c => ({ id: c.id, qty: c.qty })),
+  })
+  if (error) throw error
+  return data
+}
+
 // Email a receipt PDF to the store owner (the standing owner-email rule).
 // The customer keeps the downloaded PDF; the owner gets the record + PDF.
 export async function emailReceipt({ subject, record, pdfBase64, filename }) {

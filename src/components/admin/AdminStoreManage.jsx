@@ -39,7 +39,7 @@ export default function AdminStoreManage() {
   const reload = () => {
     setRows(null)
     let q = supabase.from(tableName).select('*').order('name')
-    if (table === 'items') q = supabase.from(tableName).select('*, provider:store_providers(name), category:store_categories(name)').order('name')
+    if (table === 'items') q = supabase.from(tableName).select('*, provider:store_providers(name), category:store_categories(name)').order('pending_approval', { ascending: false }).order('name')
     if (table === 'forms') q = supabase.from(tableName).select('*').order('f')
     q.then(({ data, error }) => {
       if (error) { setStatus('Error: ' + error.message); setRows([]) }
@@ -70,6 +70,14 @@ export default function AdminStoreManage() {
     const { error } = await supabase.from(tableName).delete().eq('id', row.id)
     if (error) { setStatus('Cannot delete: ' + error.message + (table === 'providers' || table === 'categories' ? ' — delete or move its items first.' : '')); return }
     setStatus(`✓ Deleted "${label}".`)
+    reload()
+  }
+
+  // Approval step: a pending provider item goes live with one tap.
+  const approve = async (row) => {
+    const { error } = await supabase.from('store_items').update({ is_active: true, pending_approval: false }).eq('id', row.id)
+    if (error) { setStatus('Cannot approve: ' + error.message); return }
+    setStatus(`✓ Approved "${row.name}" — now live.`)
     reload()
   }
 
@@ -163,7 +171,7 @@ export default function AdminStoreManage() {
                     <td>{r.category?.name || r.category_id}</td>
                     <td>{r.delivery ? 'Yes' : 'No'}</td>
                     <td>{r.pickup ? 'Yes' : 'No'}</td>
-                    <td>{r.is_active ? 'Yes' : 'Hidden'}</td>
+                    <td>{r.pending_approval ? 'Pending' : r.is_active ? 'Yes' : 'Hidden'}</td>
                     <td>{r.online ? 'Yes' : 'No'}</td>
                     <td>{r.stock === null || r.stock === undefined ? '—' : r.stock}</td>
                   </>
@@ -171,7 +179,10 @@ export default function AdminStoreManage() {
                 {table === 'providers' && <><td>{r.city}</td><td>{r.country}</td><td>{(r.pics || []).length}</td><td>{r.holdorder ? 'Yes' : 'No'}</td><td>{r.payorder !== false ? 'Yes' : 'No'}</td></>}
                 {table === 'categories' && <td>{r.slug}</td>}
                 {table === 'forms' && <><td><a href={`/${r.f}`} target="_blank" rel="noreferrer">autofly.us.com/{r.f}</a></td><td>{r.u}</td><td>{r.comment}</td></>}
-                <td><button type="button" className="btn-mini" onClick={() => setDraft({ ...r })}>Edit</button></td>
+                <td>
+                  {table === 'items' && r.pending_approval && <button type="button" className="btn-mini" onClick={() => approve(r)}>Approve</button>}{' '}
+                  <button type="button" className="btn-mini" onClick={() => setDraft({ ...r })}>Edit</button>
+                </td>
                 <td><button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button></td>
               </tr>
             ))}

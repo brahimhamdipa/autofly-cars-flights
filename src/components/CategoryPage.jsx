@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Lightbox } from './CarSection'
 import { GroceryTopBar } from './GroceryMenu'
 import { useCart } from '../lib/CartContext'
 import { loadItems, loadCategories, money } from '../lib/storeData'
-import { StockLine } from './StoreBits'
+import { StockLine, CardSlideshow } from './StoreBits'
 
 // Category page: every submenu category link queries the Items table
 // filtered by category (and only active items). Each item shows its
@@ -22,7 +21,6 @@ export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
   const [items, setItems] = useState(null)
   const [error, setError] = useState('')
   const [query, setQuery] = useState('')
-  const [zoom, setZoom] = useState(null)
   const [justAdded, setJustAdded] = useState('')
   const { addStore } = useCart()
 
@@ -86,13 +84,7 @@ export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
           const out = item.stock !== null && item.stock !== undefined && item.stock <= 0
           return (
             <div className="card" key={item.id}>
-              <div className="slideshow">
-                {images.length > 0 ? (
-                  <img src={images[0]} alt={item.name} onClick={() => setZoom(images)} title="Click to enlarge" />
-                ) : (
-                  <div className="no-photo">No photos yet</div>
-                )}
-              </div>
+              <CardSlideshow images={images} name={item.name} />
               <div className="card-body">
                 <h3 className="clickable-title" onClick={() => go('item-detail', item.id)}>{item.name}</h3>
                 <p className="g-price">{money(item.price)}</p>
@@ -113,8 +105,6 @@ export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
           )
         })}
       </div>
-
-      {zoom && <Lightbox images={zoom} start={0} onClose={() => setZoom(null)} />}
     </div>
   )
 }

@@ -4,7 +4,7 @@ import { useCart } from '../lib/CartContext'
 import { GroceryTopBar } from './GroceryMenu'
 import CartCheckout, { money } from './CartCheckout'
 import { loadItems } from '../lib/storeData'
-import { StockLine } from './StoreBits'
+import { StockLine, CardSlideshow } from './StoreBits'
 
 // Accent-insensitive text match helper (same idea as the Cars picker).
 const norm = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -51,7 +51,7 @@ export default function GroceriesPage({ go }) {
       <div className="hero-card">
         <span className="tag">Now Open</span>
         <h2>🛍️ Online Store</h2>
-        <p>Items from our physical stores, sold online here. Tap any item for details, add it to your cart, and check out per store — delivery or pickup, just like in the shop.</p>
+        <p>Items from our physical stores, sold online here. Tap a picture for a fullscreen slideshow, View details for the full item page, add items to your cart, and check out per store — delivery or pickup, just like in the shop.</p>
         <div className="filters">
           <input placeholder="Search store items (e.g. bread, Paris)" value={onlineQuery} onChange={e => setOnlineQuery(e.target.value)} />
         </div>
@@ -71,13 +71,7 @@ export default function GroceriesPage({ go }) {
           const out = item.stock !== null && item.stock !== undefined && item.stock <= 0
           return (
             <div className="card g-card" key={item.id}>
-              <div className="g-photo">
-                {images.length > 0 ? (
-                  <img src={images[0]} alt={item.name} onClick={() => go('item-detail', item.id)} title="Click for details" />
-                ) : (
-                  <span className="g-emoji">🛒</span>
-                )}
-              </div>
+              <CardSlideshow images={images} name={item.name} />
               <div className="card-body">
                 <h3 className="clickable-title" onClick={() => go('item-detail', item.id)}>{item.name}</h3>
                 <StockLine stock={item.stock} />

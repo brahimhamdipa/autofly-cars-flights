@@ -1,21 +1,36 @@
 import { useEffect, useMemo, useState } from 'react'
+
 import { Lightbox } from './CarSection'
+
 import { GroceryTopBar } from './GroceryMenu'
+
 import { useCart } from '../lib/CartContext'
+
 import { loadProvider, loadItems, money } from '../lib/storeData'
-import { StockLine } from './StoreBits'
+
+import { StockLine, useVariantAdd } from './StoreBits'
 
 // "Order from us" page for one store: ALL of this provider's active
 // items (not just "Store products"), with category tabs to narrow down.
-// Adding goes to the ONE site-wide cart (grouped by store at checkout).
+// Tabs come from the items' attached categories arrays (the new
+// category table, via store_item_categories) — one tab per distinct
+// category across this store's items. Adding goes to the ONE site-wide
+// cart (grouped by store at checkout).
 // This fixes the old dead end where an item found on a category page
 // vanished here because only "Store products" were listed.
+
 function ItemCard({ item, onAdd, onOpen }) {
+
   const [idx, setIdx] = useState(0)
+
   const [zoom, setZoom] = useState(false)
+
   const images = item.pics || []
+
   const n = images.length
+
   const out = item.stock !== null && item.stock !== undefined && item.stock <= 0
+
   return (
     <div className="card">
       <div className="slideshow">
@@ -27,7 +42,7 @@ function ItemCard({ item, onAdd, onOpen }) {
         {n > 1 && (
           <>
             <button className="slide-btn prev" onClick={() => setIdx(i => (i - 1 + n) % n)} aria-label="Previous photo">‹</button>
-            <button className="slide-btn next" onClick={() => setIdx(i => (i + 1) % n)} aria-label="Next photo">›</button>
+            <button className="slide-btn next" onClick={() => setIdx(i => (i + 1 + n) % n)} aria-label="Next photo">›</button>
             <span className="slide-count">{idx + 1} / {n}</span>
           </>
         )}
@@ -37,7 +52,7 @@ function ItemCard({ item, onAdd, onOpen }) {
         <p className="g-price">{money(item.price)}</p>
         <StockLine stock={item.stock} />
         {item.description && <p className="car-desc desc-clamp">{item.description}</p>}
-        {item.category && <p className="hint">{item.category.name}</p>}
+        {item.categories && item.categories.length > 0 && <p className="hint">{item.categories.map(c => c.label).join(' · ')}</p>}
         <p className="item-badges">
           {item.delivery && <span className="badge">🚚 Delivery</span>}
           {item.pickup && <span className="badge">🏪 Pickup</span>}
@@ -50,16 +65,27 @@ function ItemCard({ item, onAdd, onOpen }) {
       {zoom && n > 0 && <Lightbox images={images} start={idx} onClose={() => setZoom(false)} />}
     </div>
   )
+
 }
 
+
 export default function StoreOrderPage({ providerId, go, goBack }) {
+
   const [provider, setProvider] = useState(null)
+
   const [items, setItems] = useState(null)
+
   const [error, setError] = useState('')
+
   const [query, setQuery] = useState('')
+
   const [catFilter, setCatFilter] = useState('all')
+
   const [justAdded, setJustAdded] = useState('')
-  const { addStore, count } = useCart()
+
+  const { count } = useCart()
+
+  const { requestAdd, variantPopup } = useVariantAdd()
 
   useEffect(() => {
     setProvider(null); setItems(null); setError(''); setCatFilter('all'); setJustAdded('')
@@ -70,7 +96,7 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
   const categories = useMemo(() => {
     const map = {}
     for (const i of items || []) {
-      if (i.category) map[i.category.slug] = i.category.name
+      for (const c of i.categories || []) map[c.slug] = c.label
     }
     return Object.entries(map).sort((a, b) => a[1].localeCompare(b[1]))
   }, [items])
@@ -79,15 +105,16 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
     if (!items) return []
     const needle = query.trim().toLowerCase()
     return items.filter(i =>
-      (catFilter === 'all' || i.category?.slug === catFilter) &&
-      (!needle || [i.name, i.description, String(i.price), i.category?.name].join(' ').toLowerCase().includes(needle))
+      (catFilter === 'all' || (i.categories || []).some(c => c.slug === catFilter)) &&
+      (!needle || [i.name, i.description, String(i.price), ...(i.categories || []).map(c => c.label)].join(' ').toLowerCase().includes(needle))
     )
   }, [items, query, catFilter])
 
   const addToCart = (item) => {
-    addStore(item)
-    setJustAdded(item.name)
-    setTimeout(() => setJustAdded(''), 4000)
+    requestAdd(item, () => {
+      setJustAdded(item.name)
+      setTimeout(() => setJustAdded(''), 4000)
+    })
   }
 
   return (
@@ -134,6 +161,9 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
           />
         ))}
       </div>
+
+      {variantPopup}
     </div>
   )
+
 }

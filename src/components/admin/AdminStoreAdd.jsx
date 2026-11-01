@@ -1,32 +1,39 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
-import { loadProviders, loadCategories } from '../../lib/storeData'
-import { ProviderForm, ItemForm, CategoryForm, ProviderFormEditor } from './StoreFormBits'
+import { loadProviders, loadItemCategories } from '../../lib/storeData'
+import { ProviderForm, ItemForm, ProviderFormEditor, ItemCategoryForm, SubCategoryForm } from './StoreFormBits'
 
-// Adding section: the three forms live inline on the page (no popups).
+// Adding section: the forms live inline on the page (no popups).
 // Each saves straight into its table (admin RLS: owner's email only).
+// Items link to categories and locations later, in Manage → Items.
 const slugify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 
 const blankProvider = () => ({ name: '', phone: '', email: '', address: '', city: '', country: '', zip: '', hours: '', about: '', pics: [], holdorder: false, payorder: true })
-const blankItem = () => ({ provider_id: '', category_id: '', name: '', price: '', description: '', delivery_address: '', pickup_address: '', delivery: true, pickup: true, is_active: true, online: false, stock: '', pics: [] })
-const blankCategory = () => ({ name: '' })
+
+const blankItem = () => ({ provider_id: '', name: '', price: '', description: '', delivery_address: '', pickup_address: '', delivery: true, pickup: true, is_active: true, stock: '', pics: [] })
+
+const blankItemCategory = () => ({ label: '' })
+
+const blankSubCategory = () => ({ category_id: '', flavor: '', color: '', packof: '', size: '', weight: '', unit: '' })
+
 const blankProviderForm = () => ({ provider_id: '', f: '', u: '', p: '', comment: '' })
 
 export default function AdminStoreAdd() {
   const [providers, setProviders] = useState([])
-  const [categories, setCategories] = useState([])
+  const [itemCategories, setItemCategories] = useState([])
   const [status, setStatus] = useState('')
-
   const [p, setP] = useState(blankProvider)
   const [it, setIt] = useState(blankItem)
-  const [cat, setCat] = useState(blankCategory)
+  const [ic, setIc] = useState(blankItemCategory)
+  const [sc, setSc] = useState(blankSubCategory)
   const [forms, setForms] = useState([])
   const [pf, setPf] = useState(blankProviderForm)
 
   const loadForms = () => supabase.from('providersForm').select('provider_id, f').then(({ data }) => setForms(data || [])).catch(() => {})
+
   useEffect(() => {
     loadProviders().then(setProviders).catch(() => {})
-    loadCategories().then(setCategories).catch(() => {})
+    loadItemCategories().then(setItemCategories).catch(() => {})
     loadForms()
   }, [])
 
@@ -48,10 +55,10 @@ export default function AdminStoreAdd() {
     e.preventDefault()
     setStatus('Saving...')
     const { error } = await supabase.from('store_items').insert({
-      provider_id: Number(it.provider_id), category_id: Number(it.category_id), name: it.name,
+      provider_id: Number(it.provider_id), name: it.name,
       price: Number(it.price), description: it.description, delivery_address: it.delivery_address,
       pickup_address: it.pickup_address, delivery: it.delivery, pickup: it.pickup,
-      is_active: it.is_active, online: it.online,
+      is_active: it.is_active,
       stock: it.stock === '' ? null : Number(it.stock),
       pics: it.pics,
       barCode: it.barCode || '',
@@ -61,14 +68,27 @@ export default function AdminStoreAdd() {
     setIt(blankItem())
   }
 
-  const saveCategory = async (e) => {
+  const saveItemCategory = async (e) => {
     e.preventDefault()
     setStatus('Saving...')
-    const { error } = await supabase.from('store_categories').insert({ name: cat.name, slug: slugify(cat.name) })
+    const { error } = await supabase.from('category').insert({ label: ic.label, slug: slugify(ic.label) })
     if (error) { setStatus('Error: ' + error.message); return }
-    setStatus(`✓ Category "${cat.name}" saved.`)
-    setCat(blankCategory())
-    loadCategories().then(setCategories).catch(() => {})
+    setStatus(`✓ Item category "${ic.label}" saved.`)
+    setIc(blankItemCategory())
+    loadItemCategories().then(setItemCategories).catch(() => {})
+  }
+
+  const saveSubCategory = async (e) => {
+    e.preventDefault()
+    setStatus('Saving...')
+    const { error } = await supabase.from('subCategory').insert({
+      category_id: Number(sc.category_id), flavor: sc.flavor, color: sc.color,
+      packof: sc.packof === '' || sc.packof === null ? null : Number(sc.packof),
+      size: sc.size, weight: sc.weight === '' || sc.weight === null ? null : Number(sc.weight), unit: sc.unit,
+    })
+    if (error) { setStatus('Error: ' + error.message); return }
+    setStatus(`✓ Sub category saved.`)
+    setSc(blankSubCategory())
   }
 
   const saveProviderForm = async (e) => {
@@ -90,7 +110,7 @@ export default function AdminStoreAdd() {
     <div>
       <div className="hero-card">
         <h2>➕ Add to the store tables</h2>
-        <p>Each form below saves straight into its table. Providers and categories must exist before you add items that use them.</p>
+        <p>Each form below saves straight into its table. Providers must exist before you add items for them; link items to categories and locations in Manage → Items.</p>
         {status && <p className="hint">{status}</p>}
       </div>
 
@@ -98,10 +118,13 @@ export default function AdminStoreAdd() {
       <ProviderForm draft={p} setDraft={setP} onSubmit={saveProvider} submitLabel="Save provider" />
 
       <h3>➕ Add Item</h3>
-      <ItemForm draft={it} setDraft={setIt} onSubmit={saveItem} submitLabel="Save item" providers={providers} categories={categories} />
+      <ItemForm draft={it} setDraft={setIt} onSubmit={saveItem} submitLabel="Save item" providers={providers} />
 
-      <h3>➕ Add Category</h3>
-      <CategoryForm draft={cat} setDraft={setCat} onSubmit={saveCategory} submitLabel="Save category" />
+      <h3>➕ Add Item Category</h3>
+      <ItemCategoryForm draft={ic} setDraft={setIc} onSubmit={saveItemCategory} submitLabel="Save item category" />
+
+      <h3>➕ Add Sub Category</h3>
+      <SubCategoryForm draft={sc} setDraft={setSc} onSubmit={saveSubCategory} submitLabel="Save sub category" itemCategories={itemCategories} />
 
       <h3>➕ Create Provider Form</h3>
       <p className="hint">A temporary login form for one store: the store opens autofly.us.com/&lt;form name&gt;, logs in with the username and password you set here, and submits items straight into that store's items. Delete the form in Manage when they are done — items already submitted stay.</p>

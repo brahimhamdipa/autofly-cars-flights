@@ -1,9 +1,14 @@
 import { useEffect, useState } from 'react'
+
 import { Lightbox } from './CarSection'
+
 import { GroceryTopBar } from './GroceryMenu'
+
 import { useCart } from '../lib/CartContext'
+
 import { loadItem, money } from '../lib/storeData'
-import { StockLine } from './StoreBits'
+
+import { StockLine, useVariantAdd } from './StoreBits'
 
 // Item detail page: tapping any store item anywhere on the site lands
 // here. Laid out like the store page (ProviderPage): ONE section with
@@ -14,12 +19,20 @@ import { StockLine } from './StoreBits'
 // AutoFly T-Shirt on Clothes) vanished on the store's order page,
 // which only listed "Store products".
 export default function ItemDetailPage({ itemId, go, goBack }) {
+
   const [item, setItem] = useState(null)
+
   const [error, setError] = useState('')
+
   const [idx, setIdx] = useState(0)
+
   const [zoom, setZoom] = useState(false)
+
   const [added, setAdded] = useState(false)
-  const { addStore, count } = useCart()
+
+  const { count } = useCart()
+
+  const { requestAdd, variantPopup } = useVariantAdd()
 
   useEffect(() => {
     setItem(null); setError(''); setAdded(false)
@@ -27,8 +40,15 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
   }, [itemId])
 
   const images = item?.pics || []
+
   const n = images.length
+
   const out = item && item.stock !== null && item.stock !== undefined && item.stock <= 0
+
+  const headerParts = []
+  if (item?.categories?.length > 0) headerParts.push(item.categories.map(c => c.label).join(' · '))
+  if (item?.provider) headerParts.push(`🏬 ${item.provider.name}`)
+  const headerLine = headerParts.join(' · ')
 
   return (
     <div>
@@ -46,7 +66,7 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
           <div className="hero-card">
             {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
             <h2>{item.name}</h2>
-            {item.category && <p className="hint">{item.category.name}{item.provider ? ` · 🏬 ${item.provider.name}` : ''}</p>}
+            {headerLine && <p className="hint">{headerLine}</p>}
           </div>
 
           <div className="form-card wide store-info">
@@ -71,7 +91,6 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
               <p className="item-badges">
                 {item.delivery && <span className="badge">🚚 Delivery</span>}
                 {item.pickup && <span className="badge">🏪 Pickup</span>}
-                {item.online && <span className="badge">🌐 Also on the Online Store</span>}
               </p>
               {item.provider && (
                 <p className="hint">
@@ -83,7 +102,7 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
             <div className="item-actions">
               <button
                 disabled={out}
-                onClick={() => { addStore(item); setAdded(true) }}
+                onClick={() => requestAdd(item, () => setAdded(true))}
               >
                 {out ? 'Out of stock' : '🛒 Add to cart'}
               </button>
@@ -100,6 +119,8 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
         </div>
       )}
 
+      {variantPopup}
     </div>
   )
+
 }

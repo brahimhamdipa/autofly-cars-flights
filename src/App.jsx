@@ -90,12 +90,14 @@ export default function App() {
     if (prev.tab === 'store-detail' && prev.providerId) window.location.hash = 'store/' + prev.providerId
     else if (window.location.hash) window.location.hash = ''
   } : null
+
   useEffect(() => {
     const m = window.location.hash.match(/^#store\/(.+)$/)
     if (m) { setProviderId(decodeURIComponent(m[1])); setTab('store-detail') }
   }, [])
+
   const GROCERY_TABS = ['groceries', 'grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'general-products', 'item-detail']
-  const inShopping = [...GROCERY_TABS, 'clothes', 'services', 'services-home', 'services-business', 'services-contact', 'about'].includes(tab)
+  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -109,13 +111,13 @@ export default function App() {
         </div>
         <div className="header-right">
           <nav>
+            <button className={GROCERY_TABS.includes(tab) ? 'active' : ''} onClick={() => go('stores')}>Shopping</button>
             <button className={inCars ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
             <button className={inFlights ? 'active' : ''} onClick={() => go('flights')}>Flights</button>
             <span className="dropdown" ref={moreRef}>
-              <button className={inShopping ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>Shopping ▾</button>
+              <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
               {moreOpen && (
                 <span className="dropdown-menu">
-                  <a onClick={() => go('stores')}>Groceries</a>
                   <a onClick={() => go('services')}>Services</a>
                   <a onClick={() => go('about')}>About Us</a>
                 </span>

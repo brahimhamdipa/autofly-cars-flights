@@ -2,15 +2,16 @@ import { supabase, NOTIFY_EMAIL } from './supabaseClient'
 import { jsPDF } from 'jspdf'
 
 // Data layer for the table-driven Stores system (replaces Stores/* folders).
-// Tables: store_categories, store_providers, store_items, store_orders,
-// store_holds. Public reads; orders and holds go through security-definer
-// RPCs so totals are always computed from database prices.
-
-export async function loadCategories() {
-  const { data, error } = await supabase.from('store_categories').select('*').order('name')
-  if (error) throw error
-  return data || []
-}
+// Tables: store_providers, store_items, store_orders, store_holds,
+// category, subCategory, store_item_categories, store_item_fromdel,
+// store_item_topick, fromDel, toPick. Public reads; orders and holds go
+// through security-definer RPCs so totals are always computed from
+// database prices.
+//
+// NOTE: store_categories is GONE. Items link to categories ONLY through
+// the store_item_categories junction (item_id, category_id), and variants
+// are category-level: an item's variants are the subCategory rows of its
+// linked categories.
 
 export async function loadProviders() {
   const { data, error } = await supabase.from('store_providers').select('*').order('name')
@@ -24,44 +25,122 @@ export async function loadProvider(id) {
   return data
 }
 
-// Items with their provider + category joined. Filters: providerId,
-// categorySlug (e.g. 'store-products'), activeOnly (default true),
-// onlineFilter: true = only items sold on the Online Store page,
-// false = only items NOT sold online, null/undefined = all items.
-export async function loadItems({ providerId, categorySlug, activeOnly = true, onlineFilter } = {}) {
+// Attach each item's categories (junction + category table), sorted by
+// label, as item.categories = [{ id, slug, label }]. Items with no links
+// get an empty array.
+async function attachItemCategories(items) {
+  if (!items || items.length === 0) return items || []
+  const ids = items.map(i => i.id)
+  const { data: links, error } = await supabase.from('store_item_categories').select('item_id, category_id').in('item_id', ids)
+  if (error) throw error
+  const catIds = [...new Set((links || []).map(r => r.category_id))]
+  let catsById = {}
+  if (catIds.length) {
+    const { data: cats, error: catErr } = await supabase.from('category').select('id, slug, label').in('id', catIds)
+    if (catErr) throw catErr
+    catsById = Object.fromEntries((cats || []).map(c => [c.id, c]))
+  }
+  const perItem = {}
+  for (const r of links || []) {
+    const cat = catsById[r.category_id]
+    if (!cat) continue
+    if (!perItem[r.item_id]) perItem[r.item_id] = []
+    if (!perItem[r.item_id].some(c => c.id === cat.id)) perItem[r.item_id].push(cat)
+  }
+  for (const item of items) {
+    item.categories = (perItem[item.id] || []).sort((a, b) => (a.label || '').localeCompare(b.label || ''))
+  }
+  return items
+}
+
+// Items with their provider joined + categories attached. Filters:
+// providerId, activeOnly (default true). No category or online filtering
+// here — the Products page filters client-side from item.categories.
+export async function loadItems({ providerId, activeOnly = true } = {}) {
   let q = supabase.from('store_items')
-    .select('*, provider:store_providers(id, name, country, city), category:store_categories(id, name, slug)')
+    .select('*, provider:store_providers(id, name, country, city)')
     .order('name')
   if (providerId) q = q.eq('provider_id', providerId)
   if (activeOnly) q = q.eq('is_active', true)
-  if (onlineFilter === true) q = q.eq('online', true)
-  if (onlineFilter === false) q = q.eq('online', false)
-  let { data, error } = await q
+  const { data, error } = await q
   if (error) throw error
-  if (categorySlug) {
-    data = (data || []).filter(i => i.category && i.category.slug === categorySlug)
-  }
-  return data || []
+  return attachItemCategories(data || [])
 }
 
-// One item with provider + category (the item detail page).
+// One item with provider + categories attached (the item detail page).
 export async function loadItem(id) {
   const { data, error } = await supabase.from('store_items')
-    .select('*, provider:store_providers(id, name, country, city, phone, address), category:store_categories(id, name, slug)')
+    .select('*, provider:store_providers(id, name, country, city, phone, address)')
     .eq('id', id)
     .single()
   if (error) throw error
-  return data
+  return (await attachItemCategories([data]))[0]
 }
 
-// Store items by id (used by the unified cart to resolve its lines).
+// Store items by id (used by the unified cart to resolve its lines),
+// with categories attached.
 export async function loadItemsByIds(ids) {
   if (!ids || ids.length === 0) return []
   const { data, error } = await supabase.from('store_items')
     .select('*, provider:store_providers(id, name, country, city)')
     .in('id', ids)
   if (error) throw error
-  return data || []
+  return attachItemCategories(data || [])
+}
+
+// An item's variants, grouped per item id: { itemId: [subCategory rows] }.
+// Variants are CATEGORY-level: an item's variants are the subCategory rows
+// of every category it is linked to (union, deduped by row id). Items with
+// no linked categories, or categories with no subCategory rows, get an
+// empty array. Empty input -> {}.
+export async function loadItemVariants(itemIds) {
+  if (!itemIds || itemIds.length === 0) return {}
+  const { data: links, error } = await supabase.from('store_item_categories').select('item_id, category_id').in('item_id', itemIds)
+  if (error) throw error
+  const catIds = [...new Set((links || []).map(r => r.category_id))]
+  if (catIds.length === 0) return {}
+  const { data: rows, error: subErr } = await supabase.from('subCategory').select('*').in('category_id', catIds)
+  if (subErr) throw subErr
+  const catsOfItem = {}
+  for (const r of links || []) {
+    if (!catsOfItem[r.item_id]) catsOfItem[r.item_id] = new Set()
+    catsOfItem[r.item_id].add(r.category_id)
+  }
+  const rowsByCat = {}
+  for (const row of rows || []) {
+    if (!rowsByCat[row.category_id]) rowsByCat[row.category_id] = []
+    rowsByCat[row.category_id].push(row)
+  }
+  const out = {}
+  for (const id of itemIds) {
+    const seen = new Set()
+    const list = []
+    for (const catId of catsOfItem[id] || []) {
+      for (const row of rowsByCat[catId] || []) {
+        if (seen.has(row.id)) continue
+        seen.add(row.id)
+        list.push(row)
+      }
+    }
+    out[id] = list
+  }
+  return out
+}
+
+// One-line label for a subCategory row, joining only the fields that are
+// set, in this order: flavor, color, size, "Pack of <packof>",
+// "<weight> <unit>". Examples: "Mango · Pack of 12", "Red · M".
+export function formatVariant(row) {
+  if (!row) return ''
+  const parts = []
+  if (row.flavor) parts.push(String(row.flavor))
+  if (row.color) parts.push(String(row.color))
+  if (row.size) parts.push(String(row.size))
+  if (row.packof !== null && row.packof !== undefined && row.packof !== '') parts.push(`Pack of ${row.packof}`)
+  if (row.weight !== null && row.weight !== undefined && row.weight !== '') {
+    parts.push(String(row.weight) + (row.unit ? ` ${row.unit}` : ''))
+  }
+  return parts.join(' · ')
 }
 
 // Delivery/pickup locations linked to items, grouped per item id:
@@ -155,7 +234,7 @@ export async function placeStoreOrder({ providerId, name, email, phone, fulfillm
     p_customer_phone: phone || '',
     p_fulfillment: fulfillment,
     p_delivery_address: deliveryAddress || '',
-    p_items: cart.map(c => ({ id: c.id, qty: c.qty })),
+    p_items: cart.map(c => ({ id: c.id, qty: c.qty, variant: c.variant || null })),
   })
   if (error) throw error
   return data
@@ -183,7 +262,7 @@ export async function placeStoreHoldOrder({ providerId, name, email, phone, fulf
     p_customer_phone: phone || '',
     p_fulfillment: fulfillment,
     p_delivery_address: deliveryAddress || '',
-    p_items: cart.map(c => ({ id: c.id, qty: c.qty })),
+    p_items: cart.map(c => ({ id: c.id, qty: c.qty, variant: c.variant || null })),
   })
   if (error) throw error
   return data

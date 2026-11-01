@@ -50,6 +50,9 @@ export default function CartCheckout({ products, onOrderPlaced }) {
   const [sectionStatus, setSectionStatus] = useState({})
 
   const [storeItems, setStoreItems] = useState([])
+    // Key of the store ids whose load last succeeded ('': nothing loaded yet).
+    // The purge effect below only runs when this matches the current ids.
+    const [loadedStoreKey, setLoadedStoreKey] = useState('')
 
   const [providers, setProviders] = useState([])
 
@@ -93,13 +96,29 @@ export default function CartCheckout({ products, onOrderPlaced }) {
   )
 
   useEffect(() => {
-    if (storeIds.length === 0) { setStoreItems([]); return }
+        if (storeIds.length === 0) { setStoreItems([]); setLoadedStoreKey(''); return }
     let alive = true
-    loadItemsByIds(storeIds).then(data => { if (alive) setStoreItems(data) }).catch(() => {})
+        loadItemsByIds(storeIds).then(data => { if (alive) { setStoreItems(data); setLoadedStoreKey(storeIds.join(',')) } }).catch(() => {})
     return () => { alive = false }
   }, [storeIds.join(',')])
 
   const storeById = useMemo(() => Object.fromEntries(storeItems.map(i => [i.id, i])), [storeItems])
+    // Drop cart keys whose item/product is gone (deleted from the catalog):
+        // they render no line but still inflate the cart badge. Only runs after
+    // a successful load for the current ids (see loadedStoreKey), never on
+    // a failed load. Removing the keys also fixes the badge, which counts
+    // the same cart object.
+    useEffect(() => {
+          if (loadedStoreKey !== storeIds.join(',')) return
+          const dead = Object.keys(cart).filter(k => {
+                  if (k.startsWith('s:')) return !storeById[parseStoreKey(k).id]
+                  if (k.startsWith('g:')) return !groceryById[k.slice(2)]
+                  return false
+          })
+          if (dead.length > 0) removeSection(dead)
+    }, [loadedStoreKey, storeItems, cart, groceryById])
+  
+  
 
   const storeLines = Object.entries(cart)
     .filter(([k]) => k.startsWith('s:'))

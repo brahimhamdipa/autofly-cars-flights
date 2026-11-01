@@ -1,41 +1,54 @@
 import { useEffect, useMemo, useState } from 'react'
-import { GroceryTopBar } from './GroceryMenu'
-import { useCart } from '../lib/CartContext'
-import { loadItems, loadCategories, money } from '../lib/storeData'
-import { StockLine, CardSlideshow } from './StoreBits'
 
-// Category page: every submenu category link queries the Items table
-// filtered by category (and only active items). Each item shows its
-// store, opens its detail page on tap, and can go straight into the one
-// site-wide cart — the cart groups each store's items into their own
-// section at checkout, so nothing gets mixed up. "Shop with us" opens
-// the store's order page (all that store's products, with search) —
-// the same page the Physical Stores list opens, not the store's
-// about page.
+import { GroceryTopBar } from './GroceryMenu'
+
+import { useCart } from '../lib/CartContext'
+
+import { loadItems, loadItemCategories, money } from '../lib/storeData'
+
+import { StockLine, CardSlideshow, useVariantAdd } from './StoreBits'
+
+// Category page: every category link shows the items linked to that
+// category in the NEW category table (via store_item_categories), from
+// all stores, active items only. Items are loaded once and filtered
+// client-side to those whose attached categories array contains the
+// slug. Each item shows its store, opens its detail page on tap, and
+// can go straight into the one site-wide cart — the cart groups each
+// store's items into their own section at checkout, so nothing gets
+// mixed up. "Shop with us" opens the store's order page (all that
+// store's products, with search) — the same page the Physical Stores
+// list opens, not the store's about page.
 //
-// Props: slug (category link name), onlineFilter (true/false/null —
-// used by the "Groceries / General Products" page for items NOT sold
-// online), title / intro overrides for that page.
-export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
+// Props: slug (category link name), title / intro overrides for pages
+// that reuse this view with their own heading.
+export default function CategoryPage({ slug, go, title, intro }) {
+
   const [category, setCategory] = useState(null)
+
   const [items, setItems] = useState(null)
+
   const [error, setError] = useState('')
+
   const [query, setQuery] = useState('')
+
   const [justAdded, setJustAdded] = useState('')
-  const { addStore } = useCart()
+
+  const { count } = useCart()
+
+  const { requestAdd, variantPopup } = useVariantAdd()
 
   useEffect(() => {
     setCategory(null); setItems(null); setError(''); setJustAdded('')
-    loadCategories()
+    loadItemCategories()
       .then(cats => cats.find(c => c.slug === slug) || null)
       .then(cat => {
         setCategory(cat)
-        if (cat) return loadItems({ categorySlug: slug, onlineFilter })
+        if (cat) return loadItems().then(all => all.filter(i => (i.categories || []).some(c => c.slug === slug)))
         return []
       })
       .then(setItems)
       .catch(e => setError(e.message))
-  }, [slug, onlineFilter])
+  }, [slug])
 
   const filtered = useMemo(() => {
     if (!items) return []
@@ -48,9 +61,10 @@ export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
   }, [items, query])
 
   const addToCart = (item) => {
-    addStore(item)
-    setJustAdded(item.name)
-    setTimeout(() => setJustAdded(''), 4000)
+    requestAdd(item, () => {
+      setJustAdded(item.name)
+      setTimeout(() => setJustAdded(''), 4000)
+    })
   }
 
   return (
@@ -58,7 +72,7 @@ export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
       <GroceryTopBar go={go} />
 
       <div className="hero-card">
-        <h2>{title || (category ? category.name : 'Category')}</h2>
+        <h2>{title || (category ? category.label : 'Category')}</h2>
         <p>{intro || 'Items in this category, from all stores. Search by name, price, store or country. Tap an item for details.'}</p>
         <div className="filters">
           <input placeholder="Search items (e.g. lamb, 22, Morocco)" value={query} onChange={e => setQuery(e.target.value)} />
@@ -105,6 +119,9 @@ export default function CategoryPage({ slug, go, onlineFilter, title, intro }) {
           )
         })}
       </div>
+
+      {variantPopup}
     </div>
   )
+
 }

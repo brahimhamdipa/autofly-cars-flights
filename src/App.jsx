@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import CarSection from './components/CarSection'
 import FlightSection from './components/FlightSection'
-import GroceriesPage from './components/GroceriesPage'
 import AboutPage from './components/AboutPage'
 import RentPage from './components/RentPage'
 import SellPage from './components/SellPage'
@@ -19,6 +18,7 @@ import GroceryContactPage from './components/GroceryContactPage'
 import ProvidersPage from './components/ProvidersPage'
 import ProviderPage from './components/ProviderPage'
 import StoreOrderPage from './components/StoreOrderPage'
+import ProductsPage from './components/ProductsPage'
 import CategoryPage from './components/CategoryPage'
 import ItemDetailPage from './components/ItemDetailPage'
 import ProviderFormPage from './components/ProviderFormPage'
@@ -96,7 +96,7 @@ export default function App() {
     if (m) { setProviderId(decodeURIComponent(m[1])); setTab('store-detail') }
   }, [])
 
-  const GROCERY_TABS = ['groceries', 'grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'general-products', 'item-detail']
+  const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
   const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
@@ -150,7 +150,6 @@ export default function App() {
         {tab === 'flight-contact' && <FlightContactPage go={go} />}
         {GROCERY_TABS.includes(tab) && (
           <CartProvider>
-            {tab === 'groceries' && <GroceriesPage go={go} />}
             {tab === 'grocery-cart' && <GroceryCartPage go={go} />}
             {tab === 'lunches' && (
               <GrocerySoonPage go={go} title="Lunches & Snacks" emoji="🥪" topic="Lunches/Snacks"
@@ -166,14 +165,8 @@ export default function App() {
             {tab === 'stores' && <ProvidersPage go={go} onShop={(id) => go('store-order', id)} onView={(id) => go('store-detail', id)} />}
             {tab === 'store-detail' && <ProviderPage providerId={providerId} go={go} goBack={goBack} />}
             {tab === 'store-order' && <StoreOrderPage providerId={orderProviderId} go={go} goBack={goBack} />}
+            {tab === 'products' && <ProductsPage go={go} />}
             {tab === 'category' && <CategoryPage slug={categorySlug} go={go} />}
-            {tab === 'general-products' && (
-              <CategoryPage
-                slug="store-products" go={go} onlineFilter={false}
-                title="Groceries / General Products"
-                intro="Store items that are not sold on the Online Store page — browse them here, tap an item for details, or add it to your cart from its store."
-              />
-            )}
             {tab === 'item-detail' && <ItemDetailPage itemId={itemId} go={go} goBack={goBack} />}
           </CartProvider>
         )}

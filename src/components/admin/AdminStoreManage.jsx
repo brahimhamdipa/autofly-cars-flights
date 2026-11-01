@@ -1,19 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+
 import { supabase } from '../../lib/supabaseClient'
-import { loadProviders, loadCategories, syncItemLinks, loadItemCategories, loadFromDel, loadToPick } from '../../lib/storeData'
-import { ProviderForm, ItemForm, CategoryForm, ProviderFormEditor, FromDelForm, ToPickForm, ItemCategoryForm, SubCategoryForm } from './StoreFormBits'
+
+import { loadProviders, syncItemLinks, loadItemCategories, loadFromDel, loadToPick } from '../../lib/storeData'
+
+import { ProviderForm, ItemForm, ProviderFormEditor, FromDelForm, ToPickForm, ItemCategoryForm, SubCategoryForm } from './StoreFormBits'
+
 import { money } from '../../lib/storeData'
 
 // Editing/Deleting section: one page per table, same pattern as the
 // Products & Stock page — a form above the table (blank for a new row,
 // filled when Edit is tapped) and Edit/Delete on every row. No popups.
-// A provider or category that still has items cannot be deleted until
-// those items are gone first — the database refuses it, and the error
-// is shown plainly.
+// A provider that still has items cannot be deleted until those items
+// are gone first — the database refuses it, and the error is shown
+// plainly. Categories live ONLY in the new category table ("Item
+// Categories" tab) and link to items via tick boxes on the Items form;
+// the old store_categories table is gone.
 const TABLES = [
   ['providers', 'Providers', 'store_providers'],
   ['items', 'Items', 'store_items'],
-  ['categories', 'Categories', 'store_categories'],
   ['forms', 'Provider Forms', 'providersForm'],
   ['fromdel', 'Delivery Locations', 'fromDel'],
   ['topick', 'Pickup Locations', 'toPick'],
@@ -25,7 +30,7 @@ const slugify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replac
 
 const blankDraft = (table) => {
   if (table === 'providers') return { name: '', phone: '', email: '', address: '', city: '', country: '', zip: '', hours: '', about: '', pics: [], holdorder: false, payorder: true }
-  if (table === 'items') return { provider_id: '', category_id: '', name: '', price: '', description: '', delivery_address: '', pickup_address: '', delivery: true, pickup: true, is_active: true, online: false, stock: '', pics: [] }
+  if (table === 'items') return { provider_id: '', name: '', price: '', description: '', delivery_address: '', pickup_address: '', delivery: true, pickup: true, is_active: true, stock: '', pics: [] }
   if (table === 'forms') return { provider_id: '', f: '', u: '', p: '', comment: '' }
   if (table === 'fromdel') return { fname: '', faddress: '', fcity: '', fstate: '', fzip: '', fcountry: '', fcounty: '', ftownship: '', fcomment: '' }
   if (table === 'topick') return { tname: '', taddress: '', tcity: '', tstate: '', tzip: '', tcountry: '', tcounty: '', ttownship: '', tcomment: '' }
@@ -35,24 +40,38 @@ const blankDraft = (table) => {
 }
 
 export default function AdminStoreManage() {
+
   const [table, setTable] = useState('providers')
+
   const [rows, setRows] = useState(null)
+
   const [providers, setProviders] = useState([])
-  const [categories, setCategories] = useState([])
+
   // Lists the Items form links against (new category table, locations).
   const [itemCategories, setItemCategories] = useState([])
+
   const [fromdel, setFromdel] = useState([])
+
   const [topick, setTopick] = useState([])
+
   const [query, setQuery] = useState('')
+
   const [draft, setDraft] = useState(() => blankDraft('providers'))
+
   const [status, setStatus] = useState('')
 
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const menuRef = useRef(null)
+
   const tableName = TABLES.find(t => t[0] === table)[2]
+
+  const tableLabel = TABLES.find(t => t[0] === table)[1]
 
   const reload = () => {
     setRows(null)
     let q = supabase.from(tableName).select('*').order('name')
-    if (table === 'items') q = supabase.from(tableName).select('*, provider:store_providers(name), category:store_categories(name)').order('pending_approval', { ascending: false }).order('name')
+    if (table === 'items') q = supabase.from(tableName).select('*, provider:store_providers(name)').order('pending_approval', { ascending: false }).order('name')
     if (table === 'forms') q = supabase.from(tableName).select('*').order('f')
     if (table === 'fromdel') q = supabase.from(tableName).select('*').order('fname')
     if (table === 'topick') q = supabase.from(tableName).select('*').order('tname')
@@ -63,17 +82,26 @@ export default function AdminStoreManage() {
       else setRows(data || [])
     })
     loadProviders().then(setProviders).catch(() => {})
-    loadCategories().then(setCategories).catch(() => {})
     loadItemCategories().then(setItemCategories).catch(() => {})
     loadFromDel().then(setFromdel).catch(() => {})
     loadToPick().then(setTopick).catch(() => {})
   }
+
   useEffect(reload, [table])
+
+  // Outside tap closes the table submenu (same pattern as the website menus).
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false) }
+    window.addEventListener('pointerdown', onDown)
+    return () => window.removeEventListener('pointerdown', onDown)
+  }, [menuOpen])
 
   const pickTable = (key) => {
     setTable(key)
     setDraft(blankDraft(key))
     setStatus('')
+    setMenuOpen(false)
   }
 
   const filtered = useMemo(() => {
@@ -90,7 +118,7 @@ export default function AdminStoreManage() {
     const label = rowLabel(row)
     if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return
     const { error } = await supabase.from(tableName).delete().eq('id', row.id)
-    if (error) { setStatus('Cannot delete: ' + error.message + (table === 'providers' || table === 'categories' ? ' — delete or move its items first.' : '')); return }
+    if (error) { setStatus('Cannot delete: ' + error.message + (table === 'providers' ? ' — delete or move its items first.' : '')); return }
     setStatus(`✓ Deleted "${label}".`)
     reload()
   }
@@ -127,14 +155,12 @@ export default function AdminStoreManage() {
 
   const save = async (e) => {
     e.preventDefault()
-    const { id, created_at, provider, category, _catIds, _fromIds, _toIds, ...fields } = draft
+    const { id, created_at, provider, _catIds, _fromIds, _toIds, ...fields } = draft
     if (fields.price !== undefined) fields.price = Number(fields.price)
     if (fields.stock !== undefined) fields.stock = fields.stock === '' || fields.stock === null ? null : Number(fields.stock)
     if (fields.provider_id !== undefined) fields.provider_id = Number(fields.provider_id)
-    if (fields.category_id !== undefined) fields.category_id = Number(fields.category_id)
     if (fields.packof !== undefined) fields.packof = fields.packof === '' || fields.packof === null ? null : Number(fields.packof)
     if (fields.weight !== undefined) fields.weight = fields.weight === '' || fields.weight === null ? null : Number(fields.weight)
-    if (table === 'categories' && !id) fields.slug = slugify(fields.name)
     if (table === 'itemcats' && !id) fields.slug = slugify(fields.label)
     // Only providers/items/forms carry updated_at; the new location /
     // category tables have created_at only, so stamping them would fail.
@@ -175,18 +201,25 @@ export default function AdminStoreManage() {
     reload()
   }
 
-  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : 'category'
+  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : 'row'
+
   const formTitle = draft.id ? `Edit ${kindLabel} — ${rowLabel(draft)}` : `New ${kindLabel}`
+
   const submitLabel = draft.id ? 'Save changes' : `Save ${kindLabel}`
 
   return (
     <div>
       <div className="hero-card">
         <h2>✏️ Edit or delete store tables</h2>
-        <div className="trip-tabs">
-          {TABLES.map(([key, label]) => (
-            <button key={key} type="button" className={table === key ? 'active' : ''} onClick={() => pickTable(key)}>{label}</button>
-          ))}
+        <div className="car-submenu-wrap" ref={menuRef}>
+          <button type="button" onClick={() => setMenuOpen(o => !o)} aria-haspopup="true" aria-expanded={menuOpen}>{tableLabel} ▾</button>
+          {menuOpen && (
+            <div className="car-submenu">
+              {TABLES.map(([key, label]) => (
+                <button key={key} type="button" onClick={() => pickTable(key)}>{label}</button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="filters">
           <input placeholder="Search this table..." value={query} onChange={e => setQuery(e.target.value)} />
@@ -201,12 +234,8 @@ export default function AdminStoreManage() {
       )}
       {table === 'items' && (
         <ItemForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
-          onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} providers={providers} categories={categories}
+          onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} providers={providers}
           linkData={{ itemCategories, fromdel, topick, selected: { categoryIds: draft._catIds || [], fromdelIds: draft._fromIds || [], topickIds: draft._toIds || [] }, onToggle }} />
-      )}
-      {table === 'categories' && (
-        <CategoryForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
-          onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
       )}
       {table === 'forms' && (
         <ProviderFormEditor draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
@@ -236,9 +265,8 @@ export default function AdminStoreManage() {
             <tr>
               <th>ID</th><th>{table === 'forms' ? 'Store' : 'Name'}</th>
               {table === 'items' &&
-                <><th>Price</th><th>Provider</th><th>Category</th><th>Delivery</th><th>Pickup</th><th>Shown</th><th>Online</th><th>Stock</th></>}
+                <><th>Price</th><th>Provider</th><th>Delivery</th><th>Pickup</th><th>Shown</th><th>Stock</th></>}
               {table === 'providers' && <><th>City</th><th>Country</th><th>Photos</th><th>Hold orders</th><th>Pay orders</th></>}
-              {table === 'categories' && <th>Link name</th>}
               {table === 'forms' && <><th>Form address</th><th>Username</th><th>Comment</th></>}
               {table === 'fromdel' && <><th>Address</th><th>City</th><th>State</th><th>Zip</th><th>Country</th></>}
               {table === 'topick' && <><th>Address</th><th>City</th><th>State</th><th>Zip</th><th>Country</th></>}
@@ -256,16 +284,13 @@ export default function AdminStoreManage() {
                   <>
                     <td>{money(r.price)}</td>
                     <td>{r.provider?.name || r.provider_id}</td>
-                    <td>{r.category?.name || r.category_id}</td>
                     <td>{r.delivery ? 'Yes' : 'No'}</td>
                     <td>{r.pickup ? 'Yes' : 'No'}</td>
                     <td>{r.pending_approval ? 'Pending' : r.is_active ? 'Yes' : 'Hidden'}</td>
-                    <td>{r.online ? 'Yes' : 'No'}</td>
                     <td>{r.stock === null || r.stock === undefined ? '—' : r.stock}</td>
                   </>
                 )}
                 {table === 'providers' && <><td>{r.city}</td><td>{r.country}</td><td>{(r.pics || []).length}</td><td>{r.holdorder ? 'Yes' : 'No'}</td><td>{r.payorder !== false ? 'Yes' : 'No'}</td></>}
-                {table === 'categories' && <td>{r.slug}</td>}
                 {table === 'forms' && <><td><a href={`/${r.f}`} target="_blank" rel="noreferrer">autofly.us.com/{r.f}</a></td><td>{r.u}</td><td>{r.comment}</td></>}
                 {table === 'fromdel' && <><td>{r.faddress}</td><td>{r.fcity}</td><td>{r.fstate}</td><td>{r.fzip}</td><td>{r.fcountry}</td></>}
                 {table === 'topick' && <><td>{r.taddress}</td><td>{r.tcity}</td><td>{r.tstate}</td><td>{r.tzip}</td><td>{r.tcountry}</td></>}

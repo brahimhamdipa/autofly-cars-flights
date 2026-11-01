@@ -1,10 +1,25 @@
 import { useEffect, useMemo, useState } from 'react'
+
 import { supabase, NOTIFY_EMAIL } from '../lib/supabaseClient'
+
 import { useCart } from '../lib/CartContext'
-import { loadItemsByIds, loadProviders, loadItemLocations, placeStoreOrder, placeStoreHoldOrder, emailReceipt, buildReceiptPdf, money } from '../lib/storeData'
+
+import { loadItemsByIds, loadProviders, loadItemLocations, loadItemVariants, formatVariant, placeStoreOrder, placeStoreHoldOrder, emailReceipt, buildReceiptPdf, money } from '../lib/storeData'
 
 export { money }
+
 export const priceOf = (p) => Number(p.sale_price ?? p.price)
+
+// Cart keys for store items: 's:<itemId>' for a plain add, or
+// 's:<itemId>:v<variantRowId>' when the customer picked a variant
+// (a subCategory row of one of the item's categories) before adding.
+// The variant part is the subCategory row id; the label is resolved
+// at display time via loadItemVariants, and sent to the order RPCs
+// as the per-line 'variant' text.
+const parseStoreKey = (k) => {
+  const m = k.slice(2).match(/^(\d+)(?::v(\d+))?$/)
+  return m ? { id: Number(m[1]), variantId: m[2] ? Number(m[2]) : null } : { id: Number(k.slice(2)), variantId: null }
+}
 
 // The unified "Your cart" section: EVERYTHING the customer added —
 // grocery products and store items alike — grouped into sections, one
@@ -14,21 +29,44 @@ export const priceOf = (p) => Number(p.sale_price ?? p.price)
 // (and each store's items only offer the fulfillment they support).
 // Used BOTH on the Groceries shop page and on the My Cart page so the
 // two never drift apart.
+//
+// Variant lines show as "<item name> (<variant label>)" and the label
+// travels into the order (RPC p_items 'variant', receipt PDF, owner
+// email). Delivery coverage: when the customer already typed an
+// address and the section's items have linked delivery locations, the
+// Delivery popup only offers locations whose city or zip appears in
+// that address; if none match, the choice is refused and the covered
+// areas are listed, so the customer can switch to Pickup instead.
 export default function CartCheckout({ products, onOrderPlaced }) {
+
   const { cart, setQty, removeSection, lastOrder, setLastOrder } = useCart()
+
   const [customer, setCustomer] = useState({ name: '', email: '', phone: '', address: '' })
+
   const [chosen, setChosen] = useState({}) // sectionKey -> 'delivery' | 'pickup' (nothing chosen by default)
+
   const [placing, setPlacing] = useState({})
+
   const [sectionStatus, setSectionStatus] = useState({})
+
   const [storeItems, setStoreItems] = useState([])
+
   const [providers, setProviders] = useState([])
+
   // Linked delivery/pickup locations per store item, for the popups:
   // { fromdel: { itemId: [rows] }, topick: { itemId: [rows] } }.
   const [itemLocs, setItemLocs] = useState({ fromdel: {}, topick: {} })
+
+  // Variant (subCategory) rows per store item, for variant cart lines:
+  // { itemId: [rows] }.
+  const [itemVariants, setItemVariants] = useState({})
+
   // sectionKey -> { mode, label } once a popup location is picked.
   const [selectedLoc, setSelectedLoc] = useState({})
+
   // Open popup: { sectionKey, mode, rows } or null. Search text for it.
   const [popup, setPopup] = useState(null)
+
   const [popupQuery, setPopupQuery] = useState('')
 
   // The cart reads each store's order-mode flags: holdorder shows the
@@ -36,6 +74,7 @@ export default function CartCheckout({ products, onOrderPlaced }) {
   useEffect(() => {
     loadProviders().then(setProviders).catch(() => {})
   }, [])
+
   const providerFlags = useMemo(
     () => Object.fromEntries(providers.map(p => [p.id, { holdorder: !!p.holdorder, payorder: p.payorder !== false }])),
     [providers]
@@ -49,9 +88,10 @@ export default function CartCheckout({ products, onOrderPlaced }) {
     .filter(x => x.product && x.qty > 0)
 
   const storeIds = useMemo(
-    () => Object.keys(cart).filter(k => k.startsWith('s:')).map(k => Number(k.slice(2))),
+    () => [...new Set(Object.keys(cart).filter(k => k.startsWith('s:')).map(k => parseStoreKey(k).id))],
     [cart]
   )
+
   useEffect(() => {
     if (storeIds.length === 0) { setStoreItems([]); return }
     let alive = true
@@ -60,10 +100,42 @@ export default function CartCheckout({ products, onOrderPlaced }) {
   }, [storeIds.join(',')])
 
   const storeById = useMemo(() => Object.fromEntries(storeItems.map(i => [i.id, i])), [storeItems])
+
   const storeLines = Object.entries(cart)
     .filter(([k]) => k.startsWith('s:'))
-    .map(([k, qty]) => ({ key: k, item: storeById[Number(k.slice(2))], qty }))
+    .map(([k, qty]) => { const { id, variantId } = parseStoreKey(k); return { key: k, item: storeById[id], qty, variantId } })
     .filter(x => x.item && x.qty > 0)
+
+  // Store item ids currently in the cart (deduped — one item can sit
+  // on several variant lines).
+  const cartStoreItemIds = useMemo(
+    () => [...new Set(storeLines.map(l => l.item.id))],
+    [storeLines]
+  )
+
+  // Locations for every store item currently in the cart.
+  useEffect(() => {
+    if (cartStoreItemIds.length === 0) { setItemLocs({ fromdel: {}, topick: {} }); return }
+    let alive = true
+    loadItemLocations(cartStoreItemIds).then(d => { if (alive) setItemLocs(d) }).catch(() => {})
+    return () => { alive = false }
+  }, [cartStoreItemIds.join(',')])
+
+  // Variants for every store item currently in the cart.
+  useEffect(() => {
+    if (cartStoreItemIds.length === 0) { setItemVariants({}); return }
+    let alive = true
+    loadItemVariants(cartStoreItemIds).then(d => { if (alive) setItemVariants(d) }).catch(() => {})
+    return () => { alive = false }
+  }, [cartStoreItemIds.join(',')])
+
+  // Label for one variant line, or null when there is no variant (or
+  // its row is gone — the line then just shows the plain item name).
+  const variantLabelFor = (itemId, variantId) => {
+    if (!variantId) return null
+    const row = (itemVariants[itemId] || []).find(r => r.id === variantId)
+    return row ? formatVariant(row) : null
+  }
 
   // Sections: grocery first, then one per store, in cart order.
   const sections = useMemo(() => {
@@ -88,27 +160,17 @@ export default function CartCheckout({ products, onOrderPlaced }) {
         }
         out.push(byProvider[pid])
       }
+      const variantLabel = variantLabelFor(l.item.id, l.variantId)
       byProvider[pid].lines.push({
-        key: l.key, name: l.item.name, unit: null,
+        key: l.key, itemId: l.item.id, variantId: l.variantId, variantLabel,
+        name: variantLabel ? `${l.item.name} (${variantLabel})` : l.item.name, unit: null,
         price: Number(l.item.price), qty: l.qty, stock: l.item.stock,
         delivery: l.item.delivery, pickup: l.item.pickup,
         delivery_address: l.item.delivery_address, pickup_address: l.item.pickup_address,
       })
     }
     return out
-  }, [groceryLines, storeLines])
-
-  // Locations for every store item currently in the cart.
-  const cartStoreItemIds = useMemo(
-    () => sections.filter(s => s.kind === 'store').flatMap(s => s.lines.map(l => Number(l.key.slice(2)))),
-    [sections]
-  )
-  useEffect(() => {
-    if (cartStoreItemIds.length === 0) { setItemLocs({ fromdel: {}, topick: {} }); return }
-    let alive = true
-    loadItemLocations(cartStoreItemIds).then(d => { if (alive) setItemLocs(d) }).catch(() => {})
-    return () => { alive = false }
-  }, [cartStoreItemIds.join(',')])
+  }, [groceryLines, storeLines, itemVariants])
 
   // No default fulfillment: null until the customer picks a mode the
   // section's lines all support.
@@ -132,7 +194,7 @@ export default function CartCheckout({ products, onOrderPlaced }) {
   // down: only items that HAVE links take part in the intersection.
   const popupCandidates = (section, mode) => {
     const map = mode === 'delivery' ? itemLocs.fromdel : itemLocs.topick
-    const perItem = section.lines.map(l => map[Number(l.key.slice(2))] || [])
+    const perItem = section.lines.map(l => map[l.itemId] || [])
     const constrained = perItem.filter(a => a.length > 0)
     if (constrained.length === 0) return null
     const idSets = constrained.map(a => new Set(a.map(r => r.id)))
@@ -148,6 +210,29 @@ export default function CartCheckout({ products, onOrderPlaced }) {
 
   const handleFulfillClick = (section, mode) => {
     const rows = popupCandidates(section, mode)
+    // Delivery coverage: the customer already typed an address and the
+    // section's items have linked delivery locations — only offer the
+    // locations whose city or zip appears in that address. If none
+    // match, refuse the choice (chosen stays untouched, no popup) and
+    // list the covered areas so the customer can try Pickup instead.
+    // With no typed address, or no linked locations, behavior is
+    // exactly as before (popup with all intersected rows, or fallback).
+    if (mode === 'delivery' && rows && customer.address.trim()) {
+      const addr = customer.address.toLowerCase()
+      const covered = rows.filter(r =>
+        (r.fcity && addr.includes(r.fcity.toLowerCase())) ||
+        (r.fzip && addr.includes(String(r.fzip).toLowerCase()))
+      )
+      if (covered.length === 0) {
+        const areas = [...new Set(rows.map(r => r.fcity).filter(Boolean))].join(', ')
+        setSectionStatus(s => ({ ...s, [section.key]: `We don't deliver to that area yet. Covered areas for these items: ${areas || 'the delivery locations for these items'}. Try Pickup instead.` }))
+        return
+      }
+      setChosen(c => ({ ...c, [section.key]: mode }))
+      setSectionStatus(s => ({ ...s, [section.key]: '' }))
+      setPopup({ sectionKey: section.key, mode, rows: covered }); setPopupQuery('')
+      return
+    }
     setChosen(c => ({ ...c, [section.key]: mode }))
     setSectionStatus(s => ({ ...s, [section.key]: '' }))
     if (rows) { setPopup({ sectionKey: section.key, mode, rows }); setPopupQuery('') }
@@ -264,18 +349,22 @@ export default function CartCheckout({ products, onOrderPlaced }) {
       const res = await placeStoreOrder({
         providerId: section.providerId, name: customer.name, email: customer.email, phone: customer.phone,
         fulfillment, deliveryAddress: fulfillment === 'pickup' && locLabel ? locLabel : customer.address,
-        cart: section.lines.map(l => ({ id: Number(l.key.slice(2)), qty: l.qty })),
+        cart: section.lines.map(l => ({ id: l.itemId, qty: l.qty, variant: l.variantLabel || null })),
       })
+      // The RPC lines carry the per-line variant: fold it into the
+      // display name so the receipt PDF and the owner email both say
+      // which variant was ordered.
+      const displayItems = (res.items || []).map(it => it.variant ? { ...it, name: `${it.name} (${it.variant})` } : it)
       const pdf = buildReceiptPdf({
         kind: 'order', refId: res.order_id, storeName: section.title,
-        customer, lines: res.items, total: res.total,
+        customer, lines: displayItems, total: res.total,
         fulfillment, deliveryAddress: customer.address,
         locationLabel: locLabel || undefined,
       })
       const record = {
         order_id: res.order_id, store: section.title, customer: customer.name,
         customer_email: customer.email, customer_phone: customer.phone,
-        fulfillment, delivery_address: customer.address, items: res.items, total: res.total,
+        fulfillment, delivery_address: customer.address, items: displayItems, total: res.total,
         ...(locLabel ? (fulfillment === 'delivery' ? { shipFrom: locLabel } : { pickupLocation: locLabel }) : {}),
       }
       try {
@@ -316,18 +405,21 @@ export default function CartCheckout({ products, onOrderPlaced }) {
       const res = await placeStoreHoldOrder({
         providerId: section.providerId, name: customer.name, email: customer.email, phone: customer.phone,
         fulfillment, deliveryAddress: fulfillment === 'pickup' && locLabel ? locLabel : customer.address,
-        cart: section.lines.map(l => ({ id: Number(l.key.slice(2)), qty: l.qty })),
+        cart: section.lines.map(l => ({ id: l.itemId, qty: l.qty, variant: l.variantLabel || null })),
       })
+      // Same variant folding as placeStore: the receipt and the owner
+      // email show "<name> (<variant>)" for variant lines.
+      const displayItems = (res.items || []).map(it => it.variant ? { ...it, name: `${it.name} (${it.variant})` } : it)
       const pdf = buildReceiptPdf({
         kind: 'hold', refId: res.order_id, storeName: section.title,
-        customer, lines: res.items, total: res.total,
+        customer, lines: displayItems, total: res.total,
         fulfillment, deliveryAddress: customer.address,
         locationLabel: locLabel || undefined,
       })
       const record = {
         order_id: res.order_id, store: section.title, customer: customer.name,
         customer_email: customer.email, customer_phone: customer.phone,
-        fulfillment, delivery_address: customer.address, items: res.items, total: res.total, is_hold: true,
+        fulfillment, delivery_address: customer.address, items: displayItems, total: res.total, is_hold: true,
         ...(locLabel ? (fulfillment === 'delivery' ? { shipFrom: locLabel } : { pickupLocation: locLabel }) : {}),
       }
       try {
@@ -416,7 +508,6 @@ export default function CartCheckout({ products, onOrderPlaced }) {
                   </div>
                 ))}
                 <p className="cart-total">Section total: <b>{money(total)}</b></p>
-
                 <div className="trip-tabs fulfill-tabs">
                   {canDeliver && <button type="button" className={chosen[section.key] === 'delivery' ? 'active' : ''} onClick={() => section.kind === 'grocery' ? handleGroceryClick(section, 'delivery') : handleFulfillClick(section, 'delivery')}>🚚 Delivery</button>}
                   {canPickup && <button type="button" className={chosen[section.key] === 'pickup' ? 'active' : ''} onClick={() => section.kind === 'grocery' ? handleGroceryClick(section, 'pickup') : handleFulfillClick(section, 'pickup')}>🏪 Pickup</button>}

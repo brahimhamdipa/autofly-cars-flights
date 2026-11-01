@@ -1,13 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
 import { supabase } from '../lib/supabaseClient'
+
 import { isAdminUser } from '../lib/admin'
+
 import AdminDashboard from './AdminDashboard'
+
 import AdminProducts from './AdminProducts'
+
 import AdminOrders from './AdminOrders'
+
 import AdminSubmissions from './AdminSubmissions'
+
 import AdminStoreAdd from './admin/AdminStoreAdd'
+
 import AdminStoreManage from './admin/AdminStoreManage'
+
 import AdminStoreReports from './admin/AdminStoreReports'
+
 import AdminChat from './admin/AdminChat'
 
 const SECTIONS = [
@@ -21,11 +31,11 @@ const SECTIONS = [
   ['chat', '💬 Chat'],
 ]
 
-// Sections grouped so the menu stays short: tapping a group opens its
-// first section, and the section row switches within the group. Every
-// section and what it does is unchanged — only the navigation moved
-// from one long dropdown into two sticky rows that stay on screen
-// while scrolling, so a long form never traps you at the bottom.
+// Sections grouped under one ☰ submenu button (same look and behavior
+// as the website's area submenus): tapping a section switches to it
+// and closes the menu. Every section and what it does is unchanged —
+// only the navigation moved from two sticky button rows into one
+// button, so a long form never traps you at the bottom.
 const GROUPS = [
   ['Overview', ['dashboard']],
   ['Shop', ['products', 'orders']],
@@ -37,14 +47,26 @@ const GROUPS = [
 // email is authorized — the database enforces the same rule, so this UI
 // gate is just the visible half of the protection.
 export default function AdminPage() {
+
   const [session, setSession] = useState(undefined) // undefined = still loading
+
   const [mode, setMode] = useState('login') // login | signup
+
   // Not pre-filled: the admin's email address stays off the public page.
   const [email, setEmail] = useState('')
+
   const [password, setPassword] = useState('')
+
   const [authMsg, setAuthMsg] = useState('')
+
   const [section, setSection] = useState('dashboard')
+
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  const menuRef = useRef(null)
+
   const [newPassword, setNewPassword] = useState('')
+
   const [pwMsg, setPwMsg] = useState('')
 
   useEffect(() => {
@@ -52,6 +74,14 @@ export default function AdminPage() {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
     return () => sub.subscription.unsubscribe()
   }, [])
+
+  // Outside tap closes the submenu (same pattern as the website menus).
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false) }
+    window.addEventListener('pointerdown', onDown)
+    return () => window.removeEventListener('pointerdown', onDown)
+  }, [menuOpen])
 
   const submitAuth = async (e) => {
     e.preventDefault()
@@ -139,34 +169,32 @@ export default function AdminPage() {
     )
   }
 
-  const groupOf = (s) => GROUPS.find(([, secs]) => secs.includes(s)) || GROUPS[0]
-  const activeGroup = groupOf(section)
   const labelOf = (v) => (SECTIONS.find(([val]) => val === v) || [v, v])[1]
 
   return (
     <div>
       <div className="admin-nav no-print">
-        <div className="admin-groups">
-          {GROUPS.map(([label, secs]) => (
-            <button
-              key={label} type="button"
-              className={activeGroup[0] === label ? 'active' : ''}
-              onClick={() => setSection(secs[0])}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="admin-sections">
-          {activeGroup[1].map(v => (
-            <button
-              key={v} type="button"
-              className={section === v ? 'active' : ''}
-              onClick={() => setSection(v)}
-            >
-              {labelOf(v)}
-            </button>
-          ))}
+        <div className="car-submenu-wrap" ref={menuRef}>
+          <button className="car-submenu-btn" onClick={() => setMenuOpen(o => !o)} aria-haspopup="true" aria-expanded={menuOpen} aria-label="Admin menu">
+            <span className="burger" aria-hidden="true"><span /><span /><span /></span>
+          </button>
+          {menuOpen && (
+            <div className="car-submenu">
+              {GROUPS.map(([label, secs]) => (
+                <div key={label}>
+                  <p style={{ margin: '10px 0 2px', fontWeight: 'bold' }}>{label}</p>
+                  {secs.map(v => (
+                    <button
+                      key={v} type="button"
+                      onClick={() => { setSection(v); setMenuOpen(false) }}
+                    >
+                      {labelOf(v)}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className="admin-actions">
           <button type="button" onClick={() => window.print()}>🖨 Print / Save PDF</button>

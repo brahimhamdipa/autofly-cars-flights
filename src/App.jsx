@@ -36,7 +36,7 @@ export default function App() {
     const path = window.location.pathname.replace(/\/$/, '')
     if (path === '/admin') return 'admin'
     if (path !== '' && path !== '/') return 'provider-form'
-    return 'cars'
+    return 'products'
   })
   const [formSlug, setFormSlug] = useState(() => {
     const path = window.location.pathname.replace(/\/$/, '')
@@ -111,7 +111,7 @@ export default function App() {
         </div>
         <div className="header-right">
           <nav>
-            <button className={GROCERY_TABS.includes(tab) ? 'active' : ''} onClick={() => go('stores')}>Shopping</button>
+            <button className={GROCERY_TABS.includes(tab) ? 'active' : ''} onClick={() => go('products')}>Shopping</button>
             <button className={inCars ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
             <button className={inFlights ? 'active' : ''} onClick={() => go('flights')}>Flights</button>
             <span className="dropdown" ref={moreRef}>

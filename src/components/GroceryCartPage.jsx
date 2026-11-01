@@ -37,7 +37,7 @@ export default function GroceryCartPage({ go }) {
       {!loading && !loadError && count === 0 && (!lastOrder || lastOrder.length === 0) && (
         <div className="hero-card">
           <p>Your cart is empty.</p>
-          <button onClick={() => go && go('groceries')}>Browse Groceries</button>
+          <button onClick={() => go && go('products')}>Browse Products</button>
         </div>
       )}
       {!loading && !loadError && (count > 0 || (lastOrder && lastOrder.length > 0)) && (

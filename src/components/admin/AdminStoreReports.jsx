@@ -1,10 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
+
 import { supabase } from '../../lib/supabaseClient'
+
 import { money } from '../../lib/storeData'
 
 // Reports section: links in a row, each opening a searchable report
 // table, with a "To PDF" button (print → Save as PDF, same as the rest
 // of the admin area).
+// NOTE: items no longer carry a single category or an online flag —
+// categories live only in the category table (linked via
+// store_item_categories) and delivery/pickup come from the item's own
+// flags, so those two columns are gone from the Items reports.
 const REPORTS = [
   ['providers', 'All Providers'],
   ['items', 'All Items'],
@@ -15,9 +21,13 @@ const REPORTS = [
 ]
 
 export default function AdminStoreReports() {
+
   const [report, setReport] = useState('providers')
+
   const [rows, setRows] = useState(null)
+
   const [error, setError] = useState('')
+
   const [query, setQuery] = useState('')
 
   useEffect(() => {
@@ -30,7 +40,7 @@ export default function AdminStoreReports() {
           setRows(data || [])
         } else if (report === 'items' || report === 'items-providers') {
           const { data, error } = await supabase.from('store_items')
-            .select('*, provider:store_providers(name, phone, country, city), category:store_categories(name)')
+            .select('*, provider:store_providers(name, phone, country, city)')
             .order('name')
           if (error) throw error
           setRows(data || [])
@@ -90,7 +100,7 @@ export default function AdminStoreReports() {
             <thead>
               <tr>
                 {report === 'providers' && <><th>ID</th><th>Name</th><th>Phone</th><th>City</th><th>Country</th><th>Photos</th></>}
-                {(report === 'items' || report === 'items-providers') && <><th>ID</th><th>Item</th><th>Price</th><th>Category</th><th>Provider</th><th>Delivery</th><th>Pickup</th><th>Shown</th><th>Online</th><th>Stock</th></>}
+                {(report === 'items' || report === 'items-providers') && <><th>ID</th><th>Item</th><th>Price</th><th>Provider</th><th>Delivery</th><th>Pickup</th><th>Shown</th><th>Stock</th></>}
                 {report === 'providers-items' && <><th>ID</th><th>Provider</th><th>Country</th><th>Items</th></>}
                 {report === 'orders' && <><th>ID</th><th>Store</th><th>Customer</th><th>Fulfillment</th><th>Total</th><th>Status</th><th>Date</th></>}
                 {report === 'holds' && <><th>ID</th><th>Item</th><th>Store</th><th>Customer</th><th>Status</th><th>Date</th></>}
@@ -101,10 +111,10 @@ export default function AdminStoreReports() {
                 <tr key={r.id}>
                   {report === 'providers' && <><td>{r.id}</td><td>{r.name}</td><td>{r.phone}</td><td>{r.city}</td><td>{r.country}</td><td>{(r.pics || []).length}</td></>}
                   {(report === 'items' || report === 'items-providers') && (
-                    <><td>{r.id}</td><td>{r.name}</td><td>{money(r.price)}</td><td>{r.category?.name}</td>
+                    <><td>{r.id}</td><td>{r.name}</td><td>{money(r.price)}</td>
                     <td>{report === 'items-providers' ? `${r.provider?.name || ''}${r.provider?.phone ? ` (${r.provider.phone})` : ''}` : (r.provider?.name || r.provider_id)}</td>
                     <td>{r.delivery ? 'Yes' : 'No'}</td><td>{r.pickup ? 'Yes' : 'No'}</td><td>{r.is_active ? 'Yes' : 'Hidden'}</td>
-                    <td>{r.online ? 'Yes' : 'No'}</td><td>{r.stock === null || r.stock === undefined ? '—' : r.stock}</td></>
+                    <td>{r.stock === null || r.stock === undefined ? '—' : r.stock}</td></>
                   )}
                   {report === 'providers-items' && (
                     <><td>{r.id}</td><td>{r.name}</td><td>{r.country}</td>

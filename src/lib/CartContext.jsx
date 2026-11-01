@@ -6,9 +6,13 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 // is ever lost by mixing, because each line knows where it came from.
 //
 // Cart shape: { key: qty } where key is 'g:<grocery product id>' or
-// 's:<store item id>'. Older saved carts used bare product ids; those
-// are migrated to 'g:' keys on load, so nobody loses their cart.
+// 's:<store item id>', or 's:<store item id>:v<variant row id>' when the
+// customer picked a variant (flavor, color, size, pack, ...) for that
+// item. Two variants of the same item are two separate lines. Older
+// saved carts used bare product ids; those are migrated to 'g:' keys on
+// load, so nobody loses their cart.
 const CartCtx = createContext(null)
+
 const STORAGE_KEY = 'autofly-grocery-cart'
 
 function migrate(raw) {
@@ -17,7 +21,7 @@ function migrate(raw) {
   for (const [k, v] of Object.entries(raw)) {
     const qty = Number(v) || 0
     if (qty <= 0) continue
-    if (k.startsWith('g:') || k.startsWith('s:')) out[k] = qty
+    if (k.startsWith('g:') || k.startsWith('s:')) out[k] = qty // includes 's:<id>:v<variantId>' keys, unchanged
     else out['g:' + k] = qty // legacy bare grocery id
   }
   return out
@@ -57,8 +61,13 @@ export function CartProvider({ children }) {
   // Grocery product (from the Online Store grid).
   const addGrocery = (product, qty) => add('g:' + product.id, qty, product.stock)
   // Store item (from any store / category / detail page). A null stock
-  // means "not tracked" (e.g. services) — no quantity cap.
-  const addStore = (item, qty = 1) => add('s:' + item.id, qty, item.stock ?? undefined)
+  // means "not tracked" (e.g. services) — no quantity cap. When a variant
+  // row is given, the line key carries ':v' + the variant row id, so each
+  // chosen variant is its own cart line.
+  const addStore = (item, qty = 1, variant = null) => {
+    const key = 's:' + item.id + (variant ? ':v' + variant.id : '')
+    return add(key, qty, item.stock ?? undefined)
+  }
 
   const setQty = (key, qty, max) =>
     setCartState(c => {

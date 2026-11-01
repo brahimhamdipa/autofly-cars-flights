@@ -64,6 +64,89 @@ export async function loadItemsByIds(ids) {
   return data || []
 }
 
+// Delivery/pickup locations linked to items, grouped per item id:
+// { fromdel: { itemId: [fromDel rows] }, topick: { itemId: [toPick rows] } }.
+// Used by the checkout popups. Empty input -> empty maps.
+export async function loadItemLocations(itemIds) {
+  if (!itemIds || itemIds.length === 0) return { fromdel: {}, topick: {} }
+  const [fd, tp] = await Promise.all([
+    supabase.from('store_item_fromdel').select('item_id, fromdel_id').in('item_id', itemIds),
+    supabase.from('store_item_topick').select('item_id, topick_id').in('item_id', itemIds),
+  ])
+  if (fd.error) throw fd.error
+  if (tp.error) throw tp.error
+  const fromIds = [...new Set((fd.data || []).map(r => r.fromdel_id))]
+  const toIds = [...new Set((tp.data || []).map(r => r.topick_id))]
+  const [fromRows, toRows] = await Promise.all([
+    fromIds.length ? supabase.from('fromDel').select('*').in('id', fromIds) : Promise.resolve({ data: [] }),
+    toIds.length ? supabase.from('toPick').select('*').in('id', toIds) : Promise.resolve({ data: [] }),
+  ])
+  if (fromRows.error) throw fromRows.error
+  if (toRows.error) throw toRows.error
+  const fromById = Object.fromEntries((fromRows.data || []).map(r => [r.id, r]))
+  const toById = Object.fromEntries((toRows.data || []).map(r => [r.id, r]))
+  const fromdel = {}
+  const topick = {}
+  for (const r of fd.data || []) {
+    const row = fromById[r.fromdel_id]
+    if (!row) continue
+    if (!fromdel[r.item_id]) fromdel[r.item_id] = []
+    fromdel[r.item_id].push(row)
+  }
+  for (const r of tp.data || []) {
+    const row = toById[r.topick_id]
+    if (!row) continue
+    if (!topick[r.item_id]) topick[r.item_id] = []
+    topick[r.item_id].push(row)
+  }
+  return { fromdel, topick }
+}
+
+// New location/category tables (admin lists + checkout popups).
+// NOTE: category here is the NEW item-category table, not store_categories.
+export async function loadItemCategories() {
+  const { data, error } = await supabase.from('category').select('*').order('label')
+  if (error) throw error
+  return data || []
+}
+
+export async function loadFromDel() {
+  const { data, error } = await supabase.from('fromDel').select('*').order('fname')
+  if (error) throw error
+  return data || []
+}
+
+export async function loadToPick() {
+  const { data, error } = await supabase.from('toPick').select('*').order('tname')
+  if (error) throw error
+  return data || []
+}
+
+export async function loadSubCategories() {
+  const { data, error } = await supabase.from('subCategory').select('*').order('id')
+  if (error) throw error
+  return data || []
+}
+
+// Replace one item's links wholesale: delete all its junction rows, then
+// insert the given ids (empty arrays insert nothing). Admin use only.
+export async function syncItemLinks(itemId, { categoryIds = [], fromdelIds = [], topickIds = [] } = {}) {
+  const dels = await Promise.all([
+    supabase.from('store_item_categories').delete().eq('item_id', itemId),
+    supabase.from('store_item_fromdel').delete().eq('item_id', itemId),
+    supabase.from('store_item_topick').delete().eq('item_id', itemId),
+  ])
+  for (const d of dels) if (d.error) throw d.error
+  const inserts = []
+  if (categoryIds.length) inserts.push(supabase.from('store_item_categories').insert(categoryIds.map(category_id => ({ item_id: itemId, category_id }))))
+  if (fromdelIds.length) inserts.push(supabase.from('store_item_fromdel').insert(fromdelIds.map(fromdel_id => ({ item_id: itemId, fromdel_id }))))
+  if (topickIds.length) inserts.push(supabase.from('store_item_topick').insert(topickIds.map(topick_id => ({ item_id: itemId, topick_id }))))
+  for (const ins of inserts) {
+    const { error } = await ins
+    if (error) throw error
+  }
+}
+
 export async function placeStoreOrder({ providerId, name, email, phone, fulfillment, deliveryAddress, cart }) {
   const { data, error } = await supabase.rpc('place_store_order', {
     p_provider_id: providerId,
@@ -126,7 +209,7 @@ export function money(v) {
 
 // Build a receipt PDF (jsPDF) and return it as a base64 string + a
 // download helper. kind: 'order' | 'hold'.
-export function buildReceiptPdf({ kind, refId, storeName, customer, lines, total, fulfillment, deliveryAddress }) {
+export function buildReceiptPdf({ kind, refId, storeName, customer, lines, total, fulfillment, deliveryAddress, locationLabel }) {
   const doc = new jsPDF()
   let y = 20
   doc.setFontSize(18)
@@ -139,6 +222,10 @@ export function buildReceiptPdf({ kind, refId, storeName, customer, lines, total
   y += 8
   if (fulfillment) {
     doc.text(`Fulfillment: ${fulfillment}${deliveryAddress ? ' — ' + deliveryAddress : ''}`, 14, y)
+    y += 8
+  }
+  if (locationLabel) {
+    doc.text(`Location: ${locationLabel}`, 14, y)
     y += 8
   }
   y += 4

@@ -62,7 +62,7 @@ export function ProviderForm({ draft, setDraft, onSubmit, submitLabel, onCancel 
   )
 }
 
-export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, providers, categories }) {
+export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, providers, categories, linkData }) {
   return (
     <form onSubmit={onSubmit} className="form-card">
       <select required value={draft.provider_id || ''} onChange={e => setDraft({ ...draft, provider_id: e.target.value })}>
@@ -83,7 +83,27 @@ export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, pro
       <label><input type="checkbox" checked={!!draft.is_active} onChange={e => setDraft({ ...draft, is_active: e.target.checked })} /> Show this item on the site (uncheck to hide it)</label>
       <label><input type="checkbox" checked={!!draft.online} onChange={e => setDraft({ ...draft, online: e.target.checked })} /> Sell this item on the Online Store page (otherwise it shows on "Groceries / General Products" for Store products)</label>
       <input placeholder="Stock (how many available — leave empty if not tracked, e.g. services)" type="number" min="0" value={draft.stock ?? ''} onChange={e => setDraft({ ...draft, stock: e.target.value })} />
+      <input placeholder="Barcode (optional)" value={draft.barCode || ''} onChange={e => setDraft({ ...draft, barCode: e.target.value })} />
       <PicField pics={draft.pics || []} setPics={pics => setDraft({ ...draft, pics })} />
+      {linkData && (
+        <div>
+          <p><b>Item categories</b></p>
+          {(linkData.itemCategories || []).length === 0 && <p className="hint">No item categories yet.</p>}
+          {(linkData.itemCategories || []).map(c => (
+            <label key={c.id}><input type="checkbox" checked={linkData.selected.categoryIds.includes(c.id)} onChange={() => linkData.onToggle('cat', c.id)} /> {c.label}</label>
+          ))}
+          <p><b>Delivery locations</b></p>
+          {(linkData.fromdel || []).length === 0 && <p className="hint">No delivery locations yet.</p>}
+          {(linkData.fromdel || []).map(r => (
+            <label key={r.id}><input type="checkbox" checked={linkData.selected.fromdelIds.includes(r.id)} onChange={() => linkData.onToggle('from', r.id)} /> {r.fname}{r.fcity ? ` — ${r.fcity}` : ''}</label>
+          ))}
+          <p><b>Pickup locations</b></p>
+          {(linkData.topick || []).length === 0 && <p className="hint">No pickup locations yet.</p>}
+          {(linkData.topick || []).map(r => (
+            <label key={r.id}><input type="checkbox" checked={linkData.selected.topickIds.includes(r.id)} onChange={() => linkData.onToggle('to', r.id)} /> {r.tname}{r.tcity ? ` — ${r.tcity}` : ''}</label>
+          ))}
+        </div>
+      )}
       <div className="store-actions">
         <button type="submit">{submitLabel}</button>
         {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
@@ -99,6 +119,93 @@ export function CategoryForm({ draft, setDraft, onSubmit, submitLabel, onCancel 
       {draft.id
         ? <p className="hint">Link name stays "{draft.slug}" — renaming here does not change existing links.</p>
         : <p className="hint">The category's link name is made from this automatically (e.g. "Bakery" → bakery).</p>}
+      <div className="store-actions">
+        <button type="submit">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+// Delivery locations (fromDel): the "from" addresses a store item can
+// ship from. Linked to items in Manage → Items, picked by customers
+// in the cart's Delivery popup.
+export function FromDelForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form onSubmit={onSubmit} className="form-card">
+      <input required placeholder="Location name" value={draft.fname || ''} onChange={e => setDraft({ ...draft, fname: e.target.value })} />
+      <input placeholder="Address" value={draft.faddress || ''} onChange={e => setDraft({ ...draft, faddress: e.target.value })} />
+      <input placeholder="City" value={draft.fcity || ''} onChange={e => setDraft({ ...draft, fcity: e.target.value })} />
+      <input placeholder="State" value={draft.fstate || ''} onChange={e => setDraft({ ...draft, fstate: e.target.value })} />
+      <input placeholder="Zip code" value={draft.fzip || ''} onChange={e => setDraft({ ...draft, fzip: e.target.value })} />
+      <input placeholder="Country" value={draft.fcountry || ''} onChange={e => setDraft({ ...draft, fcountry: e.target.value })} />
+      <input placeholder="County" value={draft.fcounty || ''} onChange={e => setDraft({ ...draft, fcounty: e.target.value })} />
+      <input placeholder="Township" value={draft.ftownship || ''} onChange={e => setDraft({ ...draft, ftownship: e.target.value })} />
+      <textarea placeholder="Comment (admin note — not shown to customers)" value={draft.fcomment || ''} onChange={e => setDraft({ ...draft, fcomment: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+// Pickup locations (toPick): the "to" addresses customers pick up
+// from. Linked to items in Manage → Items, picked by customers
+// in the cart's Pickup popup.
+export function ToPickForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form onSubmit={onSubmit} className="form-card">
+      <input required placeholder="Location name" value={draft.tname || ''} onChange={e => setDraft({ ...draft, tname: e.target.value })} />
+      <input placeholder="Address" value={draft.taddress || ''} onChange={e => setDraft({ ...draft, taddress: e.target.value })} />
+      <input placeholder="City" value={draft.tcity || ''} onChange={e => setDraft({ ...draft, tcity: e.target.value })} />
+      <input placeholder="State" value={draft.tstate || ''} onChange={e => setDraft({ ...draft, tstate: e.target.value })} />
+      <input placeholder="Zip code" value={draft.tzip || ''} onChange={e => setDraft({ ...draft, tzip: e.target.value })} />
+      <input placeholder="Country" value={draft.tcountry || ''} onChange={e => setDraft({ ...draft, tcountry: e.target.value })} />
+      <input placeholder="County" value={draft.tcounty || ''} onChange={e => setDraft({ ...draft, tcounty: e.target.value })} />
+      <input placeholder="Township" value={draft.ttownship || ''} onChange={e => setDraft({ ...draft, ttownship: e.target.value })} />
+      <textarea placeholder="Comment (admin note — not shown to customers)" value={draft.tcomment || ''} onChange={e => setDraft({ ...draft, tcomment: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+// Item categories (the NEW category table — not store_categories).
+// The slug is auto-made from the label on create and never changes
+// on edit, mirroring CategoryForm.
+export function ItemCategoryForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form onSubmit={onSubmit} className="form-card">
+      <input required placeholder="Item category label (e.g. Dairy)" value={draft.label || ''} onChange={e => setDraft({ ...draft, label: e.target.value })} />
+      {draft.id
+        ? <p className="hint">Slug stays "{draft.slug}" — renaming here does not change it.</p>
+        : <p className="hint">The category's slug is made from this automatically (e.g. "Dairy" → dairy).</p>}
+      <div className="store-actions">
+        <button type="submit">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+// Sub categories: variant-style attributes belonging to one item
+// category (flavor, color, pack size, weight...).
+export function SubCategoryForm({ draft, setDraft, onSubmit, submitLabel, onCancel, itemCategories }) {
+  return (
+    <form onSubmit={onSubmit} className="form-card">
+      <select required value={draft.category_id || ''} onChange={e => setDraft({ ...draft, category_id: e.target.value })}>
+        <option value="">— Item category —</option>
+        {(itemCategories || []).map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+      </select>
+      <input placeholder="Flavor (e.g. vanilla)" value={draft.flavor || ''} onChange={e => setDraft({ ...draft, flavor: e.target.value })} />
+      <input placeholder="Color" value={draft.color || ''} onChange={e => setDraft({ ...draft, color: e.target.value })} />
+      <input placeholder="Pack of (how many in a pack)" type="number" min="0" value={draft.packof ?? ''} onChange={e => setDraft({ ...draft, packof: e.target.value })} />
+      <input placeholder="Size" value={draft.size || ''} onChange={e => setDraft({ ...draft, size: e.target.value })} />
+      <input placeholder="Weight" type="number" step="any" min="0" value={draft.weight ?? ''} onChange={e => setDraft({ ...draft, weight: e.target.value })} />
+      <input placeholder="Unit (e.g. kg, lb, oz)" value={draft.unit || ''} onChange={e => setDraft({ ...draft, unit: e.target.value })} />
       <div className="store-actions">
         <button type="submit">{submitLabel}</button>
         {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}

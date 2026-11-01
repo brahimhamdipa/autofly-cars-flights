@@ -54,6 +54,7 @@ export default function AdminStoreAdd() {
       is_active: it.is_active, online: it.online,
       stock: it.stock === '' ? null : Number(it.stock),
       pics: it.pics,
+      barCode: it.barCode || '',
     })
     if (error) { setStatus('Error: ' + error.message); return }
     setStatus(`✓ Item "${it.name}" saved.`)

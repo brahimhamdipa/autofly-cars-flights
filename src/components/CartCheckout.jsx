@@ -149,7 +149,15 @@ export default function CartCheckout({ products, onOrderPlaced }) {
   const handleFulfillClick = (section, mode) => {
     const rows = popupCandidates(section, mode)
     setChosen(c => ({ ...c, [section.key]: mode }))
+    setSectionStatus(s => ({ ...s, [section.key]: '' }))
     if (rows) { setPopup({ sectionKey: section.key, mode, rows }); setPopupQuery('') }
+  }
+
+  // Grocery sections have no popups: picking a mode just selects it
+  // (and clears any stale notice from an earlier Place attempt).
+  const handleGroceryClick = (section, mode) => {
+    setChosen(c => ({ ...c, [section.key]: mode }))
+    setSectionStatus(s => ({ ...s, [section.key]: '' }))
   }
 
   // X closes the popup with no half-state: the mode choice goes back
@@ -410,8 +418,8 @@ export default function CartCheckout({ products, onOrderPlaced }) {
                 <p className="cart-total">Section total: <b>{money(total)}</b></p>
 
                 <div className="trip-tabs fulfill-tabs">
-                  {canDeliver && <button type="button" className={chosen[section.key] === 'delivery' ? 'active' : ''} onClick={() => section.kind === 'grocery' ? setChosen(c => ({ ...c, [section.key]: 'delivery' })) : handleFulfillClick(section, 'delivery')}>🚚 Delivery</button>}
-                  {canPickup && <button type="button" className={chosen[section.key] === 'pickup' ? 'active' : ''} onClick={() => section.kind === 'grocery' ? setChosen(c => ({ ...c, [section.key]: 'pickup' })) : handleFulfillClick(section, 'pickup')}>🏪 Pickup</button>}
+                  {canDeliver && <button type="button" className={chosen[section.key] === 'delivery' ? 'active' : ''} onClick={() => section.kind === 'grocery' ? handleGroceryClick(section, 'delivery') : handleFulfillClick(section, 'delivery')}>🚚 Delivery</button>}
+                  {canPickup && <button type="button" className={chosen[section.key] === 'pickup' ? 'active' : ''} onClick={() => section.kind === 'grocery' ? handleGroceryClick(section, 'pickup') : handleFulfillClick(section, 'pickup')}>🏪 Pickup</button>}
                 </div>
                 {!canDeliver && !canPickup && <p className="hint">Nothing in this section supports delivery or pickup — remove those items to continue.</p>}
                 {sel && sel.mode === fulfillment && (

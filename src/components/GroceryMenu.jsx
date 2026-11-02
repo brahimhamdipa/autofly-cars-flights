@@ -14,7 +14,7 @@ export default function GroceryMenu({ go }) {
     const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
     window.addEventListener('pointerdown', onDown)
     return () => window.removeEventListener('pointerdown', onDown)
-  }, [open ])
+  }, [open])
 
   const pick = (page, param) => { setOpen(false); if (go) go(page, param) }
 
@@ -25,7 +25,7 @@ export default function GroceryMenu({ go }) {
       </button>
       {open && (
         <div className="car-submenu">
-          <button onClick={() => pick('grocery-cart')}>My Cart <span className="menu-count">{count}</span></button>
+          <button onClick={() => pick('grocery-cart')}>My Cart {count > 0 && <span className="menu-count">{count}</span>}</button>
           <button onClick={() => pick('products')}>Products</button>
           <button onClick={() => pick('stores')}>Stores</button>
           <button onClick={() => pick('grocery-contact')}>Contact Us</button>
@@ -43,7 +43,7 @@ export function GroceryTopBar({ go }) {
     <div className="g-topbar">
       <GroceryMenu go={go} />
       <button className="cart-fab" onClick={() => go && go('grocery-cart')} aria-label="My Cart">
-        🛒<span className="cart-fab-count">{count}</span>
+        🛒{count > 0 && <span className="cart-fab-count">{count}</span>}
       </button>
     </div>
   )

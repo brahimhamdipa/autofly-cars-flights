@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { supabase, NOTIFY_EMAIL } from '../lib/supabaseClient'
 
 import { loadItemCategories, loadSubCategories, formatVariant } from '../lib/storeData'
+import { loadBarberDomain } from '../lib/barberData'
+import BarberTemplatePage from './BarberTemplatePage'
 
 import { PicField } from './admin/StoreFormBits'
 import EmployeeChatView from './EmployeeChatView'
@@ -44,14 +46,32 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange }) {
 
   const [item, setItem] = useState(blankItem)
 
+  // Barber template lookup: null = not a barber slug (normal login
+  // flow), a row = render the public template page instead.
+  const [barberDomain, setBarberDomain] = useState(null)
+  const [barberChecking, setBarberChecking] = useState(true)
+
   const [status, setStatus] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    loadItemCategories().then(setCategories).catch(() => {})
-    loadSubCategories().then(setSubcats).catch(() => {})
-  }, [])
+    loadBarberDomain(slug)
+      .then(d => {
+        setBarberDomain(d)
+        // The template page needs no categories — skip those loads
+        // when this slug is a barber website.
+        if (!d) {
+          loadItemCategories().then(setCategories).catch(() => {})
+          loadSubCategories().then(setSubcats).catch(() => {})
+        }
+      })
+      .catch(() => {
+        loadItemCategories().then(setCategories).catch(() => {})
+        loadSubCategories().then(setSubcats).catch(() => {})
+      })
+      .finally(() => setBarberChecking(false))
+  }, [slug])
   useEffect(() => {
     if (onAuthedChange) onAuthedChange(!!authed)
   }, [authed])
@@ -118,6 +138,19 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange }) {
     } catch (err) {
       setStatus(s => s + ' (Note: the item is saved, but the owner email failed.)')
     }
+  }
+  if (barberChecking) {
+    return (
+      <div>
+        <div className="hero-card">
+          {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
+          <p>Loading…</p>
+        </div>
+      </div>
+    )
+  }
+  if (barberDomain) {
+    return <BarberTemplatePage domain={barberDomain} goBack={goBack} />
   }
   if (authed?.kind === 'employee') {
     return <EmployeeChatView creds={authed.creds} employee={authed.employee} goBack={goBack} />

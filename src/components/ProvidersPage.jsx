@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Lightbox } from './CarSection'
 import { GroceryTopBar } from './GroceryMenu'
 import { loadProviders } from '../lib/storeData'
+import ScrollTopButton from './ScrollTopButton'
 
 // Physical Stores list — data now comes from the store_providers table
 // (replaces the old Stores/*/store.txt folders). Search matches name,
@@ -91,6 +92,7 @@ export default function ProvidersPage({ go, onShop, onView }) {
           <ProviderCard key={store.id} store={store} onShop={onShop} onView={onView} />
         ))}
       </div>
+      <ScrollTopButton />
     </div>
   )
 }

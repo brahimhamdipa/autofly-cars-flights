@@ -6,14 +6,16 @@ import { GroceryTopBar } from './GroceryMenu'
 
 import { useCart } from '../lib/CartContext'
 
-import { loadProvider, loadItems, money } from '../lib/storeData'
+import { loadProvider, loadItems, loadSubCategories, loadItemVariants, money } from '../lib/storeData'
 
 import { StockLine, useVariantAdd } from './StoreBits'
+import FilterPopup from './FilterPopup'
+import ScrollTopButton from './ScrollTopButton'
 
 // "Order from us" page for one store: ALL of this provider's active
-// items (not just "Store products"), with category tabs to narrow down.
-// Tabs come from the items' attached categories arrays (the new
-// category table, via store_item_categories) — one tab per distinct
+// items (not just "Store products"), with a store-scoped filter popup to narrow down.
+// Filter categories come from the items' attached categories arrays (the new
+// category table, via store_item_categories) — one filter entry per distinct
 // category across this store's items. Adding goes to the ONE site-wide
 // cart (grouped by store at checkout).
 // This fixes the old dead end where an item found on a category page
@@ -79,7 +81,11 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
 
   const [query, setQuery] = useState('')
 
-  const [catFilter, setCatFilter] = useState('all')
+  const [selCats, setSelCats] = useState([])
+  const [selSubs, setSelSubs] = useState([])
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [itemVariants, setItemVariants] = useState(null) // null = not loaded yet → filter fails OPEN
+  const [subcats, setSubcats] = useState([])
 
   const [justAdded, setJustAdded] = useState('')
 
@@ -88,29 +94,45 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
   const { requestAdd, variantPopup } = useVariantAdd()
 
   useEffect(() => {
-    setProvider(null); setItems(null); setError(''); setCatFilter('all'); setJustAdded('')
+  setProvider(null); setItems(null); setError(''); setSelCats([]); setSelSubs([]); setFilterOpen(false); setJustAdded('')
     loadProvider(providerId).then(setProvider).catch(e => setError(e.message))
     loadItems({ providerId }).then(setItems).catch(e => setError(e.message))
   }, [providerId])
+  useEffect(() => {
+    loadSubCategories().then(setSubcats).catch(() => {})
+  }, [])
+  useEffect(() => {
+    if (!items) return
+    loadItemVariants(items.map(i => i.id)).then(setItemVariants).catch(() => {})
+  }, [items])
 
   const categories = useMemo(() => {
     const map = {}
     for (const i of items || []) {
-      for (const c of i.categories || []) map[c.slug] = c.label
+      for (const c of i.categories || []) map[c.id] = c
     }
-    return Object.entries(map).sort((a, b) => a[1].localeCompare(b[1]))
+    return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
   }, [items])
-
+  const scopedSubcats = useMemo(() => {
+    const ids = new Set(categories.map(c => c.id))
+    return subcats.filter(s => ids.has(s.category_id))
+  }, [categories, subcats])
   const filtered = useMemo(() => {
     if (!items) return []
     const needle = query.trim().toLowerCase()
     return items.filter(i =>
-      (catFilter === 'all' || (i.categories || []).some(c => c.slug === catFilter)) &&
+      (selCats.length === 0 || (i.categories || []).some(c => selCats.includes(c.id))) &&
+      (selSubs.length === 0 || !itemVariants || (itemVariants[i.id] || []).some(v => selSubs.includes(v.id))) &&
       (!needle || [i.name, i.description, String(i.price), ...(i.categories || []).map(c => c.label)].join(' ').toLowerCase().includes(needle))
-    )
-  }, [items, query, catFilter])
-
-  const addToCart = (item) => {
+  )
+  }, [items, query, selCats, selSubs, itemVariants])
+  const toggle = (list, setList, id) =>
+    setList(list.includes(id)? list.filter(x => x!== id): [...list, id])
+  const toggleCat = (id) => toggle(selCats, setSelCats, id)
+  const toggleSub = (id) => toggle(selSubs, setSelSubs, id)
+    const clearFilters = () => { setSelCats([]); setSelSubs([])}
+  const activeFilterCount = selCats.length + selSubs.length
+      const addToCart = (item) => {
     requestAdd(item, () => {
       setJustAdded(item.name)
       setTimeout(() => setJustAdded(''), 4000)
@@ -130,16 +152,12 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
         )}
         {justAdded && <p className="status">✓ "{justAdded}" added to your cart.</p>}
         <div className="filters">
+            <button type="button" onClick={() => setFilterOpen(true)} aria-label="Filter items" title="Filter items">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M3 5h18" /><path d="M7 12h10" /><path d="M10 19h4" /></svg>
+              {activeFilterCount > 0 && <span> ({activeFilterCount})</span>}
+            </button>
           <input placeholder="Search items (e.g. bread, 8.50)" value={query} onChange={e => setQuery(e.target.value)} />
         </div>
-        {categories.length > 1 && (
-          <div className="report-links">
-            <button type="button" className={catFilter === 'all' ? 'active' : ''} onClick={() => setCatFilter('all')}>All</button>
-            {categories.map(([slug, name]) => (
-              <button key={slug} type="button" className={catFilter === slug ? 'active' : ''} onClick={() => setCatFilter(slug)}>{name}</button>
-            ))}
-          </div>
-        )}
         {items && <p className="hint">{filtered.length} item{filtered.length === 1 ? '' : 's'}</p>}
       </div>
 
@@ -163,6 +181,20 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
       </div>
 
       {variantPopup}
+      {filterOpen && (
+        <FilterPopup
+            title="Filter items"
+          categories={categories}
+          subcats={scopedSubcats}
+          selCats={selCats}
+          selSubs={selSubs}
+          onToggleCat={toggleCat}
+          onToggleSub={toggleSub}
+          onClear={clearFilters}
+          onClose={() => setFilterOpen(false)}
+          />
+      )}
+      <ScrollTopButton />
     </div>
   )
 

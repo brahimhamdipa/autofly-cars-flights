@@ -51,6 +51,7 @@ export default function App() {
   // to wherever the customer came from (not always the store).
   const [prev, setPrev] = useState(null)
   const [moreOpen, setMoreOpen] = useState(false)
+  const [formAuthed, setFormAuthed] = useState(false)
   const moreRef = useRef(null)
 
   useEffect(() => {
@@ -185,12 +186,12 @@ export default function App() {
         {tab === 'services-contact' && <ServicesContactPage go={go} />}
         {tab === 'about' && <AboutPage />}
         {tab === 'admin' && <AdminPage />}
-        {tab === 'provider-form' && <ProviderFormPage slug={formSlug} goBack={goBack} />}
+        {tab === 'provider-form' && <ProviderFormPage slug={formSlug} goBack={goBack} onAuthedChange={setFormAuthed} />}
       </main>
       <footer className="footer">
         <p>AutoFly.us.com — Cars, Flights & More — All in One Place</p>
       </footer>
-      <ChatWidget />
+      {!(tab === 'provider-form' && formAuthed) && <ChatWidget />}
     </div>
   )
 }

@@ -40,7 +40,7 @@ export default function ProductsPage({ go }) {
     useEffect(() => {
           if (!items) return
           loadItemVariants(items.map(i => i.id)).then(setItemVariants).catch(() => {})
-    }, [items]
+    }, [items])
 
   const filtered = useMemo(() => {
     if (!items) return []
@@ -49,7 +49,7 @@ export default function ProductsPage({ go }) {
       if (needle && ![i.name, i.description, String(i.price), i.provider?.name].join(' ').toLowerCase().includes(needle)) return false
       const cats = i.categories || []
       if (selCats.length > 0 && !cats.some(c => selCats.includes(c.id))) return false
-      if (selSubs.length > 0 && itemVariants && !(itemVariants[i.id] || []).some(v => selSubs.includes(v.id)) return false
+      if (selSubs.length > 0 && itemVariants && !(itemVariants[i.id] || []).some(v => selSubs.includes(v.id)) return) false
       return true
     })
     }, [items, query, selCats, selSubs, subcats, itemVariants])

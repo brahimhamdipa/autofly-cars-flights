@@ -25,6 +25,9 @@ import ProviderFormPage from './components/ProviderFormPage'
 import ChatWidget from './components/ChatWidget'
 import AdminPage from './components/AdminPage'
 import { CartProvider } from './lib/CartContext'
+import { BarberCartProvider } from './lib/BarberCartContext'
+import BarbersPage from './components/BarbersPage'
+import BarberCartPage from './components/BarberCartPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
 
@@ -98,7 +101,8 @@ export default function App() {
   }, [])
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
-  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes'].includes(tab)
+  const BARBER_TABS = ['barbers', 'barber-cart']
+  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes', 'barbers', 'barber-cart'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -119,6 +123,7 @@ export default function App() {
               <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
               {moreOpen && (
                 <span className="dropdown-menu">
+                  <a onClick={() => go('barbers')}>Barbers</a>
                   <a onClick={() => go('services')}>Services</a>
                   <a onClick={() => go('about')}>About Us</a>
                 </span>
@@ -170,6 +175,12 @@ export default function App() {
             {tab === 'category' && <CategoryPage slug={categorySlug} go={go} />}
             {tab === 'item-detail' && <ItemDetailPage itemId={itemId} go={go} goBack={goBack} />}
           </CartProvider>
+        )}
+        {BARBER_TABS.includes(tab) && (
+          <BarberCartProvider>
+            {tab === 'barbers' && <BarbersPage go={go} />}
+            {tab === 'barber-cart' && <BarberCartPage go={go} />}
+          </BarberCartProvider>
         )}
         {tab === 'clothes' && <ClothesPage />}
         {tab === 'services' && <ServicesPage go={go} />}

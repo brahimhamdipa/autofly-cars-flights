@@ -65,6 +65,10 @@ export function ProviderForm({ draft, setDraft, onSubmit, submitLabel, onCancel 
       <div className="store-actions">
         <button type="submit">{submitLabel}</button>
         {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+      )
+}
 
 
 // --- Jobs / employees / languages / employee passes (batch 3) ---
@@ -153,10 +157,6 @@ export function EmployeePassForm({ draft, setDraft, onSubmit, submitLabel, onCan
     </form>
   )
 }
-      </div>
-    </form>
-  )
-}
 
 export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, providers, linkData }) {
   return (
@@ -186,21 +186,20 @@ export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, pro
           <p><b>Delivery locations</b></p>
           {(linkData.fromdel || []).length === 0 && <p className="hint">No delivery locations yet.</p>}
           {(linkData.fromdel || []).map(r => (
-            <label key={r.id}><input type="checkbox" checked={linkData.selected.fromdelIds.includes(r.id)} onChange={() => linkData.onToggle('from', r.id)} /> {r.fname}{r.fcity ? ` — ${r.fcity}` : ''}</label>
+            <label key={r.id}><input type="checkbox" checked={linkData.selected.fromdelIds.includes(r.id)} onChange={() => linkData.onToggle('from', r.id)} /> {r.fname}{r.fcity ? ` — ${r.fcity}` — ''}</label>
           ))}
           <p><b>Pickup locations</b></p>
           {(linkData.topick || []).length === 0 && <p className="hint">No pickup locations yet.</p>}
           {(linkData.topick || []).map(r => (
             <label key={r.id}><input type="checkbox" checked={linkData.selected.topickIds.includes(r.id)} onChange={() => linkData.onToggle('to', r.id)} /> {r.tname}{r.tcity ? ` — ${r.tcity}` : ''}</label>
           ))}
-        </div>
       {(linkData.selected.categoryIds || []).map(catId => {
-                const cat = (linkData.itemCategories || []).find(c => c.id === catId)
+      const cat = (linkData.itemCategories || []).find(c => c.id === catId)
                 const subs = (linkData.subcats || []).filter(s => s.category_id === catId)
                 return (
                               <div key={catId} style={{ marginLeft: 16, borderLeft: '3px solid #e8e8f0', paddingLeft: 10, marginTop: 8 }}>
                                               <label style={{ fontWeight: 600 }}>Options for {cat ? cat.label : 'category'}:</label>
-                                {subs.length === 0 && <div className="hint">No options defined for this category yet — add them in Sub Categories.</div>div>}
+                                {subs.length === 0 && <div className="hint">No options defined for this category yet — add them in Sub Categories.</div>}
                                 {subs.map(s => (
                                                 <label key={s.id} style={{ display: 'block' }}>
                                                                   <input
@@ -213,7 +212,8 @@ export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, pro
                               </div>
                             )
       })}
-                                
+        </div>
+      
     
     
       )}

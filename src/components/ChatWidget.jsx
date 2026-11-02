@@ -148,7 +148,7 @@ export default function ChatWidget() {
           ) : (
             <>
               <div className="chat-messages">
-                {employeeName && <p className="hint">You're chatting with {employeeName}.</p>}
+                <p className="hint">You're chatting with AutoFly.</p>
                 {messages.map(m => (
                   <div key={m.id} className={`chat-msg ${m.sender === 'customer' ? 'mine' : 'theirs'}`}>
                     <span>{m.body}</span>

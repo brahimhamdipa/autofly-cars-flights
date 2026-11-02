@@ -9,9 +9,11 @@ import { jsPDF } from 'jspdf'
 // database prices.
 //
 // NOTE: store_categories is GONE. Items link to categories ONLY through
-// the store_item_categories junction (item_id, category_id), and variants
-// are category-level: an item's variants are the subCategory rows of its
-// linked categories.
+// the store_item_categories junction (item_id, category_id). Variants are
+// EFFECTIVE per category (see loadItemVariants): for each linked category,
+// the item's explicitly picked subcategories in that category
+// (store_item_subcategories) if it picked any, otherwise ALL subCategory
+// rows of that category.
 
 export async function loadProviders() {
   const { data, error } = await supabase.from('store_providers').select('*').order('name')
@@ -89,43 +91,61 @@ export async function loadItemsByIds(ids) {
 }
 
 // An item's variants, grouped per item id: { itemId: [subCategory rows] }.
-// Variants are CATEGORY-level: an item's variants are the subCategory rows
-// of every category it is linked to (union, deduped by row id). Items with
+// Effective variants are PER-CATEGORY: for each category the item is
+// linked to, if the item has explicitly picked subcategories in that
+// category (store_item_subcategories) those are its variants for that
+// category, otherwise ALL subCategory rows of that category are. Items with
 // no linked categories, or categories with no subCategory rows, get an
 // empty array. Empty input -> {}.
 export async function loadItemVariants(itemIds) {
-  if (!itemIds || itemIds.length === 0) return {}
-  const { data: links, error } = await supabase.from('store_item_categories').select('item_id, category_id').in('item_id', itemIds)
-  if (error) throw error
-  const catIds = [...new Set((links || []).map(r => r.category_id))]
-  if (catIds.length === 0) return {}
-  const { data: rows, error: subErr } = await supabase.from('subCategory').select('*').in('category_id', catIds)
-  if (subErr) throw subErr
-  const catsOfItem = {}
-  for (const r of links || []) {
-    if (!catsOfItem[r.item_id]) catsOfItem[r.item_id] = new Set()
-    catsOfItem[r.item_id].add(r.category_id)
-  }
-  const rowsByCat = {}
-  for (const row of rows || []) {
-    if (!rowsByCat[row.category_id]) rowsByCat[row.category_id] = []
-    rowsByCat[row.category_id].push(row)
-  }
-  const out = {}
-  for (const id of itemIds) {
-    const seen = new Set()
-    const list = []
-    for (const catId of catsOfItem[id] || []) {
-      for (const row of rowsByCat[catId] || []) {
-        if (seen.has(row.id)) continue
-        seen.add(row.id)
-        list.push(row)
-      }
+    if (!itemIds || itemIds.length === 0) return {}
+    const { data: links, error } = await supabase.from('store_item_categories').select('item_id, category_id').in('item_id', itemIds)
+    if (error) throw error
+    const { data: subLinks, error: subLinkErr } = await supabase.from('store_item_subcategories').select('item_id, subcategory_id').in('item_id', itemIds)
+    if (subLinkErr) throw subLinkErr
+    const catIds = [...new Set((links || []).map(r => r.category_id))]
+    if (catIds.length === 0) return {}
+    const { data: rows, error: subErr } = await supabase.from('subCategory').select('*').in('category_id', catIds)
+    if (subErr) throw subErr
+    const rowById = Object.fromEntries((rows || []).map(r => [r.id, r]))
+    const rowsByCat = {}
+    for (const row of rows || []) {
+          if (!rowsByCat[row.category_id]) rowsByCat[row.category_id] = []
+          rowsByCat[row.category_id].push(row)
     }
-    out[id] = list
-  }
-  return out
+    const catsOfItem = {}
+    for (const r of links || []) {
+          if (!catsOfItem[r.item_id]) catsOfItem[r.item_id] = new Set()
+          catsOfItem[r.item_id].add(r.category_id)
+    }
+    const explicitByItemCat = {}
+    for (const r of subLinks || []) {
+          const row = rowById[r.subcategory_id]
+          if (!row) continue
+          const key = r.item_id + ':' + row.category_id
+          if (!explicitByItemCat[key]) explicitByItemCat[key] = new Set()
+          explicitByItemCat[key].add(r.subcategory_id)
+    }
+    const out = {}
+    for (const id of itemIds) {
+          const seen = new Set()
+          const list = []
+          for (const catId of catsOfItem[id] || []) {
+                  const explicit = explicitByItemCat[id + ':' + catId]
+                  const pool = explicit && explicit.size > 0
+                    ? (rowsByCat[catId] || []).filter(r => explicit.has(r.id))
+                            : (rowsByCat[catId] || [])
+                  for (const row of pool) {
+                            if (seen.has(row.id)) continue
+                            seen.add(row.id)
+                            list.push(row)
+                  }
+          }
+          out[id] = list
+    }
+    return out
 }
+
 
 // One-line label for a subCategory row, joining only the fields that are
 // set, in this order: flavor, color, size, "Pack of <packof>",
@@ -209,23 +229,34 @@ export async function loadSubCategories() {
 
 // Replace one item's links wholesale: delete all its junction rows, then
 // insert the given ids (empty arrays insert nothing). Admin use only.
-export async function syncItemLinks(itemId, { categoryIds = [], fromdelIds = [], topickIds = [] } = {}) {
+export async function syncItemLinks(itemId, { categoryIds = [], fromdelIds = [], topickIds = [] , subcategoryIds = []} = {}) {
   const dels = await Promise.all([
     supabase.from('store_item_categories').delete().eq('item_id', itemId),
     supabase.from('store_item_fromdel').delete().eq('item_id', itemId),
     supabase.from('store_item_topick').delete().eq('item_id', itemId),
+        supabase.from('store_item_subcategories').delete().eq('item_id', itemId),
   ])
   for (const d of dels) if (d.error) throw d.error
   const inserts = []
   if (categoryIds.length) inserts.push(supabase.from('store_item_categories').insert(categoryIds.map(category_id => ({ item_id: itemId, category_id }))))
   if (fromdelIds.length) inserts.push(supabase.from('store_item_fromdel').insert(fromdelIds.map(fromdel_id => ({ item_id: itemId, fromdel_id }))))
   if (topickIds.length) inserts.push(supabase.from('store_item_topick').insert(topickIds.map(topick_id => ({ item_id: itemId, topick_id }))))
+    if (subcategoryIds.length) inserts.push(supabase.from('store_item_subcategories').insert(subcategoryIds.map(subcategory_id => ({ item_id: itemId, subcategory_id }))))
   for (const ins of inserts) {
     const { error } = await ins
     if (error) throw error
   }
 }
 
+// One item's explicitly picked subcategory ids (store_item_subcategories),
+// as a plain id array. Used by the admin/provider item forms to pre-check
+// the subcategory boxes under each linked category.
+export async function loadItemSubcategoryIds(itemId) {
+    if (!itemId) return []
+        const { data, error } = await supabase.from('store_item_subcategories').select('subcategory_id').eq('item_id', itemId)
+            if (error) throw error
+                return (data || []).map(r => r.subcategory_id)
+}
 export async function placeStoreOrder({ providerId, name, email, phone, fulfillment, deliveryAddress, cart }) {
   const { data, error } = await supabase.rpc('place_store_order', {
     p_provider_id: providerId,

@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react'
 
 import { supabase, NOTIFY_EMAIL } from '../lib/supabaseClient'
 
-import { loadItemCategories } from '../lib/storeData'
+import { loadItemCategories, loadSubCategories, formatVariant } from '../lib/storeData'
 
 import { PicField } from './admin/StoreFormBits'
+import EmployeeChatView from './EmployeeChatView'
 
 // Public provider form page, reached at autofly.us.com/<form name>.
 // The store owner logs in with the username and password the admin
@@ -22,13 +23,14 @@ const blankItem = () => ({
 
   delivery_address: '', pickup_address: '',
 
-  delivery: true, pickup: true, stock: '', pics: [],
+  delivery: true, pickup: true, stock: '', pics: [], subcategoryIds: []
 
 })
 
 export default function ProviderFormPage({ slug, goBack }) {
 
   const [categories, setCategories] = useState([])
+  const [subcats, setSubcats] = useState([])
 
   const [username, setUsername] = useState('')
 
@@ -48,26 +50,37 @@ export default function ProviderFormPage({ slug, goBack }) {
 
   useEffect(() => {
     loadItemCategories().then(setCategories).catch(() => {})
+    loadSubCategories().then(setSubcats).catch(() => {})
   }, [])
 
-  const login = async (e) => {
+  const login = async(e) => {
     e.preventDefault()
-    setLoggingIn(true); setLoginError('')
-    const { data, error } = await supabase.rpc('check_provider_form', {
-      p_slug: slug, p_username: username, p_password: password,
-    })
-    setLoggingIn(false)
-    if (error) { setLoginError('Could not open this form: ' + error.message); return }
-    if (!data || !data.ok) { setLoginError('Wrong username or password for this form.'); return }
-    setAuthed({ providerId: data.provider_id, providerName: data.provider_name })
+    setLoggingIn(true)
+    setLoginError('')
+    try {
+      const { data, error} = await supabase.rpc('check_provider_form', { p_slug: slug, p_username: username, p_password: password})
+      if (!error && data && data.ok) {
+        setAuthed({ kind: 'provider', providerId: data.provider_id, providerName: data.provider_name})
+        return
+      }
+    } catch { /* fall through to the employee check */ }
+    try {
+      const { data, error} = await supabase.rpc('check_employee_pass', { p_form: slug, p_username: username, p_password: password})
+      if (error) throw error
+      setAuthed({ kind: 'employee', creds: { form: slug, username, password}, employee: { firstName: data.firstName, lastName: data.lastName, jobTitle: data.jobTitle}})
+    } catch {
+      setLoginError('Wrong username or password for this form.')
+    } finally {
+      setLoggingIn(false)
+    }
   }
-
   const submitItem = async (e) => {
     e.preventDefault()
     setSubmitting(true); setStatus('')
     const { data, error } = await supabase.rpc('submit_provider_item', {
       p_slug: slug, p_username: username, p_password: password,
       p_category_ids: [Number(item.category_id)],
+      p_subcategory_ids: item.subcategoryIds || [],
       p_name: item.name,
       p_price: Number(item.price),
       p_description: item.description,
@@ -103,7 +116,9 @@ export default function ProviderFormPage({ slug, goBack }) {
       setStatus(s => s + ' (Note: the item is saved, but the owner email failed.)')
     }
   }
-
+  if (authed?.kind === 'employee') {
+    return <EmployeeChatView creds={authed.creds} employee={authed.employee} goBack={goBack} />
+  }
   return (
     <div>
       <div className="hero-card">
@@ -123,15 +138,24 @@ export default function ProviderFormPage({ slug, goBack }) {
         </form>
       )}
 
-      {authed && (
+      {authed?.kind === 'provider' && (
         <form onSubmit={submitItem} className="form-card">
           <label>Store
             <input disabled value={authed.providerName} />
           </label>
-          <select required value={item.category_id} onChange={e => setItem({ ...item, category_id: e.target.value })}>
+          <select required value={item.category_id} onChange={e => setItem({ ...item, category_id: e.target.value, subcategoryIds: []})}>
             <option value="">— Category —</option>
             {categories.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
           </select>
+          {subcats.filter(s => s.category_id === Number(item.category_id)).map(s => (
+          <label key={s.id} style={{ display: 'block'}}>
+            <input
+              type="checkbox"
+              checked={(item.subcategoryIds || []).includes(s.id)}
+              onChange={() => setItem(prev => ({...prev, subcategoryIds: (prev.subcategoryIds || []).includes(s.id)? prev.subcategoryIds.filter(x => x!== s.id): [...prev.subcategoryIds, s.id]}))}
+              /> {formatVariant(s)}
+
+          ))}
           <input required placeholder="Item name" value={item.name} onChange={e => setItem({ ...item, name: e.target.value })} />
           <input required placeholder="Price" type="number" step="0.01" min="0" value={item.price} onChange={e => setItem({ ...item, price: e.target.value })} />
           <textarea placeholder="Description" value={item.description} onChange={e => setItem({ ...item, description: e.target.value })} />

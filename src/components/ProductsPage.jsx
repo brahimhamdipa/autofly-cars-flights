@@ -42,9 +42,27 @@ export default function ProductsPage({ go }) {
           loadItemVariants(items.map(i => i.id)).then(setItemVariants).catch(() => {})
     }, [items])
 
+  
+    // Filter categories come from the available products themselves
+  // (same as a Shop-with-us page): only categories that have products
+  // appear, and only their subcategories are offered.
+    const prodCategories = useMemo(() => {
+    const map = {}
+    for (const i of items || []) {
+      for (const c of i.categories || []) map[c.id] = c
+                                 }
+return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
+    }, [items])
+  const prodSubcats = useMemo(() => {
+    const ids = new Set(prodCategories.map(c => c.id))
+    return subcats.filter(s => ids.has(s.category_id))
+  }, [prodCategories, subcats])
+
+    
   const filtered = useMemo(() => {
     if (!items) return []
     const needle = query.trim().toLowerCase()
+    
     return items.filter(i => {
       if (needle && ![i.name, i.description, String(i.price), i.provider?.name].join(' ').toLowerCase().includes(needle)) return false
       const cats = i.categories || []
@@ -128,8 +146,8 @@ export default function ProductsPage({ go }) {
       {filterOpen && (
               <FilterPopup
                         title="Filter products"
-                        categories={categories}
-                        subcats={subcats}
+                        categories={prodCategories}
+                        subcats={prodSubcats}
                         selCats={selCats}
                         selSubs={selSubs}
                         onToggleCat={(id) => toggle(selCats, setSelCats, id)}
@@ -141,3 +159,4 @@ export default function ProductsPage({ go }) {
     </div>
   )
 }
+

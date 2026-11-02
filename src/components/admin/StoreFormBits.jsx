@@ -185,7 +185,7 @@ export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, pro
           ))}
           <p><b>Delivery locations</b></p>
           {(linkData.fromdel || []).length === 0 && <p className="hint">No delivery locations yet.</p>}
-          {(linkData.fromdel || []).map(r => (
+          {(linkData.fromdel || []):map(r => (
             <label key={r.id}><input type="checkbox" checked={linkData.selected.fromdelIds.includes(r.id)} onChange={() => linkData.onToggle('from', r.id)} /> {r.fname}{r.fcity ? ` — ${r.fcity}` — ''}</label>
           ))}
           <p><b>Pickup locations</b></p>

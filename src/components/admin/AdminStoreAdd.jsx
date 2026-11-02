@@ -127,6 +127,8 @@ export default function AdminStoreAdd() {
     if (f === 'admin') { setStatus('Error: "admin" is reserved — pick another form name.'); return }
     const { data: passRows } = await supabase.from('fPasses').select('id').eq('formName', f)
     if (passRows && passRows.length > 0) { setStatus('That form name is already used by an employee pass — pick another.'); return }
+    const { data: domainRows } = await supabase.from('website_domain').select('id').eq('slug', f)
+    if (domainRows && domainRows.length > 0) { setStatus('That form name is already used by a barber website — pick another.'); return }
     setStatus('Saving...')
     const { error } = await supabase.from('providersForm').insert({
       provider_id: Number(pf.provider_id), f, u: pf.u, p: pf.p, comment: pf.comment,

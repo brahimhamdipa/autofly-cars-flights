@@ -351,3 +351,268 @@ export function ProviderFormEditor({ draft, setDraft, onSubmit, submitLabel, onC
     </form>
   )
 }
+
+// --- Barber template websites (batch 4 phase 2) ---
+export function BarberStoreForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <input required placeholder="Store name" value={draft.store_name || ''} onChange={e => setDraft({ ...draft, store_name: e.target.value })} />
+      <input placeholder="Owner name" value={draft.owner_name || ''} onChange={e => setDraft({ ...draft, owner_name: e.target.value })} />
+      <input placeholder="Phone" value={draft.tel || ''} onChange={e => setDraft({ ...draft, tel: e.target.value })} />
+      <input placeholder="Email (reservations are emailed here)" type="email" value={draft.email || ''} onChange={e => setDraft({ ...draft, email: e.target.value })} />
+      <input placeholder="Website URL" value={draft.url || ''} onChange={e => setDraft({ ...draft, url: e.target.value })} />
+      <textarea placeholder="About the store" value={draft.about || ''} onChange={e => setDraft({ ...draft, about: e.target.value })} />
+      <label><input type="checkbox" checked={!!draft.text_message} onChange={e => setDraft({ ...draft, text_message: e.target.checked })} /> Store wants text messages (preference only — SMS is not sent yet)</label>
+      <PicField pics={draft.pics || []} setPics={pics => setDraft({ ...draft, pics })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function BarberLocationForm({ draft, setDraft, onSubmit, submitLabel, onCancel, stores }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <select required value={draft.store_id ?? ''} onChange={e => setDraft({ ...draft, store_id: e.target.value })}>
+        <option value="">— Barber store —</option>
+        {(stores || []).map(s => <option key={s.id} value={s.id}>{s.store_name}</option>)}
+      </select>
+      <input required placeholder="Address" value={draft.address || ''} onChange={e => setDraft({ ...draft, address: e.target.value })} />
+      <input placeholder="City" value={draft.city || ''} onChange={e => setDraft({ ...draft, city: e.target.value })} />
+      <input placeholder="Zip code" value={draft.zip || ''} onChange={e => setDraft({ ...draft, zip: e.target.value })} />
+      <input placeholder="State" value={draft.state || ''} onChange={e => setDraft({ ...draft, state: e.target.value })} />
+      <input placeholder="Country" value={draft.country || ''} onChange={e => setDraft({ ...draft, country: e.target.value })} />
+      <input placeholder="County" value={draft.county || ''} onChange={e => setDraft({ ...draft, county: e.target.value })} />
+      <input placeholder="Township" value={draft.township || ''} onChange={e => setDraft({ ...draft, township: e.target.value })} />
+      <textarea placeholder="Note" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function OpenTimeForm({ draft, setDraft, onSubmit, submitLabel, onCancel, stores }) {
+  const days = [['monday', 'Monday'], ['tuesday', 'Tuesday'], ['wednesday', 'Wednesday'], ['thursday', 'Thursday'], ['friday', 'Friday'], ['saturday', 'Saturday'], ['sunday', 'Sunday']]
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <select required value={draft.store_id ?? ''} onChange={e => setDraft({ ...draft, store_id: e.target.value })}>
+        <option value="">— Barber store —</option>
+        {(stores || []).map(s => <option key={s.id} value={s.id}>{s.store_name}</option>)}
+      </select>
+      <p className="hint">One hours row per store (one-to-one). Type hours per day, e.g. “9:00 AM – 6:00 PM”, or leave a day empty.</p>
+      {days.map(([key, label]) => (
+        <label key={key}>{label} <input placeholder="e.g. 9:00 AM – 6:00 PM" value={draft[key] || ''} onChange={e => setDraft({ ...draft, [key]: e.target.value })} /></label>
+      ))}
+      <input placeholder="Closed (e.g. Sundays, holidays)" value={draft.closed || ''} onChange={e => setDraft({ ...draft, closed: e.target.value })} />
+      <label><input type="checkbox" checked={!!draft.hours_may_differ} onChange={e => setDraft({ ...draft, hours_may_differ: e.target.checked })} /> Hours may differ (holidays etc.)</label>
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function BarberCustomerForm({ draft, setDraft, onSubmit, submitLabel, onCancel, stores }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <select required value={draft.store_id ?? ''} onChange={e => setDraft({ ...draft, store_id: e.target.value })}>
+        <option value="">— Barber store —</option>
+        {(stores || []).map(s => <option key={s.id} value={s.id}>{s.store_name}</option>)}
+      </select>
+      <input required placeholder="First name" value={draft.fname || ''} onChange={e => setDraft({ ...draft, fname: e.target.value })} />
+      <input placeholder="Last name" value={draft.lname || ''} onChange={e => setDraft({ ...draft, lname: e.target.value })} />
+      <input placeholder="Location GPS" value={draft.location_gps || ''} onChange={e => setDraft({ ...draft, location_gps: e.target.value })} />
+      <textarea placeholder="Note" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function BarberStyleForm({ draft, setDraft, onSubmit, submitLabel, onCancel, stores }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <select required value={draft.store_id ?? ''} onChange={e => setDraft({ ...draft, store_id: e.target.value })}>
+        <option value="">— Barber store —</option>
+        {(stores || []).map(s => <option key={s.id} value={s.id}>{s.store_name}</option>)}
+      </select>
+      <input required placeholder="Style / service name (e.g. Haircut)" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
+      <input placeholder="Price" type="number" step="0.01" min="0" value={draft.price ?? ''} onChange={e => setDraft({ ...draft, price: e.target.value })} />
+      <textarea placeholder="Description" value={draft.description || ''} onChange={e => setDraft({ ...draft, description: e.target.value })} />
+      <input placeholder="Time to finish (minutes)" type="number" min="0" value={draft.time_to_finish ?? ''} onChange={e => setDraft({ ...draft, time_to_finish: e.target.value })} />
+      <PicField pics={draft.pics || []} setPics={pics => setDraft({ ...draft, pics })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function WebsiteDomainForm({ draft, setDraft, onSubmit, submitLabel, onCancel, stores, types }) {
+  const slugPreview = (draft.slug || 'website-name').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <select required value={draft.store_id ?? ''} onChange={e => setDraft({ ...draft, store_id: e.target.value })}>
+        <option value="">— Barber store —</option>
+        {(stores || []).map(s => <option key={s.id} value={s.id}>{s.store_name}</option>)}
+      </select>
+      <select value={draft.type_id ?? ''} onChange={e => setDraft({ ...draft, type_id: e.target.value })}>
+        <option value="">— Website type (optional) —</option>
+        {(types || []).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+      </select>
+      <input required placeholder="Slug — the word after autofly.us.com/ (e.g. demo-barber)" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The barber's page will open at autofly.us.com/{slugPreview}. The slug can't be “admin” and can't match a provider form or employee pass name — Admin refuses it if it does.</p>
+      <input placeholder="Domain (if the barber has their own, e.g. joesbarber.com)" value={draft.domain || ''} onChange={e => setDraft({ ...draft, domain: e.target.value })} />
+      <textarea placeholder="Description" value={draft.description || ''} onChange={e => setDraft({ ...draft, description: e.target.value })} />
+      <input placeholder="Note" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <input placeholder="Phone" value={draft.tel || ''} onChange={e => setDraft({ ...draft, tel: e.target.value })} />
+      <input placeholder="Email 1" type="email" value={draft.email1 || ''} onChange={e => setDraft({ ...draft, email1: e.target.value })} />
+      <input placeholder="Email 2" type="email" value={draft.email2 || ''} onChange={e => setDraft({ ...draft, email2: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function WebsiteTypeForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <input required placeholder="Type name (e.g. Barber)" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
+      <textarea placeholder="Description" value={draft.description || ''} onChange={e => setDraft({ ...draft, description: e.target.value })} />
+      <input placeholder="Note" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <PicField pics={draft.pics || []} setPics={pics => setDraft({ ...draft, pics })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function WebsiteHeaderForm({ draft, setDraft, onSubmit, submitLabel, onCancel, domains }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <select required value={draft.domain_id ?? ''} onChange={e => setDraft({ ...draft, domain_id: e.target.value })}>
+        <option value="">— Barber website —</option>
+        {(domains || []).map(d => <option key={d.id} value={d.id}>{d.slug}</option>)}
+      </select>
+      <p className="hint">One header per website (one-to-one).</p>
+      <input placeholder="Header name" value={draft.header_name || ''} onChange={e => setDraft({ ...draft, header_name: e.target.value })} />
+      <PicField pics={draft.header_logo || []} setPics={header_logo => setDraft({ ...draft, header_logo })} />
+      <input placeholder="Slogan" value={draft.header_slogan || ''} onChange={e => setDraft({ ...draft, header_slogan: e.target.value })} />
+      <textarea placeholder="Description" value={draft.header_description || ''} onChange={e => setDraft({ ...draft, header_description: e.target.value })} />
+      <input placeholder="Note" value={draft.header_note || ''} onChange={e => setDraft({ ...draft, header_note: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function WebsiteBodyForm({ draft, setDraft, onSubmit, submitLabel, onCancel, domains }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <select required value={draft.domain_id ?? ''} onChange={e => setDraft({ ...draft, domain_id: e.target.value })}>
+        <option value="">— Barber website —</option>
+        {(domains || []).map(d => <option key={d.id} value={d.id}>{d.slug}</option>)}
+      </select>
+      <p className="hint">One body per website (one-to-one). Headings h1–h5 title the sections; texts fill them.</p>
+      <input placeholder="Name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
+      <textarea placeholder="Description" value={draft.description || ''} onChange={e => setDraft({ ...draft, description: e.target.value })} />
+      <input placeholder="Note" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <input placeholder="Heading 1" value={draft.h1 || ''} onChange={e => setDraft({ ...draft, h1: e.target.value })} />
+      <textarea placeholder="Text 1" value={draft.text1 || ''} onChange={e => setDraft({ ...draft, text1: e.target.value })} />
+      <input placeholder="Heading 2 (services)" value={draft.h2 || ''} onChange={e => setDraft({ ...draft, h2: e.target.value })} />
+      <input placeholder="Heading 3 (locations)" value={draft.h3 || ''} onChange={e => setDraft({ ...draft, h3: e.target.value })} />
+      <input placeholder="Heading 4 (hours)" value={draft.h4 || ''} onChange={e => setDraft({ ...draft, h4: e.target.value })} />
+      <input placeholder="Heading 5" value={draft.h5 || ''} onChange={e => setDraft({ ...draft, h5: e.target.value })} />
+      <textarea placeholder="Text 2" value={draft.text2 || ''} onChange={e => setDraft({ ...draft, text2: e.target.value })} />
+      <textarea placeholder="Text 3" value={draft.text3 || ''} onChange={e => setDraft({ ...draft, text3: e.target.value })} />
+      <textarea placeholder="Text 4" value={draft.text4 || ''} onChange={e => setDraft({ ...draft, text4: e.target.value })} />
+      <textarea placeholder="Text 5" value={draft.text5 || ''} onChange={e => setDraft({ ...draft, text5: e.target.value })} />
+      <PicField pics={draft.pics || []} setPics={pics => setDraft({ ...draft, pics })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function WebsiteFooterForm({ draft, setDraft, onSubmit, submitLabel, onCancel, domains }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <select required value={draft.domain_id ?? ''} onChange={e => setDraft({ ...draft, domain_id: e.target.value })}>
+        <option value="">— Barber website —</option>
+        {(domains || []).map(d => <option key={d.id} value={d.id}>{d.slug}</option>)}
+      </select>
+      <p className="hint">One footer per website (one-to-one).</p>
+      <input placeholder="Footer name" value={draft.footer_name || ''} onChange={e => setDraft({ ...draft, footer_name: e.target.value })} />
+      <PicField pics={draft.footer_logo || []} setPics={footer_logo => setDraft({ ...draft, footer_logo })} />
+      <input placeholder="Slogan" value={draft.footer_slogan || ''} onChange={e => setDraft({ ...draft, footer_slogan: e.target.value })} />
+      <textarea placeholder="Description" value={draft.footer_description || ''} onChange={e => setDraft({ ...draft, footer_description: e.target.value })} />
+      <input placeholder="Note" value={draft.footer_note || ''} onChange={e => setDraft({ ...draft, footer_note: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function BarberReservationForm({ draft, setDraft, onSubmit, submitLabel, onCancel, stores, domains, styles }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <select required value={draft.store_id ?? ''} onChange={e => setDraft({ ...draft, store_id: e.target.value })}>
+        <option value="">— Barber store —</option>
+        {(stores || []).map(s => <option key={s.id} value={s.id}>{s.store_name}</option>)}
+      </select>
+      <select value={draft.domain_id ?? ''} onChange={e => setDraft({ ...draft, domain_id: e.target.value })}>
+        <option value="">— Website (optional) —</option>
+        {(domains || []).map(d => <option key={d.id} value={d.id}>{d.slug}</option>)}
+      </select>
+      <select value={draft.style_id ?? ''} onChange={e => setDraft({ ...draft, style_id: e.target.value })}>
+        <option value="">— Service (optional) —</option>
+        {(styles || []).map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+      </select>
+      <input required placeholder="Customer name" value={draft.customer_name || ''} onChange={e => setDraft({ ...draft, customer_name: e.target.value })} />
+      <input placeholder="Customer phone" value={draft.customer_phone || ''} onChange={e => setDraft({ ...draft, customer_phone: e.target.value })} />
+      <input placeholder="Customer email" type="email" value={draft.customer_email || ''} onChange={e => setDraft({ ...draft, customer_email: e.target.value })} />
+      <label>Date <input type="date" value={draft.reservation_date || ''} onChange={e => setDraft({ ...draft, reservation_date: e.target.value })} /></label>
+      <label>Time <input type="time" value={draft.reservation_time || ''} onChange={e => setDraft({ ...draft, reservation_time: e.target.value })} /></label>
+      <select value={draft.status || 'pending'} onChange={e => setDraft({ ...draft, status: e.target.value })}>
+        <option value="pending">Pending</option>
+        <option value="confirmed">Confirmed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <p className="hint">Only pending + confirmed reservations count toward the public wait estimate; cancelled ones don't.</p>
+      <textarea placeholder="Note" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}

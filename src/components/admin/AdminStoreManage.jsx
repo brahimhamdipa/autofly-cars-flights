@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 
 import { loadProviders, syncItemLinks, loadItemCategories, loadFromDel, loadToPick, loadSubCategories } from '../../lib/storeData'
 
-import { ProviderForm, ItemForm, ProviderFormEditor, FromDelForm, ToPickForm, ItemCategoryForm, SubCategoryForm, JobForm, EmployeeForm, LanguageForm, EmployeePassForm } from './StoreFormBits'
+import { ProviderForm, ItemForm, ProviderFormEditor, FromDelForm, ToPickForm, ItemCategoryForm, SubCategoryForm, JobForm, EmployeeForm, LanguageForm, EmployeePassForm, BarberStoreForm, BarberLocationForm, OpenTimeForm, BarberCustomerForm, BarberStyleForm, WebsiteDomainForm, WebsiteTypeForm, WebsiteHeaderForm, WebsiteBodyForm, WebsiteFooterForm, BarberReservationForm } from './StoreFormBits'
 
 import { money } from '../../lib/storeData'
 
@@ -28,6 +28,18 @@ const TABLES = [
   ['employees', 'Employees', 'employees'],
   ['languages', 'Languages', 'languages'],
   ['passes', 'Employee Passes', 'fPasses'],
+  ['barber_stores', 'Barber Stores', 'barber_store'],
+  ['barber_locations', 'Barber Locations', 'barber_location'],
+  ['open_times', 'Open Hours', 'open_time'],
+  ['barber_customers', 'Barber Customers', 'barber_customer'],
+  ['barber_styles', 'Barber Styles', 'barber_style'],
+  ['website_domains', 'Barber Websites', 'website_domain'],
+  ['website_types', 'Website Types', 'website_type'],
+  ['website_headers', 'Website Headers', 'website_header'],
+  ['website_bodies', 'Website Bodies', 'website_body'],
+  ['website_footers', 'Website Footers', 'website_footer'],
+  ['barber_reservations', 'Barber Reservations', 'barber_reservation'],
+  ['barber_orders', 'Barber Orders', 'barber_order'],
 ]
 
 const slugify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
@@ -44,6 +56,18 @@ const blankDraft = (table) => {
   if (table === 'employees') return { firstName: '', lastName: '', job_id: '', address: '', city: '', zip: '', state: '', county: '', dob: '', email1: '', email2: '', pictures: [], phone1: '', phone2: '', about: '', maritalStatus: '', gender: '', notes: '' }
   if (table === 'languages') return { language: '', note: '', employee_id: '' }
   if (table === 'passes') return { employee_id: '', formName: '', u: '', p: '', note: '', chat: true }
+  if (table === 'barber_stores') return { store_name: '', owner_name: '', tel: '', email: '', url: '', about: '', pics: [], text_message: false }
+  if (table === 'barber_locations') return { store_id: '', address: '', city: '', zip: '', state: '', country: '', county: '', township: '', note: '' }
+  if (table === 'open_times') return { store_id: '', monday: '', tuesday: '', wednesday: '', thursday: '', friday: '', saturday: '', sunday: '', closed: '', hours_may_differ: false }
+  if (table === 'barber_customers') return { store_id: '', fname: '', lname: '', location_gps: '', note: '' }
+  if (table === 'barber_styles') return { store_id: '', name: '', price: '', description: '', time_to_finish: '', pics: [] }
+  if (table === 'website_domains') return { store_id: '', type_id: '', slug: '', domain: '', description: '', note: '', tel: '', email1: '', email2: '' }
+  if (table === 'website_types') return { name: '', description: '', note: '', pics: [] }
+  if (table === 'website_headers') return { domain_id: '', header_name: '', header_logo: [], header_slogan: '', header_description: '', header_note: '' }
+  if (table === 'website_bodies') return { domain_id: '', name: '', description: '', note: '', text1: '', text2: '', text3: '', text4: '', text5: '', h1: '', h2: '', h3: '', h4: '', h5: '', pics: [] }
+  if (table === 'website_footers') return { domain_id: '', footer_name: '', footer_logo: [], footer_slogan: '', footer_description: '', footer_note: '' }
+  if (table === 'barber_reservations') return { store_id: '', domain_id: '', style_id: '', customer_name: '', customer_phone: '', customer_email: '', reservation_date: '', reservation_time: '', note: '', status: 'pending' }
+  if (table === 'barber_orders') return { customer_name: '', customer_email: '', customer_phone: '', plan: 'Barber website', price: 10, note: '' }
   return { name: '' }
 }
 
@@ -64,6 +88,10 @@ export default function AdminStoreManage() {
   const [subcats, setSubcats] = useState([])
   const [jobsList, setJobsList] = useState([])
   const [employeesList, setEmployeesList] = useState([])
+  const [barberStores, setBarberStores] = useState([])
+  const [websiteTypes, setWebsiteTypes] = useState([])
+  const [websiteDomains, setWebsiteDomains] = useState([])
+  const [barberStyles, setBarberStyles] = useState([])
 
   const [query, setQuery] = useState('')
 
@@ -92,6 +120,18 @@ export default function AdminStoreManage() {
     if (table === 'employees') q = supabase.from(tableName).select('*').order('id')
     if (table === 'languages') q = supabase.from(tableName).select('*').order('id')
     if (table === 'passes') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'barber_stores') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'barber_locations') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'open_times') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'barber_customers') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'barber_styles') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'website_domains') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'website_types') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'website_headers') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'website_bodies') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'website_footers') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'barber_reservations') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'barber_orders') q = supabase.from(tableName).select('*').order('id')
     q.then(({ data, error }) => {
       if (error) { setStatus('Error: ' + error.message); setRows([]) }
       else setRows(data || [])
@@ -103,6 +143,10 @@ export default function AdminStoreManage() {
     loadSubCategories().then(setSubcats).catch(() => {})
                                                supabase.from('jobs').select('*').order('id').then(({ data}) => setJobsList(data || [])).catch(() => {})
                                                                                                                                               supabase.from('employees').select('*').order('id').then(({ data}) => setEmployeesList(data || [])).catch(() => {})
+    supabase.from('barber_store').select('*').order('id').then(({ data }) => setBarberStores(data || [])).catch(() => {})
+    supabase.from('website_type').select('*').order('id').then(({ data }) => setWebsiteTypes(data || [])).catch(() => {})
+    supabase.from('website_domain').select('*').order('id').then(({ data }) => setWebsiteDomains(data || [])).catch(() => {})
+    supabase.from('barber_style').select('*').order('id').then(({ data }) => setBarberStyles(data || [])).catch(() => {})
   }
 
   useEffect(reload, [table])
@@ -130,7 +174,7 @@ export default function AdminStoreManage() {
   }, [rows, query])
 
   // One label per row, used by the Name cell and the delete confirm.
-  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : r.name
+  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : r.name
 
   const remove = async (row) => {
     const label = rowLabel(row)
@@ -203,6 +247,10 @@ export default function AdminStoreManage() {
       fields.f = slugify(fields.f || '')
       if (!fields.f) { setStatus('Error: the form name has to contain a letter or number.'); return }
       if (fields.f === 'admin') { setStatus('Error: "admin" is reserved — pick another form name.'); return }
+      const { data: passRowsF } = await supabase.from('fPasses').select('id').eq('formName', fields.f)
+      if (passRowsF && passRowsF.length > 0) { setStatus('That form name is already used by an employee pass — pick another.'); return }
+      const { data: domainRowsF } = await supabase.from('website_domain').select('id').eq('slug', fields.f)
+      if (domainRowsF && domainRowsF.length > 0) { setStatus('That form name is already used by a barber website — pick another.'); return }
     }
     if (table === 'employees') {
       if (fields.job_id !== undefined) fields.job_id = fields.job_id === '' ? null : Number(fields.job_id)
@@ -210,12 +258,37 @@ export default function AdminStoreManage() {
     if (table === 'languages') {
       if (fields.employee_id !== undefined) fields.employee_id = Number(fields.employee_id)
     }
+    // Barber tables: foreign keys arrive from <select> as strings.
+    if (fields.store_id !== undefined) fields.store_id = Number(fields.store_id)
+    if (fields.domain_id !== undefined) fields.domain_id = fields.domain_id === '' ? null : Number(fields.domain_id)
+    if (fields.type_id !== undefined) fields.type_id = fields.type_id === '' ? null : Number(fields.type_id)
+    if (fields.style_id !== undefined) fields.style_id = fields.style_id === '' ? null : Number(fields.style_id)
+    if (table === 'barber_stores') fields.text_message = !!fields.text_message
+    if (table === 'open_times') fields.hours_may_differ = !!fields.hours_may_differ
+    if (table === 'barber_styles' && fields.time_to_finish !== undefined) fields.time_to_finish = fields.time_to_finish === '' || fields.time_to_finish === null ? null : Number(fields.time_to_finish)
+    // Barber website slugs are public addresses (autofly.us.com/<slug>),
+    // so they follow the same collision rules as provider forms and
+    // employee passes. The checks only look at the OTHER tables, so
+    // editing a domain without changing its slug never trips them;
+    // a slug that duplicates another DOMAIN row is refused by the
+    // database's UNIQUE constraint and surfaces as a plain error.
+    if (table === 'website_domains') {
+      fields.slug = slugify(fields.slug || '')
+      if (!fields.slug) { setStatus('Error: the slug has to contain a letter or number.'); return }
+      if (fields.slug === 'admin') { setStatus('Error: "admin" is reserved — pick another slug.'); return }
+      const { data: formRows } = await supabase.from('providersForm').select('id').eq('f', fields.slug)
+      if (formRows && formRows.length > 0) { setStatus('That slug is already used by a provider form — pick another.'); return }
+      const { data: passRows } = await supabase.from('fPasses').select('id').eq('formName', fields.slug)
+      if (passRows && passRows.length > 0) { setStatus('That slug is already used by an employee pass — pick another.'); return }
+    }
     if (table === 'passes') {
       fields.formName = slugify(fields.formName || '')
       if (!fields.formName) { setStatus('Error: the form name has to contain a letter or number.'); return }
       if (fields.formName === 'admin') { setStatus('Error: "admin" is reserved — pick another form name.'); return }
       const { data: formRows } = await supabase.from('providersForm').select('id').eq('f', fields.formName)
       if (formRows && formRows.length > 0) { setStatus('That form name is already used by a provider form — pick another.'); return }
+      const { data: domainRowsP } = await supabase.from('website_domain').select('id').eq('slug', fields.formName)
+      if (domainRowsP && domainRowsP.length > 0) { setStatus('That form name is already used by a barber website — pick another.'); return }
       const { chat, ...passFields } = fields
       const q = id
       ? supabase.from(tableName).update(passFields).eq('id', id)
@@ -257,7 +330,7 @@ export default function AdminStoreManage() {
     reload()
   }
 
-  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : 'row'
+  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : 'row'
 
   const formTitle = draft.id ? `Edit ${kindLabel} — ${rowLabel(draft)}` : `New ${kindLabel}`
 
@@ -330,6 +403,53 @@ export default function AdminStoreManage() {
       <EmployeePassForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
         onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} employees={employeesList} />
       )}
+      {table === 'barber_stores' && (
+      <BarberStoreForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
+      )}
+      {table === 'barber_locations' && (
+      <BarberLocationForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} stores={barberStores} />
+      )}
+      {table === 'open_times' && (
+      <OpenTimeForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} stores={barberStores} />
+      )}
+      {table === 'barber_customers' && (
+      <BarberCustomerForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} stores={barberStores} />
+      )}
+      {table === 'barber_styles' && (
+      <BarberStyleForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} stores={barberStores} />
+      )}
+      {table === 'website_domains' && (
+      <WebsiteDomainForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} stores={barberStores} types={websiteTypes} />
+      )}
+      {table === 'website_types' && (
+      <WebsiteTypeForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
+      )}
+      {table === 'website_headers' && (
+      <WebsiteHeaderForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} domains={websiteDomains} />
+      )}
+      {table === 'website_bodies' && (
+      <WebsiteBodyForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} domains={websiteDomains} />
+      )}
+      {table === 'website_footers' && (
+      <WebsiteFooterForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} domains={websiteDomains} />
+      )}
+      {table === 'barber_reservations' && (
+      <BarberReservationForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+        onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} stores={barberStores} domains={websiteDomains} styles={barberStyles} />
+      )}
+      {table === 'barber_orders' && (
+        <p className="hint">Orders are placed by customers on the site — view and delete only, no editing.</p>
+      )}
 
       <div className="hero-card">
         <table className="admin-table">
@@ -348,6 +468,18 @@ export default function AdminStoreManage() {
               {table === 'employees' && <><th>Job</th><th>Phone</th></>}
               {table === 'languages' && <th>Employee</th>}
               {table === 'passes' && <><th>Form address</th><th>Username</th><th>Note</th></>}
+              {table === 'barber_stores' && <><th>Owner</th><th>Phone</th><th>Email</th><th>Photos</th><th>Text msgs</th></>}
+              {table === 'barber_locations' && <><th>Address</th><th>City</th><th>State</th><th>Zip</th></>}
+              {table === 'open_times' && <><th>Store</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th><th>Closed</th></>}
+              {table === 'barber_customers' && <><th>Store</th><th>GPS</th><th>Note</th></>}
+              {table === 'barber_styles' && <><th>Store</th><th>Price</th><th>Minutes</th><th>Photos</th></>}
+              {table === 'website_domains' && <><th>Store</th><th>Address</th><th>Type</th><th>Domain</th></>}
+              {table === 'website_types' && <><th>Description</th><th>Photos</th></>}
+              {table === 'website_headers' && <><th>Website</th><th>Slogan</th></>}
+              {table === 'website_bodies' && <><th>Website</th><th>Heading 1</th></>}
+              {table === 'website_footers' && <><th>Website</th><th>Slogan</th></>}
+              {table === 'barber_reservations' && <><th>Store</th><th>Phone</th><th>Date</th><th>Time</th><th>Status</th></>}
+              {table === 'barber_orders' && <><th>Email</th><th>Phone</th><th>Plan</th><th>Price</th></>}
               <th>Edit</th><th>Delete</th>
             </tr>
           </thead>
@@ -376,9 +508,21 @@ export default function AdminStoreManage() {
                 {table === 'employees' && <><td>{jobsList.find(j => j.id === r.job_id)?.jobTitle || '—'}</td><td>{r.phone1 || '—'}</td></>}
       {table === 'languages' && <td>{(() => { const e = employeesList.find(x => x.id === r.employee_id); return e ? `${e.firstName} ${e.lastName || ''}`.trim() : '—' })()}</td>}
             {table === 'passes' && <><td><a href={`/${r.formName}`}>autofly.us.com/{r.formName}</a></td><td>{r.u}</td><td>{r.note || '—'}</td></>}
+            {table === 'barber_stores' && <><td>{r.owner_name || '—'}</td><td>{r.tel || '—'}</td><td>{r.email || '—'}</td><td>{(r.pics || []).length}</td><td>{r.text_message ? 'Yes' : 'No'}</td></>}
+            {table === 'barber_locations' && <><td>{r.address || '—'}</td><td>{r.city || '—'}</td><td>{r.state || '—'}</td><td>{r.zip || '—'}</td></>}
+            {table === 'open_times' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td>{r.monday || '—'}</td><td>{r.tuesday || '—'}</td><td>{r.wednesday || '—'}</td><td>{r.thursday || '—'}</td><td>{r.friday || '—'}</td><td>{r.saturday || '—'}</td><td>{r.sunday || '—'}</td><td>{r.closed || '—'}</td></>}
+            {table === 'barber_customers' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td>{r.location_gps || '—'}</td><td>{r.note || '—'}</td></>}
+            {table === 'barber_styles' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td>{money(r.price)}</td><td>{r.time_to_finish ?? '—'}</td><td>{(r.pics || []).length}</td></>}
+            {table === 'website_domains' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td><a href={`/${r.slug}`} target="_blank" rel="noreferrer">autofly.us.com/{r.slug}</a></td><td>{websiteTypes.find(t => t.id === r.type_id)?.name || '—'}</td><td>{r.domain || '—'}</td></>}
+            {table === 'website_types' && <><td>{r.description || '—'}</td><td>{(r.pics || []).length}</td></>}
+            {table === 'website_headers' && <><td>{websiteDomains.find(d => d.id === r.domain_id)?.slug || r.domain_id}</td><td>{r.header_slogan || '—'}</td></>}
+            {table === 'website_bodies' && <><td>{websiteDomains.find(d => d.id === r.domain_id)?.slug || r.domain_id}</td><td>{r.h1 || '—'}</td></>}
+            {table === 'website_footers' && <><td>{websiteDomains.find(d => d.id === r.domain_id)?.slug || r.domain_id}</td><td>{r.footer_slogan || '—'}</td></>}
+            {table === 'barber_reservations' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td>{r.customer_phone || '—'}</td><td>{r.reservation_date || '—'}</td><td>{r.reservation_time || '—'}</td><td>{r.status || '—'}</td></>}
+            {table === 'barber_orders' && <><td>{r.customer_email || '—'}</td><td>{r.customer_phone || '—'}</td><td>{r.plan || '—'}</td><td>{money(r.price)}</td></>}
                 <td>
                   {table === 'items' && r.pending_approval && <button type="button" className="btn-mini" onClick={() => approve(r)}>Approve</button>}{' '}
-                  <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>
+                  {table !== 'barber_orders' && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
                 </td>
                 <td><button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button></td>
               </tr>

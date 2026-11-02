@@ -63,3 +63,58 @@ export async function sendCustomerMessage(conversationId, visitorId, body, custo
     console.warn('Chat email failed:', e.message)
   }
 }
+
+// --- Language chat (batch 3) ---
+// The visitor's active thread (conversation + language + employee) is
+// kept in localStorage so reopening the panel resumes it. Closing the
+// chat clears it: the visitor starts fresh next time, while the thread
+// itself stays on the employee side (see closeVisitorChat).
+
+const THREAD_KEY = 'autofly-chat-thread'
+
+export function saveChatThread(thread) {
+  try {
+    localStorage.setItem(THREAD_KEY, JSON.stringify(thread))
+  } catch { /* ignore */ }
+}
+
+export function getChatThread() {
+  try {
+    const raw = localStorage.getItem(THREAD_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+export function clearChatThread() {
+  try {
+    localStorage.removeItem(THREAD_KEY)
+  } catch { /* ignore */ }
+}
+
+// Distinct language names only — no employee data leaks through this.
+export async function listChatLanguages() {
+  const { data, error } = await supabase.rpc('list_chat_languages')
+  if (error) throw error
+  return data || []
+}
+
+// Start (or resume) a chat in a language: the first employee who speaks
+// it. Returns { conversation_id, employee_name? }.
+export async function startLanguageChat(visitorId, language, name, email) {
+  const { data, error } = await supabase.rpc('start_language_chat', {
+    p_visitor_id: visitorId, p_language: language, p_name: name || '', p_email: email || '',
+  })
+  if (error) throw error
+  return data
+}
+
+// Mark the visitor's chat closed (hidden from the visitor, kept for the
+// employee). The widget clears its local thread regardless of this call.
+export async function closeVisitorChat(conversationId, visitorId) {
+  const { error } = await supabase.rpc('close_visitor_chat', {
+    p_conversation_id: conversationId, p_visitor_id: visitorId,
+  })
+  if (error) throw error
+}

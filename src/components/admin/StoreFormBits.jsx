@@ -180,9 +180,17 @@ export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, pro
         <div>
           <p><b>Item categories</b></p>
           {(linkData.itemCategories || []).length === 0 && <p className="hint">No item categories yet.</p>}
-          {(linkData.itemCategories || []).map(c => (
-            <label key={c.id}><input type="checkbox" checked={linkData.selected.categoryIds.includes(c.id)} onChange={() => linkData.onToggle('cat', c.id)} /> {c.label}</label>
-          ))}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+            {(linkData.itemCategories || []).map(c => {
+              const checked = linkData.selected.categoryIds.includes(c.id)
+              return (
+                <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', border: '1px solid #d8dbe8', borderRadius: 8, cursor: 'pointer', background: checked ? '#e8eaf6' : '#fff' }}>
+                  <input type="checkbox" checked={checked} onChange={() => linkData.onToggle('cat', c.id)} />
+                  <b style={{ fontSize: 14 }}>{c.label}</b>
+                </label>
+              )
+            })}
+          </div>
           <p><b>Delivery locations</b></p>
           {(linkData.fromdel || []).length === 0 && <p className="hint">No delivery locations yet.</p>}
           {(linkData.fromdel || []).map(r => (

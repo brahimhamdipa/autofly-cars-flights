@@ -74,7 +74,7 @@ export default function AdminStoreAdd() {
   const saveItem = async (e) => {
     e.preventDefault()
     setStatus('Saving...')
-    const data, { error } = await supabase.from('store_items').insert({
+  const { data, error } = await supabase.from('store_items').insert({
       provider_id: Number(it.provider_id), name: it.name,
       price: Number(it.price), description: it.description, delivery_address: it.delivery_address,
       pickup_address: it.pickup_address, delivery: it.delivery, pickup: it.pickup,

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { uploadStorePictures, removeStorePictureUrl } from '../../lib/storeUpload'
+import { formatVariant } from '../../lib/storeData'
 
 // Shared bits for the store admin forms. All store admin forms live
 // inline on the page now (no popups): the Add section shows blank
@@ -9,6 +10,7 @@ import { uploadStorePictures, removeStorePictureUrl } from '../../lib/storeUploa
 // (Manage) — there is no category select and no online flag anymore:
 // the old store_categories table is gone, and whether an item can be
 // delivered or picked up comes from its delivery/pickup flags.
+// Items can also carry explicit subcategory picks per linked category.
 
 export function PicField({ pics, setPics }) {
   const [uploading, setUploading] = useState(false)
@@ -63,6 +65,94 @@ export function ProviderForm({ draft, setDraft, onSubmit, submitLabel, onCancel 
       <div className="store-actions">
         <button type="submit">{submitLabel}</button>
         {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+
+
+// --- Jobs / employees / languages / employee passes (batch 3) ---
+export function JobForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <input required placeholder="Job title" value={draft.jobTitle || ''} onChange={e => setDraft({ ...draft, jobTitle: e.target.value })} />
+      <textarea placeholder="Job description" value={draft.jobDescription || ''} onChange={e => setDraft({ ...draft, jobDescription: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function EmployeeForm({ draft, setDraft, onSubmit, submitLabel, onCancel, jobs }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <input required placeholder="First name" value={draft.firstName || ''} onChange={e => setDraft({ ...draft, firstName: e.target.value })} />
+      <input placeholder="Last name" value={draft.lastName || ''} onChange={e => setDraft({ ...draft, lastName: e.target.value })} />
+      <select value={draft.job_id ?? ''} onChange={e => setDraft({ ...draft, job_id: e.target.value })}>
+        <option value="">— Job —</option>
+        {(jobs || []).map(j => <option key={j.id} value={j.id}>{j.jobTitle}</option>)}
+      </select>
+      <input placeholder="Address" value={draft.address || ''} onChange={e => setDraft({ ...draft, address: e.target.value })} />
+      <input placeholder="City" value={draft.city || ''} onChange={e => setDraft({ ...draft, city: e.target.value })} />
+      <input placeholder="Zip" value={draft.zip || ''} onChange={e => setDraft({ ...draft, zip: e.target.value })} />
+      <input placeholder="State" value={draft.state || ''} onChange={e => setDraft({ ...draft, state: e.target.value })} />
+      <input placeholder="County" value={draft.county || ''} onChange={e => setDraft({ ...draft, county: e.target.value })} />
+      <label>Date of birth <input type="date" value={draft.dob || ''} onChange={e => setDraft({ ...draft, dob: e.target.value })} /></label>
+      <input placeholder="Email 1" value={draft.email1 || ''} onChange={e => setDraft({ ...draft, email1: e.target.value })} />
+      <input placeholder="Email 2" value={draft.email2 || ''} onChange={e => setDraft({ ...draft, email2: e.target.value })} />
+      <input placeholder="Phone 1" value={draft.phone1 || ''} onChange={e => setDraft({ ...draft, phone1: e.target.value })} />
+      <input placeholder="Phone 2" value={draft.phone2 || ''} onChange={e => setDraft({ ...draft, phone2: e.target.value })} />
+      <textarea placeholder="About" value={draft.about || ''} onChange={e => setDraft({ ...draft, about: e.target.value })} />
+      <input placeholder="Marital status" value={draft.maritalStatus || ''} onChange={e => setDraft({ ...draft, maritalStatus: e.target.value })} />
+      <input placeholder="Gender" value={draft.gender || ''} onChange={e => setDraft({ ...draft, gender: e.target.value })} />
+      <textarea placeholder="Notes" value={draft.notes || ''} onChange={e => setDraft({ ...draft, notes: e.target.value })} />
+      <PicField pics={draft.pictures || []} setPics={pictures => setDraft({ ...draft, pictures })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function LanguageForm({ draft, setDraft, onSubmit, submitLabel, onCancel, employees }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <input required placeholder="Language" value={draft.language || ''} onChange={e => setDraft({ ...draft, language: e.target.value })} />
+      <input placeholder="Note" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <select required value={draft.employee_id ?? ''} onChange={e => setDraft({ ...draft, employee_id: e.target.value })}>
+        <option value="">— Employee —</option>
+        {(employees || []).map(emp => <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName || ''}</option>)}
+      </select>
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+export function EmployeePassForm({ draft, setDraft, onSubmit, submitLabel, onCancel, employees }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <select required value={draft.employee_id ?? ''} onChange={e => setDraft({ ...draft, employee_id: e.target.value })}>
+        <option value="">— Employee —</option>
+        {(employees || []).map(emp => <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName || ''}</option>)}
+      </select>
+      <input required placeholder="Form name (the link after autofly.us.com/)" value={draft.formName || ''} onChange={e => setDraft({ ...draft, formName: e.target.value })} />
+      <input required placeholder="Username" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
+      <input required placeholder="Password (visible — the employee logs in with this)" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
+      <input placeholder="Note" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <label><input type="checkbox" checked={draft.chat !== false} onChange={e => setDraft({ ...draft, chat: e.target.checked })} /> Allow chat</label>
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
       </div>
     </form>
   )
@@ -104,6 +194,28 @@ export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, pro
             <label key={r.id}><input type="checkbox" checked={linkData.selected.topickIds.includes(r.id)} onChange={() => linkData.onToggle('to', r.id)} /> {r.tname}{r.tcity ? ` — ${r.tcity}` : ''}</label>
           ))}
         </div>
+      {(linkData.selected.categoryIds || []).map(catId => {
+                const cat = (linkData.itemCategories || []).find(c => c.id === catId)
+                const subs = (linkData.subcats || []).filter(s => s.category_id === catId)
+                return (
+                              <div key={catId} style={{ marginLeft: 16, borderLeft: '3px solid #e8e8f0', paddingLeft: 10, marginTop: 8 }}>
+                                              <label style={{ fontWeight: 600 }}>Options for {cat ? cat.label : 'category'}:</label>
+                                {subs.length === 0 && <div className="hint">No options defined for this category yet — add them in Sub Categories.</div>div>}
+                                {subs.map(s => (
+                                                <label key={s.id} style={{ display: 'block' }}>
+                                                                  <input
+                                                                                        type="checkbox"
+                                                                                        checked={(linkData.selected.subcategoryIds || []).includes(s.id)}
+                                                                                        onChange={() => linkData.onToggle('sub', s.id)}
+                                                                                      /> {formatVariant(s)}
+                                                </label>
+                                              ))}
+                              </div>
+                            )
+      })}
+                                
+    
+    
       )}
       <div className="store-actions">
         <button type="submit">{submitLabel}</button>

@@ -27,7 +27,7 @@ const blankItem = () => ({
 
 })
 
-export default function ProviderFormPage({ slug, goBack }) {
+export default function ProviderFormPage({ slug, goBack, onAuthedChange }) {
 
   const [categories, setCategories] = useState([])
   const [subcats, setSubcats] = useState([])
@@ -52,6 +52,9 @@ export default function ProviderFormPage({ slug, goBack }) {
     loadItemCategories().then(setCategories).catch(() => {})
     loadSubCategories().then(setSubcats).catch(() => {})
   }, [])
+  useEffect(() => {
+    if (onAuthedChange) onAuthedChange(!!authed)
+  }, [authed])
 
   const login = async(e) => {
     e.preventDefault()

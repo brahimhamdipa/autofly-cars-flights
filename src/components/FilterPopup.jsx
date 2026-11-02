@@ -33,7 +33,7 @@ export default function FilterPopup({ title, categories, subcats, selCats, selSu
           <span style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
             <button type="button" className="btn-soft" onClick={onClear}>Clear filters</button>
             <button type="button" onClick={onClose}>Done</button>
-            <button type="button" onClick={onClose} aria-label="Close" style={{ fontSize: 22, lineHeight: 1, padding: '4px 8px', background: '#f0f1f8', border: '1px solid #d8dbe8', borderRadius: 8, cursor: 'pointer' }}>✕</button>
+            <button type="button" onClick={onClose} aria-label="Close" style={{ fontSize: 22, lineHeight: 1, padding: '4px 8px', background: '#111827', color: '#fff', fontWeight: 700, border: '1px solid #111827', borderRadius: 8, cursor: 'pointer' }}>✕</button>
           </span>
         </div>
 

@@ -100,9 +100,9 @@ export default function AdminStoreManage() {
     loadItemCategories().then(setItemCategories).catch(() => {})
     loadFromDel().then(setFromdel).catch(() => {})
     loadToPick().then(setTopick).catch(() => {})
-    loadSubCategories().then(setSubcats).catch(() => {}
-                                               supabase.from('jobs').select('*').order('id').then(({ data}) => setJobsList(data || [])).catch(() => {}
-                                                                                                                                              supabase.from('employees').select('*').order('id').then(({ data}) => setEmployeesList(data || [])).catch(() => {}
+    loadSubCategories().then(setSubcats).catch(() => {})
+                                               supabase.from('jobs').select('*').order('id').then(({ data}) => setJobsList(data || [])).catch(() => {})
+                                                                                                                                              supabase.from('employees').select('*').order('id').then(({ data}) => setEmployeesList(data || [])).catch(() => {})
   }
 
   useEffect(reload, [table])
@@ -373,12 +373,12 @@ export default function AdminStoreManage() {
                 {table === 'itemcats' && <td>{r.slug}</td>}
                 {table === 'subcats' && <><td>{itemCategories.find(c => c.id === r.category_id)?.label || r.category_id}</td><td>{r.flavor}</td><td>{r.color}</td><td>{r.packof ?? '—'}</td><td>{r.size}</td><td>{r.weight ?? '—'}</td><td>{r.unit}</td></>}
                 {table === 'jobs' && <td>{r.jobDescription || '—'}</td>}
-                {table === 'employees' && <><td>{jobsList.find(j => j.id === r.job_id)?.jobTitle || '—'}</td><td>{r.phone1 || '—'}</td></>}</>
-      {table === 'languages' && <td>{(( => { const e = employeesList.find(x => x.id === r.employee_id); return e ? `${e.firstName} ${e.lastName || ''}`.trim() : '—' })()}</td>}
-            {table === 'passes' && <><td><a href={`/${r.formName}`}>autofly.us.com/{r.formName}</a></td><td>{r.u}</td><td>{r.note || '—'}</td></>}</>
+                {table === 'employees' && <><td>{jobsList.find(j => j.id === r.job_id)?.jobTitle || '—'}</td><td>{r.phone1 || '—'}</td></>}
+      {table === 'languages' && <td>{(() => { const e = employeesList.find(x => x.id === r.employee_id); return e ? `${e.firstName} ${e.lastName || ''}`.trim() : '—' })()}</td>}
+            {table === 'passes' && <><td><a href={`/${r.formName}`}>autofly.us.com/{r.formName}</a></td><td>{r.u}</td><td>{r.note || '—'}</td></>}
                 <td>
                   {table === 'items' && r.pending_approval && <button type="button" className="btn-mini" onClick={() => approve(r)}>Approve</button>}{' '}
-                  <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>button>
+                  <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>
                 </td>
                 <td><button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button></td>
               </tr>

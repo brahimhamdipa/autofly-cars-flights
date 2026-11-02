@@ -154,7 +154,7 @@ export default function ProviderFormPage({ slug, goBack }) {
               checked={(item.subcategoryIds || []).includes(s.id)}
               onChange={() => setItem(prev => ({...prev, subcategoryIds: (prev.subcategoryIds || []).includes(s.id)? prev.subcategoryIds.filter(x => x!== s.id): [...prev.subcategoryIds, s.id]}))}
               /> {formatVariant(s)}
-
+          </label>
           ))}
           <input required placeholder="Item name" value={item.name} onChange={e => setItem({ ...item, name: e.target.value })} />
           <input required placeholder="Price" type="number" step="0.01" min="0" value={item.price} onChange={e => setItem({ ...item, price: e.target.value })} />

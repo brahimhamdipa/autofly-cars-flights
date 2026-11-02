@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { GroceryTopBar } from './GroceryMenu'
 import { useCart } from '../lib/CartContext'
-import { loadItems, loadItemCategories, loadSubCategories, money, formatVariant } from '../lib/storeData'
+import { loadItems, loadItemCategories, loadSubCategories, loadItemVariants, money, formatVariant } from '../lib/storeData'
 import { StockLine, CardSlideshow, useVariantAdd } from './StoreBits'
+import FilterPopup from './FilterPopup'
+import ScrollTopButton from './ScrollTopButton'
 
 // Products page: EVERY active store item, from every store, in one
 // place — the same look as a store's order page (search + cards), but
@@ -31,30 +33,26 @@ export default function ProductsPage({ go }) {
     loadItemCategories().then(setCategories).catch(() => {})
     loadSubCategories().then(setSubcats).catch(() => {})
   }, [])
-
-  const subsByCat = useMemo(() => {
-    const map = {}
-    for (const s of subcats) {
-      if (!map[s.category_id]) map[s.category_id] = []
-      map[s.category_id].push(s)
-    }
-    return map
-  }, [subcats])
+    // Effective variants per item (see loadItemVariants). Null until loaded:
+    // while null, the subcategory filter is skipped (fail open) so a slow
+    // load can never empty the list.
+    const [itemVariants, setItemVariants] = useState(null)
+    useEffect(() => {
+          if (!items) return
+          loadItemVariants(items.map(i => i.id)).then(setItemVariants).catch(() => {})
+    }, [items]
 
   const filtered = useMemo(() => {
     if (!items) return []
     const needle = query.trim().toLowerCase()
-    const checkedSubCatIds = new Set(
-      subcats.filter(s => selSubs.includes(s.id)).map(s => s.category_id)
-    )
     return items.filter(i => {
       if (needle && ![i.name, i.description, String(i.price), i.provider?.name].join(' ').toLowerCase().includes(needle)) return false
       const cats = i.categories || []
       if (selCats.length > 0 && !cats.some(c => selCats.includes(c.id))) return false
-      if (selSubs.length > 0 && !cats.some(c => checkedSubCatIds.has(c.id))) return false
+      if (selSubs.length > 0 && itemVariants && !(itemVariants[i.id] || []).some(v => selSubs.includes(v.id)) return false
       return true
     })
-  }, [items, query, selCats, selSubs, subcats])
+    }, [items, query, selCats, selSubs, subcats, itemVariants])
 
   const toggle = (list, setList, id) =>
     setList(list.includes(id) ? list.filter(x => x !== id) : [...list, id])
@@ -125,30 +123,21 @@ export default function ProductsPage({ go }) {
       </div>
 
       {variantPopup}
+            <ScrollTopButton />
 
       {filterOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
-          <div style={{ background: '#fff', borderRadius: 12, padding: 20, width: '100%', maxWidth: 520, maxHeight: '80vh', overflowY: 'auto', position: 'relative' }}>
-            <button type="button" onClick={() => setFilterOpen(false)} aria-label="Close" style={{ position: 'absolute', top: 8, right: 12, fontSize: 20, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}>✕</button>
-            <h3 style={{ marginTop: 0, paddingRight: 24 }}>Filter products</h3>
-            {categories.length === 0 && <p className="hint">No categories yet — add some from Admin.</p>}
-            {categories.map(c => (
-              <div key={c.id} style={{ marginBottom: 10 }}>
-                <label><input type="checkbox" checked={selCats.includes(c.id)} onChange={() => toggle(selCats, setSelCats, c.id)} /> <b>{c.label}</b></label>
-                {selCats.includes(c.id) && (subsByCat[c.id] || []).map(s => (
-                  <div key={s.id} style={{ marginLeft: 24 }}>
-                    <label><input type="checkbox" checked={selSubs.includes(s.id)} onChange={() => toggle(selSubs, setSelSubs, s.id)} /> {formatVariant(s)}</label>
-                  </div>
-                ))}
-              </div>
-            ))}
-            <div className="store-actions" style={{ marginTop: 12 }}>
-              <button type="button" className="btn-soft" onClick={clearFilters}>Clear filters</button>
-              <button type="button" onClick={() => setFilterOpen(false)}>Done</button>
-            </div>
-          </div>
-        </div>
-      )}
+              <FilterPopup
+                        title="Filter products"
+                        categories={categories}
+                        subcats={subcats}
+                        selCats={selCats}
+                        selSubs={selSubs}
+                        onToggleCat={(id) => toggle(selCats, setSelCats, id)}
+                        onToggleSub={(id) => toggle(selSubs, setSelSubs, id)}
+                        onClear={clearFilters}
+                        onClose={() => setFilterOpen(false)}
+                        />
+            )}
     </div>
   )
 }

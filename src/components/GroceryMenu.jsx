@@ -14,7 +14,7 @@ export default function GroceryMenu({ go }) {
     const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
     window.addEventListener('pointerdown', onDown)
     return () => window.removeEventListener('pointerdown', onDown)
-  }, [open])
+  }, [open ])
 
   const pick = (page, param) => { setOpen(false); if (go) go(page, param) }
 

@@ -28,6 +28,8 @@ import { CartProvider } from './lib/CartContext'
 import { BarberCartProvider } from './lib/BarberCartContext'
 import BarbersPage from './components/BarbersPage'
 import RestaurantsPage from './components/RestaurantsPage'
+import RestaurantsCartPage from './components/RestaurantsCartPage'
+import { RestaurantCartProvider } from './lib/RestaurantCartContext'
 import BarberCartPage from './components/BarberCartPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
@@ -103,7 +105,8 @@ export default function App() {
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
   const BARBER_TABS = ['barbers', 'barber-cart']
-  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes', 'restaurants', 'barbers', 'barber-cart'].includes(tab)
+  const RESTAURANT_TABS = ['restaurants', 'restaurant-cart']
+  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes', 'restaurants', 'restaurant-cart', 'barbers', 'barber-cart'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -178,7 +181,12 @@ export default function App() {
             {tab === 'item-detail' && <ItemDetailPage itemId={itemId} go={go} goBack={goBack} />}
           </CartProvider>
         )}
-        {tab === 'restaurants' && <RestaurantsPage />}
+        {RESTAURANT_TABS.includes(tab) && (
+          <RestaurantCartProvider>
+            {tab === 'restaurants' && <RestaurantsPage go={go} />}
+            {tab === 'restaurant-cart' && <RestaurantsCartPage go={go} />}
+          </RestaurantCartProvider>
+        )}
         {BARBER_TABS.includes(tab) && (
           <BarberCartProvider>
             {tab === 'barbers' && <BarbersPage go={go} />}

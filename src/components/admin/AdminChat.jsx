@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 
 // Admin Chat section: the on/off switch for the customer chat button,
-// plus every customer conversation with a reply box. Unread customer
+// plus the latest customer conversations with a reply box. Unread customer
 // messages show a "New" badge; opening a conversation marks them read.
+// The list shows 50 at a time (Show older loads more), refreshes on its
+// own, and each conversation can be deleted with all its messages.
 export default function AdminChat() {
   const [enabled, setEnabled] = useState(null)
   const [conversations, setConversations] = useState(null)
@@ -11,11 +13,13 @@ export default function AdminChat() {
   const [openId, setOpenId] = useState(null)
   const [reply, setReply] = useState('')
   const [status, setStatus] = useState('')
+  const [visible, setVisible] = useState(50)
+  const visibleRef = useRef(50)
 
   const load = async () => {
     const { data: setting } = await supabase.from('site_settings').select('value').eq('key', 'chat_enabled').single()
     setEnabled(!setting || setting.value === 'true')
-    const { data: convs } = await supabase.from('chat_conversations').select('*').order('updated_at', { ascending: false })
+    const { data: convs } = await supabase.from('chat_conversations').select('*').order('updated_at', { ascending: false }).limit(visibleRef.current)
     setConversations(convs || [])
     if (convs && convs.length > 0) {
       const { data: msgs } = await supabase.from('chat_messages')
@@ -27,7 +31,29 @@ export default function AdminChat() {
       setAllMessages([])
     }
   }
-  useEffect(() => { load() }, [])
+  // Refresh on its own, so new chats appear without leaving this section.
+  useEffect(() => {
+    load()
+    const t = setInterval(load, 15000)
+    return () => clearInterval(t)
+  }, [])
+
+  const showOlder = () => {
+    visibleRef.current += 50
+    setVisible(visibleRef.current)
+    load()
+  }
+
+  const deleteConversation = async (cid) => {
+    if (!window.confirm('Delete this conversation and all its messages? This cannot be undone.')) return
+    setStatus('Deleting...')
+    await supabase.from('chat_messages').delete().eq('conversation_id', cid)
+    const { error } = await supabase.from('chat_conversations').delete().eq('id', cid)
+    if (error) { setStatus('Error: ' + error.message); return }
+    if (openId === cid) setOpenId(null)
+    setStatus('✓ Conversation deleted.')
+    load()
+  }
 
   const unreadByConv = useMemo(() => {
     const out = {}
@@ -95,6 +121,7 @@ export default function AdminChat() {
 
       <div className="hero-card">
         <h3>Conversations</h3>
+        <button type="button" className="btn-mini" onClick={() => load()}>↻ Refresh</button>
         {conversations === null && <p>Loading...</p>}
         {conversations && conversations.length === 0 && <p>No chats yet.</p>}
         {conversations && conversations.map(c => {
@@ -109,10 +136,17 @@ export default function AdminChat() {
                 <br />
                 <small className="hint">{last ? `${last.sender === 'owner' ? 'You: ' : ''}${last.body.slice(0, 80)}` : 'No messages yet'}</small>
               </span>
-              <button type="button" className="btn-mini" onClick={() => openConversation(c.id)}>Open</button>
+              <span>
+                <button type="button" className="btn-mini" onClick={() => openConversation(c.id)}>Open</button>
+                {' '}
+                <button type="button" className="btn-mini" onClick={() => deleteConversation(c.id)}>Delete</button>
+              </span>
             </div>
           )
         })}
+        {conversations && conversations.length >= visible && (
+          <button type="button" className="btn-soft" onClick={showOlder}>Show older conversations</button>
+        )}
       </div>
 
       {openConv && (

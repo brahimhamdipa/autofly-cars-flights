@@ -11,7 +11,7 @@ import { supabase } from '../../lib/supabaseClient'
 
 const NAME_RULE = /^[a-z0-9][a-z0-9-]*$/
 
-const SUGGESTIONS = ['dine', 'houses', 'barbershop']
+const SUGGESTIONS = ['dine', 'houses', 'barbershop', 'doctor']
 
 export default function AdminFolderPasses() {
   const [passes, setPasses] = useState(null)

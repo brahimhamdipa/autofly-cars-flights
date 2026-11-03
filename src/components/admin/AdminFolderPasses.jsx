@@ -20,7 +20,7 @@ import { supabase } from '../../lib/supabaseClient'
 
 const NAME_RULE = /^[a-z0-9][a-z0-9-]*$/
 
-const ORIGINALS = ['dine', 'houses', 'barbershop', 'doctor', 'employee', 'holiday', 'pos', 'retailer', 'dealer', 'carRental', 'carRentalSystem', 'rentCarAdmin']
+const ORIGINALS = ['dine', 'houses', 'barbershop', 'doctor', 'employee', 'holiday', 'pos', 'retailer', 'dealer', 'carRental', 'carRentalSystem', 'rentCarAdmin', 'bodyshop']
 
 const REPO_PUBLIC_URL = 'https://api.github.com/repos/brahimhamdipa/autofly-cars-flights/contents/public'
 const RAW_BASE = 'https://raw.githubusercontent.com/brahimhamdipa/autofly-cars-flights/main/public/'
@@ -38,6 +38,7 @@ function detectType(d) {
   if (Array.isArray(d.cars)) return 'carRental'
   if (Array.isArray(d.fleet)) return 'carRentalSystem'
   if (Array.isArray(d.rides)) return 'rentCarAdmin'
+  if (Array.isArray(d.jobs)) return 'bodyshop'
   if (Array.isArray(d.menu)) return 'dine'
   return 'other'
 }

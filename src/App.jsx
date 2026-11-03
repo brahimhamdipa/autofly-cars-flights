@@ -27,6 +27,7 @@ import AdminPage from './components/AdminPage'
 import { CartProvider } from './lib/CartContext'
 import { BarberCartProvider } from './lib/BarberCartContext'
 import BarbersPage from './components/BarbersPage'
+import RestaurantsPage from './components/RestaurantsPage'
 import BarberCartPage from './components/BarberCartPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
@@ -102,7 +103,7 @@ export default function App() {
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
   const BARBER_TABS = ['barbers', 'barber-cart']
-  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes', 'barbers', 'barber-cart'].includes(tab)
+  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes', 'restaurants', 'barbers', 'barber-cart'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -123,6 +124,7 @@ export default function App() {
               <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
               {moreOpen && (
                 <span className="dropdown-menu">
+                  <a onClick={() => go('restaurants')}>Restaurants</a>
                   <a onClick={() => go('barbers')}>Barbers</a>
                   <a onClick={() => go('services')}>Services</a>
                   <a onClick={() => go('about')}>About Us</a>
@@ -176,6 +178,7 @@ export default function App() {
             {tab === 'item-detail' && <ItemDetailPage itemId={itemId} go={go} goBack={goBack} />}
           </CartProvider>
         )}
+        {tab === 'restaurants' && <RestaurantsPage />}
         {BARBER_TABS.includes(tab) && (
           <BarberCartProvider>
             {tab === 'barbers' && <BarbersPage go={go} />}

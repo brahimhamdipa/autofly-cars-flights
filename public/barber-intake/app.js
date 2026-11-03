@@ -61,6 +61,7 @@
       }
       creds = { form: form, username: user, password: pass };
       $('login-card').hidden = true;
+      $('page-hint').hidden = true;
       $('intake-wrap').hidden = false;
     }).catch(function () {
       setLoginStatus('Could not reach the server — check your connection and try again.', false);

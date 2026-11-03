@@ -98,7 +98,7 @@
       return '<div class="card"><span class="badge">' + esc(p.location || '') + '</span>' +
         '<h3>' + esc(p.name) + '</h3>' +
         '<p>' + esc(p.description || '') + '</p>' +
-        '<p>Ref: ' + esc(p.reference || '') + ' &nbsp;·&nbsp; ' + esc(p.rooms) + ' rooms</p>' +
+        '<p>Ref: ' + esc(p.reference || '') + ' &nbsp;·&nbsp; ' + esc(p.rooms) + (p.rooms === 1 ? ' room' : ' rooms') + '</p>' +
         '<p><span class="price">' + money(p.price) + ' / night</span>' + peak + '</p>' +
         '<button data-book="' + p.id + '">Book this property</button></div>';
     }).join('');

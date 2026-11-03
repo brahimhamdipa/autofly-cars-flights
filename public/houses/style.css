@@ -6,7 +6,7 @@ body { margin: 0; font-family: system-ui, -apple-system, sans-serif; color: #222
 .brand h1 { margin: 0 0 4px; font-size: 28px; }
 .brand p { margin: 0; color: #555; }
 #tabs { display: flex; gap: 6px; margin-top: 14px; overflow-x: auto; }
-#tabs button { border: 1px solid #ccc; background: #fff; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-size: 15px; white-space: nowrap; }
+#tabs button { border: 1px solid #ccc; background: #fff; color: #222; padding: 9px 14px; border-radius: 999px; cursor: pointer; font-size: 15px; white-space: nowrap; }
 #tabs button.active { background: #161d44; color: #fff; border-color: #161d44; }
 main { margin-top: 16px; }
 .view h2 { margin: 6px 0 12px; }

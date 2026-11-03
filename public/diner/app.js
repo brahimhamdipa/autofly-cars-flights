@@ -473,6 +473,13 @@
   document.querySelectorAll('#tabs button').forEach(function (btn) {
     btn.addEventListener('click', function () { show(btn.getAttribute('data-view')); });
   });
+  /* Black ↑ Top pill at the bottom-left, like the shop pages: appears
+     once you scroll down, tap it to jump back to the top. */
+  var toTop = $('to-top');
+  if (toTop) {
+    toTop.addEventListener('click', function () { window.scrollTo(0, 0); });
+    window.onscroll = function () { toTop.hidden = window.scrollY < 300; };
+  }
   if (!SLUG) {
     $('site-name').textContent = 'Restaurant not found';
     $('view-menu').innerHTML = '<div class="error">This link doesn\'t point to a restaurant. Check the link and try again — a restaurant link looks like autofly.us.com/diner?r=your-restaurant.</div>';

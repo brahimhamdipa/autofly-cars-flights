@@ -40,6 +40,7 @@ const TABLES = [
   ['website_footers', 'Website Footers', 'website_footer'],
   ['barber_reservations', 'Barber Reservations', 'barber_reservation'],
   ['barber_orders', 'Barber Orders', 'barber_order'],
+  ['restaurant_orders', 'Restaurant Orders', 'restaurant_order'],
   ['intake_forms', 'Barber Intake Forms', 'barber_intake_forms'],
   ['intake_submissions', 'Barber Intake Submissions', 'barber_intake_submissions'],
   ['diner_restaurants', 'Diner Restaurants', 'diner_restaurants'],
@@ -73,6 +74,7 @@ const blankDraft = (table) => {
   if (table === 'website_footers') return { domain_id: '', footer_name: '', footer_logo: [], footer_slogan: '', footer_description: '', footer_note: '' }
   if (table === 'barber_reservations') return { store_id: '', domain_id: '', style_id: '', customer_name: '', customer_phone: '', customer_email: '', reservation_date: '', reservation_time: '', note: '', status: 'pending' }
   if (table === 'barber_orders') return { customer_name: '', customer_email: '', customer_phone: '', plan: 'Barber website', price: 10, note: '' }
+  if (table === 'restaurant_orders') return { customer_name: '', customer_email: '', customer_phone: '', plan: 'Restaurant ordering page', price: 20, note: '' }
   if (table === 'intake_forms') return { f: '', u: '', p: '', note: '' }
   if (table === 'intake_submissions') return {}
   if (table === 'diner_restaurants') return { slug: '', name: '', u: '', p: '', note: '' }
@@ -183,6 +185,7 @@ export default function AdminStoreManage() {
     if (table === 'website_footers') q = supabase.from(tableName).select('*').order('id')
     if (table === 'barber_reservations') q = supabase.from(tableName).select('*').order('id')
     if (table === 'barber_orders') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'restaurant_orders') q = supabase.from(tableName).select('*').order('id')
     if (table === 'intake_forms') q = supabase.from(tableName).select('*').order('f')
     if (table === 'intake_submissions') q = supabase.from(tableName).select('*').order('status', { ascending: false }).order('id')
     if (table === 'diner_approvals') q = supabase.from(tableName).select('*').eq('draft_status', 'pending').order('id')
@@ -232,7 +235,7 @@ export default function AdminStoreManage() {
   }, [rows, query])
 
   // One label per row, used by the Name cell and the delete confirm.
-  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : table === 'intake_forms' ? r.f : table === 'intake_submissions' ? ((r.payload && r.payload.shop_name) || ('Submission #' + r.id)) : table === 'diner_restaurants' ? r.name : table === 'diner_approvals' ? r.name : table === 'diner_orders' ? ('Order #' + r.id) : r.name
+  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : table === 'restaurant_orders' ? r.customer_name : table === 'intake_forms' ? r.f : table === 'intake_submissions' ? ((r.payload && r.payload.shop_name) || ('Submission #' + r.id)) : table === 'diner_restaurants' ? r.name : table === 'diner_approvals' ? r.name : table === 'diner_orders' ? ('Order #' + r.id) : r.name
 
   const remove = async (row) => {
     const label = rowLabel(row)
@@ -439,7 +442,7 @@ export default function AdminStoreManage() {
     reload()
   }
 
-  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : table === 'intake_forms' ? 'intake form' : table === 'intake_submissions' ? 'intake submission' : table === 'diner_restaurants' ? 'diner restaurant' : table === 'diner_approvals' ? 'diner approval' : table === 'diner_orders' ? 'diner order' : 'row'
+  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : table === 'restaurant_orders' ? 'restaurant order' : table === 'intake_forms' ? 'intake form' : table === 'intake_submissions' ? 'intake submission' : table === 'diner_restaurants' ? 'diner restaurant' : table === 'diner_approvals' ? 'diner approval' : table === 'diner_orders' ? 'diner order' : 'row'
 
   const formTitle = table === 'intake_submissions'
     ? (detail ? `Intake submission — ${rowLabel(detail)}` : 'Intake submissions')
@@ -563,6 +566,9 @@ export default function AdminStoreManage() {
       {table === 'barber_orders' && (
         <p className="hint">Orders are placed by customers on the site — view and delete only, no editing.</p>
       )}
+      {table === 'restaurant_orders' && (
+        <p className="hint">Orders are placed by customers on the site — view and delete only, no editing.</p>
+      )}
       {table === 'intake_forms' && (
         <IntakeFormForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
           onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
@@ -660,6 +666,7 @@ export default function AdminStoreManage() {
               {table === 'website_footers' && <><th>Website</th><th>Slogan</th></>}
               {table === 'barber_reservations' && <><th>Store</th><th>Phone</th><th>Date</th><th>Time</th><th>Status</th></>}
               {table === 'barber_orders' && <><th>Email</th><th>Phone</th><th>Plan</th><th>Price</th></>}
+              {table === 'restaurant_orders' && <><th>Email</th><th>Phone</th><th>Plan</th><th>Price</th></>}
               {table === 'intake_forms' && <><th>Username</th><th>Note</th></>}
               {table === 'intake_submissions' && <><th>Page word</th><th>Form</th><th>Status</th><th>Sent</th></>}
               {table === 'diner_restaurants' && <><th>Slug</th><th>Username</th><th>Draft</th></>}
@@ -705,6 +712,7 @@ export default function AdminStoreManage() {
             {table === 'website_footers' && <><td>{websiteDomains.find(d => d.id === r.domain_id)?.slug || r.domain_id}</td><td>{r.footer_slogan || '—'}</td></>}
             {table === 'barber_reservations' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td>{r.customer_phone || '—'}</td><td>{r.reservation_date || '—'}</td><td>{r.reservation_time || '—'}</td><td>{r.status || '—'}</td></>}
             {table === 'barber_orders' && <><td>{r.customer_email || '—'}</td><td>{r.customer_phone || '—'}</td><td>{r.plan || '—'}</td><td>{money(r.price)}</td></>}
+            {table === 'restaurant_orders' && <><td>{r.customer_email || '—'}</td><td>{r.customer_phone || '—'}</td><td>{r.plan || '—'}</td><td>{money(r.price)}</td></>}
             {table === 'intake_forms' && <><td>{r.u}</td><td>{r.note || '—'}</td></>}
             {table === 'intake_submissions' && <><td>{r.payload?.page_word || '—'}</td><td>{intakeFormsList.find(f => f.id === r.form_id)?.f || r.form_id}</td><td>{r.status}</td><td>{(r.created_at || '').slice(0, 10)}</td></>}
             {table === 'diner_restaurants' && <><td>{r.slug}</td><td>{r.u}</td><td>{r.draft_status}</td></>}
@@ -714,7 +722,7 @@ export default function AdminStoreManage() {
                   {table === 'items' && r.pending_approval && <button type="button" className="btn-mini" onClick={() => approve(r)}>Approve</button>}{' '}
                   {table === 'intake_submissions' && <><button type="button" className="btn-mini" onClick={() => { setDetail(r); setPageWord(r.payload?.page_word || '') }}>Details</button>{' '}{r.status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveSubmission(r)}>Approve</button>}{' '}</>}
                   {table === 'diner_approvals' && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.draft_status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveDiner(r)}>Approve</button>}{' '}</>}
-                  {table !== 'barber_orders' && table !== 'intake_submissions' && table !== 'diner_approvals' && table !== 'diner_orders' && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
+                  {table !== 'barber_orders' && table !== 'restaurant_orders' && table !== 'intake_submissions' && table !== 'diner_approvals' && table !== 'diner_orders' && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
                 </td>
                 <td>{table !== 'diner_approvals' && <button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button>}</td>
               </tr>

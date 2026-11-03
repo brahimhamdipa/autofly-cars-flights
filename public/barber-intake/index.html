@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barber intake — AutoFly</title>
+</head>
+<body>
+<header class="top">
+  <h1>Join AutoFly — Barber intake</h1>
+  <p class="about">Fill this in once and AutoFly will build your barber page. It takes a few minutes. Your answers are emailed to AutoFly when you send the form.</p>
+</header>
+
+<main>
+<form id="intake-form">
+  <section class="card">
+    <h2>Your shop</h2>
+    <label>Shop name * <input id="f-shop" required></label>
+    <label>Owner name * <input id="f-owner" required></label>
+    <label>Phone * <input id="f-phone" required></label>
+    <label>Email * <input id="f-email" type="email" required></label>
+    <p class="note">Reservation emails will go to this email.</p>
+    <label>Website address (if you have one) <input id="f-website"></label>
+    <label>Short "about" text <textarea id="f-about" rows="3"></textarea></label>
+    <label>Shop pictures / logo (links, or write "will send separately") <textarea id="f-pictures" rows="2"></textarea></label>
+  </section>
+
+  <section class="card">
+    <h2>Location</h2>
+    <label>Address <input id="f-address"></label>
+    <label>City * <input id="f-city" required></label>
+    <label>Zip * <input id="f-zip" required></label>
+    <label>State <input id="f-state"></label>
+    <label>Country <input id="f-country"></label>
+    <label>County <input id="f-county"></label>
+    <label>Township <input id="f-township"></label>
+    <label>Any note (e.g. parking, entrance) <textarea id="f-locnote" rows="2"></textarea></label>
+  </section>
+
+  <section class="card">
+    <h2>Hours</h2>
+    <div id="hours-rows"></div>
+    <label>Do hours differ on holidays / special days? <input id="f-holiday"></label>
+  </section>
+
+  <section class="card">
+    <h2>Services</h2>
+    <p class="note">These belong to the shop. Add one row per service.</p>
+    <div id="services-rows"></div>
+    <button type="button" id="add-service" class="btn-secondary">+ Add a service</button>
+  </section>
+
+  <section class="card">
+    <h2>Your page</h2>
+    <label>Page word * <input id="f-slug" required></label>
+    <p class="note">This becomes your address: autofly.us.com/<span id="slug-preview">your-word</span> — it cannot be "admin".</p>
+    <label>Header slogan <input id="f-hslogan"></label>
+    <label>Header short description <textarea id="f-hdesc" rows="2"></textarea></label>
+    <label>Body: the main texts you want on the page <textarea id="f-body" rows="4"></textarea></label>
+    <label>Footer slogan <input id="f-fslogan"></label>
+    <label>Footer short description <textarea id="f-fdesc" rows="2"></textarea></label>
+    <label class="check"><input id="f-textmsg" type="checkbox"> I would like text-message notifications</label>
+    <p class="note">Note: the text-message switch is stored, but SMS is not wired up yet — email is what works today.</p>
+  </section>
+
+  <p id="form-status" class="status" role="status"></p>
+  <button type="submit" id="submit-btn" class="btn-primary">Send to AutoFly</button>
+  <p class="note">No payment is taken here. AutoFly will confirm your page once it is built.</p>
+</form>
+</main>
+
+<footer class="foot">
+  <span class="hint">AutoFly barber intake — your answers are emailed to AutoFly only.</span>
+</footer>
+
+<script>
+  /* Bootstrap: work out this folder's own address from the URL itself, so a
+     copied folder just works under its new name — with or without a
+     trailing slash. No folder name is written anywhere in this page's code.
+     The stylesheet and app script are injected from the computed address
+     (plain relative links would break on the no-trailing-slash URL). */
+  (function () {
+    var base = window.location.pathname;
+    if (base.charAt(base.length - 1) !== '/') base += '/';
+    window.RMS_BASE = base;
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = base + 'style.css';
+    document.head.appendChild(link);
+    var script = document.createElement('script');
+    script.src = base + 'app.js';
+    document.body.appendChild(script);
+  })();
+</script>
+</body>
+</html>

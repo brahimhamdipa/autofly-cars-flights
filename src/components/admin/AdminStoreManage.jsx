@@ -40,6 +40,8 @@ const TABLES = [
   ['website_footers', 'Website Footers', 'website_footer'],
   ['barber_reservations', 'Barber Reservations', 'barber_reservation'],
   ['barber_orders', 'Barber Orders', 'barber_order'],
+  ['intake_forms', 'Barber Intake Forms', 'barber_intake_forms'],
+  ['intake_submissions', 'Barber Intake Submissions', 'barber_intake_submissions'],
 ]
 
 const slugify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
@@ -68,7 +70,27 @@ const blankDraft = (table) => {
   if (table === 'website_footers') return { domain_id: '', footer_name: '', footer_logo: [], footer_slogan: '', footer_description: '', footer_note: '' }
   if (table === 'barber_reservations') return { store_id: '', domain_id: '', style_id: '', customer_name: '', customer_phone: '', customer_email: '', reservation_date: '', reservation_time: '', note: '', status: 'pending' }
   if (table === 'barber_orders') return { customer_name: '', customer_email: '', customer_phone: '', plan: 'Barber website', price: 10, note: '' }
+  if (table === 'intake_forms') return { f: '', u: '', p: '', note: '' }
+  if (table === 'intake_submissions') return {}
   return { name: '' }
+}
+
+function IntakeFormForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <input required placeholder="Form name — given to the barber for login" value={draft.f || ''} onChange={e => setDraft({ ...draft, f: e.target.value })} />
+      <p className="hint">The barber logs in at autofly.us.com/barber-intake with this form name, a username, and a password.</p>
+      <input required placeholder="Username for the barber" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
+      <input required placeholder="Password for the barber" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
+      <p className="hint">Use a throwaway password you invent for this barber — never your own password. Only you can see it here.</p>
+      <input placeholder="Note for yourself (optional — not shown to the barber)" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
 }
 
 export default function AdminStoreManage() {
@@ -92,6 +114,9 @@ export default function AdminStoreManage() {
   const [websiteTypes, setWebsiteTypes] = useState([])
   const [websiteDomains, setWebsiteDomains] = useState([])
   const [barberStyles, setBarberStyles] = useState([])
+  const [intakeFormsList, setIntakeFormsList] = useState([])
+  const [detail, setDetail] = useState(null)
+  const [pageWord, setPageWord] = useState('')
 
   const [query, setQuery] = useState('')
 
@@ -132,6 +157,8 @@ export default function AdminStoreManage() {
     if (table === 'website_footers') q = supabase.from(tableName).select('*').order('id')
     if (table === 'barber_reservations') q = supabase.from(tableName).select('*').order('id')
     if (table === 'barber_orders') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'intake_forms') q = supabase.from(tableName).select('*').order('f')
+    if (table === 'intake_submissions') q = supabase.from(tableName).select('*').order('status', { ascending: false }).order('id')
     q.then(({ data, error }) => {
       if (error) { setStatus('Error: ' + error.message); setRows([]) }
       else setRows(data || [])
@@ -147,6 +174,7 @@ export default function AdminStoreManage() {
     supabase.from('website_type').select('*').order('id').then(({ data }) => setWebsiteTypes(data || [])).catch(() => {})
     supabase.from('website_domain').select('*').order('id').then(({ data }) => setWebsiteDomains(data || [])).catch(() => {})
     supabase.from('barber_style').select('*').order('id').then(({ data }) => setBarberStyles(data || [])).catch(() => {})
+    supabase.from('barber_intake_forms').select('id,f').order('f').then(({ data }) => setIntakeFormsList(data || [])).catch(() => {})
   }
 
   useEffect(reload, [table])
@@ -162,6 +190,7 @@ export default function AdminStoreManage() {
   const pickTable = (key) => {
     setTable(key)
     setDraft(blankDraft(key))
+    setDetail(null)
     setStatus('')
     setMenuOpen(false)
   }
@@ -174,7 +203,7 @@ export default function AdminStoreManage() {
   }, [rows, query])
 
   // One label per row, used by the Name cell and the delete confirm.
-  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : r.name
+  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : table === 'intake_forms' ? r.f : table === 'intake_submissions' ? ((r.payload && r.payload.shop_name) || ('Submission #' + r.id)) : r.name
 
   const remove = async (row) => {
     const label = rowLabel(row)
@@ -190,6 +219,30 @@ export default function AdminStoreManage() {
     const { error } = await supabase.from('store_items').update({ is_active: true, pending_approval: false }).eq('id', row.id)
     if (error) { setStatus('Cannot approve: ' + error.message); return }
     setStatus(`✓ Approved "${row.name}" — now live.`)
+    reload()
+  }
+
+  // Intake approval: one tap builds the whole shop (store, location,
+  // hours, styles, website domain/header/body/footer) in a single
+  // database transaction. A taken page word fails here with a plain
+  // message — fix it in Details first, then approve again.
+  const approveSubmission = async (row) => {
+    const { data, error } = await supabase.rpc('approve_barber_intake', { p_submission_id: row.id })
+    if (error) { setStatus('Cannot approve: ' + error.message); return }
+    setStatus(`✓ Approved — shop live at autofly.us.com/${data?.slug || ''}.`)
+    setDetail(null)
+    reload()
+  }
+
+  const savePageWord = async () => {
+    if (!detail) return
+    const slug = pageWord.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    if (!slug) { setStatus('Error: the page word has to contain a letter or number.'); return }
+    if (slug === 'admin') { setStatus('Error: "admin" is reserved — pick another page word.'); return }
+    const { error } = await supabase.from('barber_intake_submissions').update({ payload: { ...detail.payload, page_word: slug } }).eq('id', detail.id)
+    if (error) { setStatus('Error: ' + error.message); return }
+    setStatus(`✓ Page word saved as "${slug}".`)
+    setDetail({ ...detail, payload: { ...detail.payload, page_word: slug } })
     reload()
   }
 
@@ -281,6 +334,18 @@ export default function AdminStoreManage() {
       const { data: passRows } = await supabase.from('fPasses').select('id').eq('formName', fields.slug)
       if (passRows && passRows.length > 0) { setStatus('That slug is already used by an employee pass — pick another.'); return }
     }
+    if (table === 'intake_forms') {
+      fields.f = slugify(fields.f || '')
+      if (!fields.f) { setStatus('Error: the form name has to contain a letter or number.'); return }
+      if (fields.f === 'admin') { setStatus('Error: "admin" is reserved — pick another form name.'); return }
+      if (!fields.u || !fields.p) { setStatus('Error: username and password are both required.'); return }
+      const { data: formRowsI } = await supabase.from('providersForm').select('id').eq('f', fields.f)
+      if (formRowsI && formRowsI.length > 0) { setStatus('That form name is already used by a provider form — pick another.'); return }
+      const { data: passRowsI } = await supabase.from('fPasses').select('id').eq('formName', fields.f)
+      if (passRowsI && passRowsI.length > 0) { setStatus('That form name is already used by an employee pass — pick another.'); return }
+      const { data: domainRowsI } = await supabase.from('website_domain').select('id').eq('slug', fields.f)
+      if (domainRowsI && domainRowsI.length > 0) { setStatus('That form name is already used by a barber website — pick another.'); return }
+    }
     if (table === 'passes') {
       fields.formName = slugify(fields.formName || '')
       if (!fields.formName) { setStatus('Error: the form name has to contain a letter or number.'); return }
@@ -330,9 +395,11 @@ export default function AdminStoreManage() {
     reload()
   }
 
-  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : 'row'
+  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : table === 'intake_forms' ? 'intake form' : table === 'intake_submissions' ? 'intake submission' : 'row'
 
-  const formTitle = draft.id ? `Edit ${kindLabel} — ${rowLabel(draft)}` : `New ${kindLabel}`
+  const formTitle = table === 'intake_submissions'
+    ? (detail ? `Intake submission — ${rowLabel(detail)}` : 'Intake submissions')
+    : draft.id ? `Edit ${kindLabel} — ${rowLabel(draft)}` : `New ${kindLabel}`
 
   const submitLabel = draft.id ? 'Save changes' : `Save ${kindLabel}`
 
@@ -450,6 +517,51 @@ export default function AdminStoreManage() {
       {table === 'barber_orders' && (
         <p className="hint">Orders are placed by customers on the site — view and delete only, no editing.</p>
       )}
+      {table === 'intake_forms' && (
+        <IntakeFormForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+          onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
+      )}
+      {table === 'intake_submissions' && !detail && (
+        <p className="hint">Submissions arrive from the intake form — open Details to review, fix the page word if it is taken, then Approve to build the shop, or Delete to reject.</p>
+      )}
+      {table === 'intake_submissions' && detail && (
+        <div className="form-card">
+          <h3>{detail.payload.shop_name || ('Submission #' + detail.id)}</h3>
+          <p>Form: {intakeFormsList.find(f => f.id === detail.form_id)?.f || detail.form_id} · Status: {detail.status} · Sent: {(detail.created_at || '').slice(0, 10)}</p>
+          <h4>Shop</h4>
+          <p>{detail.payload.owner_name || '—'} · {detail.payload.phone || '—'} · {detail.payload.email || '—'}</p>
+          <p>{detail.payload.website || '—'}</p>
+          <p>{detail.payload.about || '—'}</p>
+          <p>Pictures: {detail.payload.pictures || '—'}</p>
+          <h4>Location</h4>
+          <p>{[detail.payload.address, detail.payload.city, detail.payload.state, detail.payload.zip, detail.payload.country, detail.payload.county, detail.payload.township].filter(Boolean).join(', ') || '—'}</p>
+          <p>{detail.payload.location_note || '—'}</p>
+          <h4>Hours</h4>
+          {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => {
+            const h = (detail.payload.hours || {})[d] || {}
+            return <p key={d}>{d}: {h.closed ? 'Closed' : (h.open && h.close ? h.open + ' - ' + h.close : '—')}</p>
+          })}
+          <p>Holiday note: {detail.payload.holiday_hours_note || '—'}</p>
+          <h4>Services</h4>
+          {(detail.payload.services || []).map((sv, i) => (
+            <p key={i}>{sv.name} — {sv.price} ({sv.duration_minutes} min){sv.description ? ' — ' + sv.description : ''}{sv.picture ? ' — ' + sv.picture : ''}</p>
+          ))}
+          <h4>Page</h4>
+          <label>Page word
+            <input value={pageWord} onChange={e => setPageWord(e.target.value)} />
+          </label>
+          <p className="hint">This becomes autofly.us.com/{pageWord || 'page-word'}. If approval says it is taken, change it here, save, then approve.</p>
+          <p>Header: {detail.payload.header_slogan || '—'} · {detail.payload.header_description || '—'}</p>
+          <p>Body: {detail.payload.body_texts || '—'}</p>
+          <p>Footer: {detail.payload.footer_slogan || '—'} · {detail.payload.footer_description || '—'}</p>
+          <p>Text messages: {detail.payload.text_message_preference ? 'Yes' : 'No'}</p>
+          <div className="store-actions">
+            <button type="button" className="btn-primary" onClick={savePageWord}>Save page word</button>
+            {detail.status === 'pending' && <button type="button" onClick={() => approveSubmission(detail)}>Approve</button>}
+            <button type="button" className="btn-soft" onClick={() => setDetail(null)}>Close</button>
+          </div>
+        </div>
+      )}
 
       <div className="hero-card">
         <table className="admin-table">
@@ -480,6 +592,8 @@ export default function AdminStoreManage() {
               {table === 'website_footers' && <><th>Website</th><th>Slogan</th></>}
               {table === 'barber_reservations' && <><th>Store</th><th>Phone</th><th>Date</th><th>Time</th><th>Status</th></>}
               {table === 'barber_orders' && <><th>Email</th><th>Phone</th><th>Plan</th><th>Price</th></>}
+              {table === 'intake_forms' && <><th>Username</th><th>Note</th></>}
+              {table === 'intake_submissions' && <><th>Page word</th><th>Form</th><th>Status</th><th>Sent</th></>}
               <th>Edit</th><th>Delete</th>
             </tr>
           </thead>
@@ -520,9 +634,12 @@ export default function AdminStoreManage() {
             {table === 'website_footers' && <><td>{websiteDomains.find(d => d.id === r.domain_id)?.slug || r.domain_id}</td><td>{r.footer_slogan || '—'}</td></>}
             {table === 'barber_reservations' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td>{r.customer_phone || '—'}</td><td>{r.reservation_date || '—'}</td><td>{r.reservation_time || '—'}</td><td>{r.status || '—'}</td></>}
             {table === 'barber_orders' && <><td>{r.customer_email || '—'}</td><td>{r.customer_phone || '—'}</td><td>{r.plan || '—'}</td><td>{money(r.price)}</td></>}
+            {table === 'intake_forms' && <><td>{r.u}</td><td>{r.note || '—'}</td></>}
+            {table === 'intake_submissions' && <><td>{r.payload?.page_word || '—'}</td><td>{intakeFormsList.find(f => f.id === r.form_id)?.f || r.form_id}</td><td>{r.status}</td><td>{(r.created_at || '').slice(0, 10)}</td></>}
                 <td>
                   {table === 'items' && r.pending_approval && <button type="button" className="btn-mini" onClick={() => approve(r)}>Approve</button>}{' '}
-                  {table !== 'barber_orders' && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
+                  {table === 'intake_submissions' && <><button type="button" className="btn-mini" onClick={() => { setDetail(r); setPageWord(r.payload?.page_word || '') }}>Details</button>{' '}{r.status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveSubmission(r)}>Approve</button>}{' '}</>}
+                  {table !== 'barber_orders' && table !== 'intake_submissions' && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
                 </td>
                 <td><button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button></td>
               </tr>

@@ -1,0 +1,52 @@
+/* Diner style — the AutoFly site style, on purpose: same navy header,
+   blue buttons, cards, and background as autofly.us.com, so a visitor
+   moving from the main site to a restaurant page feels no style change. */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #f6f7fb; color: #1a1d26; }
+#site-header { background: #161d44; color: #fff; padding: 16px; position: sticky; top: 0; z-index: 10; }
+.brand { display: flex; gap: 14px; align-items: center; max-width: 960px; margin: 0 auto; }
+.brand img { width: 56px; height: 56px; object-fit: cover; border-radius: 12px; }
+.brand h1 { margin: 0; font-size: 28px; }
+.brand p { margin: 4px 0 0; color: #d7e0f5; font-size: 15px; }
+#tabs { display: flex; gap: 3px; flex-wrap: wrap; max-width: 960px; margin: 14px auto 0; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 3px; width: fit-content; }
+#tabs button { border: 0; background: transparent; color: #d7e0f5; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-size: 14px; font-weight: 600; }
+#tabs button.active { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.5); }
+.badge { display: inline-block; background: #fff; color: #1d4ed8; border-radius: 999px; padding: 0 7px; margin-left: 4px; font-weight: 700; font-size: 13px; }
+main { max-width: 960px; margin: 0 auto; padding: 16px; }
+h2 { font-size: 22px; margin: 20px 0 10px; }
+h3 { margin: 0 0 4px; }
+.card { background: #fff; border-radius: 14px; padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.info { color: #4b5563; font-size: 15px; line-height: 1.6; }
+.info p { margin: 4px 0; }
+.menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.menu-item { background: #fff; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 6px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.menu-item img { width: 100%; border-radius: 8px; }
+.menu-item .desc { color: #4b5563; font-size: 14px; flex: 1; }
+.price { font-weight: 800; font-size: 18px; color: #dc2626; }
+button, select, input, textarea { font-size: 16px; }
+button { background: #2563eb; color: #fff; border: 0; border-radius: 10px; padding: 11px 18px; cursor: pointer; font-weight: 600; }
+button:hover { background: #1d4ed8; }
+button.secondary { background: #e5e7eb; color: #1a1d26; }
+button.secondary:hover { background: #d1d5db; }
+button.danger { background: #b91c1c; }
+button:disabled { opacity: 0.45; cursor: default; }
+button.small { padding: 6px 12px; font-size: 14px; }
+select, input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea { width: 100%; padding: 10px; border: 1px solid #d6d3d1; border-radius: 8px; margin: 4px 0 12px; }
+label { font-weight: 600; font-size: 14px; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.qty { display: inline-flex; align-items: center; gap: 8px; }
+.qty button { width: 32px; height: 32px; padding: 0; border-radius: 50%; font-size: 18px; line-height: 1; }
+.order-line { display: flex; justify-content: space-between; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f5f5f4; }
+.total { font-size: 19px; font-weight: 700; text-align: right; margin-top: 12px; }
+.note { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; font-size: 15px; line-height: 1.5; }
+.error { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 12px; padding: 12px 14px; }
+.kitchen-item { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid #f5f5f4; }
+.kitchen-item input { width: 20px; height: 20px; margin: 0; }
+.kitchen-item .done { text-decoration: line-through; color: #78716c; }
+#site-footer { max-width: 960px; margin: 0 auto; padding: 0 16px 24px; color: #6b7280; font-size: 14px; }
+#print-area { display: none; }
+@media print {
+  body * { visibility: hidden; }
+  #print-area, #print-area * { visibility: visible; }
+  #print-area { display: block; position: absolute; top: 0; left: 0; width: 100%; }
+}

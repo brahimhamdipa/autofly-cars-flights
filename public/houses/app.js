@@ -269,10 +269,12 @@
       var n = years * 12;
       var j = rate / 1200;
       var m = j === 0 ? principal / n : principal * (j / (1 - Math.pow(1 + j, -n)));
-      var total = m * n + down;
+      var paymentsTotal = m * n;
+      var total = paymentsTotal + down;
       var interest = total - down - principal;
       out.innerHTML = '<div class="total">Monthly payment: ' + money(Math.round(m * 100) / 100) + '</div>' +
-        '<p>Total of ' + n + ' payments: ' + money(Math.round(total)) +
+        '<p>Total of ' + n + ' payments: ' + money(Math.round(paymentsTotal)) +
+        '<br>Total cost including down payment: ' + money(Math.round(total)) +
         '<br>Total interest: ' + money(Math.round(interest)) + '</p>' +
         '<button class="secondary" id="mort-schedule">Show full schedule</button><div id="mort-schedule-out"></div>';
       $('mort-schedule').addEventListener('click', function () {

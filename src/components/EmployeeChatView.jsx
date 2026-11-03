@@ -39,12 +39,21 @@ export default function EmployeeChatView({ creds, employee, goBack }) {
     }
   }
 
-  useEffect(() => { loadConvs() }, [])
+  // The conversation list refreshes on its own every 8 seconds, so a chat
+  // that starts AFTER this window opens shows up without reloading the
+  // page. (Previously the list loaded once on open and never refreshed
+  // unless a conversation was clicked — an empty window stayed empty
+  // forever, which is why new chats never appeared.)
+  useEffect(() => {
+    loadConvs()
+    const t = setInterval(loadConvs, 8000)
+    return () => clearInterval(t)
+  }, [])
 
   useEffect(() => {
     if (!activeId) return
     loadMessages(activeId)
-    const t = setInterval(() => { loadMessages(activeId); loadConvs() }, 8000)
+    const t = setInterval(() => { loadMessages(activeId) }, 8000)
     return () => clearInterval(t)
   }, [activeId])
 
@@ -92,7 +101,11 @@ export default function EmployeeChatView({ creds, employee, goBack }) {
           Conversations assigned to <b>{employee.firstName}{employee.lastName ? ` ${employee.lastName}` : ''}</b>
           {employee.jobTitle ? ` (${employee.jobTitle})` : ''} — reply here; visitors see your replies as AutoFly.
           A conversation stays here even after the visitor closes it.
+          New chats appear in the list on their own — no need to reload the page.
         </p>
+        <div style={{ marginTop: 8 }}>
+          <button type="button" className="btn-soft" onClick={() => { loadConvs(); if (activeId) loadMessages(activeId) }}>↻ Refresh</button>
+        </div>
         {status && <p className="hint">{status}</p>}
       </div>
 

@@ -1,27 +1,71 @@
-/* Barber intake form — one page a barber fills in so AutoFly can build
-   their barber page. Submitting emails the answers to AutoFly's inbox
-   through the send-notification service (table label 'barber_intake').
-   No database row is written and no payment is taken here. Anyone with
-   the link can fill it in, by design — this is an intake form, not a
-   customer template, so it has no Setup tab and no folder pass. */
+/* Barber intake form — provider-form pattern for barber shops.
+   The barber logs in with a form name + username + password that
+   AutoFly's admin created (Admin → Manage → Barber Intake Forms),
+   fills the intake form, and submits. The submission waits with
+   status 'pending' until the admin taps Approve, which builds the
+   whole shop in one transaction (store, location, hours, styles,
+   website domain, header, body, footer).
+   Login credentials live in memory only — they are never stored in
+   this browser — so logging in again is needed after a reload.
+   Submitting also emails AutoFly a copy (best effort): if the email
+   fails, the submission itself still stands, and the admin sees it
+   in the pending list. */
 (function () {
   'use strict';
 
   /* Public by design: the same publishable key the main AutoFly site ships
-     in its own pages. It only allows what the service allows, and the
-     intake email goes through AutoFly's notification service. */
+     in its own pages. It only allows what the service allows. */
   var SUPABASE_URL = 'https://deykvlxikzwwrygmkdly.supabase.co';
   var SUPABASE_ANON_KEY = 'sb_publishable_e2uwGgFB0SvVQS-TZahArQ_mjypz9Vr';
 
   var DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
+  /* Login credentials, memory only. */
+  var creds = null;
+
   function $(id) { return document.getElementById(id); }
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  function val(id) { var el = $(id); return el ? el.value.trim() : ''; }
+
+  function rpc(name, body) {
+    return fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      return res.json().then(function (data) {
+        if (!res.ok) throw new Error((data && data.message) || 'request failed');
+        return data;
+      });
     });
   }
-  function val(id) { var el = $(id); return el ? el.value.trim() : ''; }
+
+  /* ---------- login ---------- */
+  function setLoginStatus(msg, ok) {
+    var s = $('login-status');
+    s.textContent = msg;
+    s.className = 'status ' + (ok ? 'ok' : 'err');
+  }
+
+  function onLogin(e) {
+    e.preventDefault();
+    var form = val('f-login-form');
+    var user = val('f-login-user');
+    var pass = $('f-login-pass').value;
+    var btn = $('login-btn');
+    btn.disabled = true;
+    setLoginStatus('Checking…', true);
+    rpc('check_barber_intake_form', { p_form: form, p_username: user, p_password: pass }).then(function (ok) {
+      if (!ok) {
+        setLoginStatus('Wrong form name, username or password.', false);
+        return;
+      }
+      creds = { form: form, username: user, password: pass };
+      $('login-card').hidden = true;
+      $('intake-wrap').hidden = false;
+    }).catch(function () {
+      setLoginStatus('Could not reach the server — check your connection and try again.', false);
+    }).finally(function () { btn.disabled = false; });
+  }
 
   /* ---------- hours rows ---------- */
   function renderHours() {
@@ -88,6 +132,10 @@
 
   function onSubmit(e) {
     e.preventDefault();
+    if (!creds) {
+      setStatus('Please log in first.', false);
+      return;
+    }
     var services = readServices().filter(function (s) { return s.name !== ''; });
     if (services.length === 0) {
       setStatus('Please add at least one service with a name, price and time.', false);
@@ -135,21 +183,30 @@
     var btn = $('submit-btn');
     btn.disabled = true;
     setStatus('Sending…', true);
-    fetch(SUPABASE_URL + '/functions/v1/send-notification', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
-      body: JSON.stringify({ subject: 'Barber intake: ' + shop, table: 'barber_intake', record: record })
-    }).then(function (res) {
-      if (!res.ok) throw new Error('send failed');
-      setStatus('Thanks! Your details were sent to AutoFly. We will confirm your page once it is built.', true);
+    rpc('submit_barber_intake', {
+      p_form: creds.form, p_username: creds.username, p_password: creds.password, p_payload: record
+    }).then(function () {
+      /* Best-effort inbox copy; the pending submission itself stands
+         even if this email fails. */
+      return fetch(SUPABASE_URL + '/functions/v1/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+        body: JSON.stringify({ subject: 'Barber intake: ' + shop + ' (pending approval)', table: 'barber_intake', record: record })
+      }).catch(function () { /* inbox copy failed; submission still saved */ });
+    }).then(function () {
+      setStatus('Thanks! Your details were sent to AutoFly and are waiting for approval. We will confirm your page once it is built.', true);
       $('intake-form').reset();
       document.querySelectorAll('#services-rows .service-row').forEach(function (r, i) { if (i > 0) r.remove(); });
       DAYS.forEach(function (day, i) {
         $('h-open-' + i).disabled = false;
         $('h-close-' + i).disabled = false;
       });
-    }).catch(function () {
-      setStatus('Sending failed — please check your connection and try again.', false);
+    }).catch(function (err) {
+      if (err && err.message === 'Invalid form login') {
+        setStatus('Your login is no longer valid — please reload the page and log in again.', false);
+      } else {
+        setStatus('Sending failed — please check your connection and try again.', false);
+      }
     }).finally(function () { btn.disabled = false; });
   }
 
@@ -162,6 +219,7 @@
     $('f-slug').addEventListener('input', function () {
       $('slug-preview').textContent = this.value.trim() || 'your-word';
     });
+    $('login-form').addEventListener('submit', onLogin);
     $('intake-form').addEventListener('submit', onSubmit);
   }
 

@@ -1,14 +1,20 @@
 import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
+import { useRestaurantCart, RESTAURANT_PLAN_PRICE } from '../lib/RestaurantCartContext'
+import { RestaurantsTopBar } from './RestaurantsMenu'
 
 // Sales page for restaurant ordering (reached from More ▾ → Restaurants).
 // One product only: a restaurant's own ordering page with a live
 // kitchen screen, for $20/month. No card payment is taken here —
-// ordering puts the request in front of the owner (see the form
-// below), who then creates the restaurant's link and login by hand.
+// ordering puts the order in front of the owner (see the cart page),
+// who then creates the restaurant's link and login by hand.
 // Nothing on this page promises instant signup: the owner sets the
-// restaurant up after the request comes in.
-export default function RestaurantsPage() {
+// restaurant up after the request comes in. The request form below is
+// a second way in — it emails the owner the same way the cart order
+// does. Connecting carts to the bank comes later.
+export default function RestaurantsPage({ go }) {
+  const { count, addPlan } = useRestaurantCart()
+  const inCart = count > 0
   const [form, setForm] = useState({ name: '', restaurant: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -35,6 +41,7 @@ export default function RestaurantsPage() {
 
   return (
     <div>
+      <RestaurantsTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>🍽️ Your restaurant, taking orders online</h2>
         <p style={{ fontSize: 18, color: '#f5c542' }}>Your own ordering page for $20/month. No apps, no hardware, no commission.</p>
@@ -65,6 +72,18 @@ export default function RestaurantsPage() {
         <h3>Simple, honest pricing</h3>
         <p><b>$20/month.</b> That's it — your page, your live kitchen, and your menu changes. No setup fee, no commission on your orders. First month free, cancel anytime.</p>
         <p className="hint">Send your request below and AutoFly will be in touch to set up your restaurant.</p>
+      </div>
+
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>Restaurant ordering page — ${RESTAURANT_PLAN_PRICE}/month</h3>
+        {inCart ? (
+          <div>
+            <p>✓ In your cart.</p>
+            <button onClick={() => go && go('restaurant-cart')}>Go to My Cart</button>
+          </div>
+        ) : (
+          <button onClick={addPlan}>Add to cart — ${RESTAURANT_PLAN_PRICE}/month</button>
+        )}
       </div>
 
       <form className="form-card wide" onSubmit={handleSubmit}>

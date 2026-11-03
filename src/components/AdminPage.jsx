@@ -20,6 +20,8 @@ import AdminStoreReports from './admin/AdminStoreReports'
 
 import AdminChat from './admin/AdminChat'
 
+import AdminFolderPasses from './admin/AdminFolderPasses'
+
 const SECTIONS = [
   ['dashboard', '📊 Dashboard'],
   ['products', '🛒 Products & Stock'],
@@ -29,6 +31,7 @@ const SECTIONS = [
   ['store-manage', '✏️ Manage'],
   ['store-reports', '📄 Store Reports'],
   ['chat', '💬 Chat'],
+  ['folder-passes', '🔐 Folder Passes'],
 ]
 
 // Sections grouped under one ☰ submenu button (same look and behavior
@@ -41,6 +44,7 @@ const GROUPS = [
   ['Shop', ['products', 'orders']],
   ['Stores', ['store-add', 'store-manage', 'store-reports']],
   ['Messages', ['submissions', 'chat']],
+  ['Websites', ['folder-passes']],
 ]
 
 // Admin area: email + password login (Supabase Auth). Only the owner's
@@ -216,6 +220,7 @@ export default function AdminPage() {
       {section === 'store-manage' && <AdminStoreManage />}
       {section === 'store-reports' && <AdminStoreReports />}
       {section === 'chat' && <AdminChat />}
+      {section === 'folder-passes' && <AdminFolderPasses />}
       <button type="button" className="admin-to-top no-print" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Top</button>
     </div>
   )

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Holiday</title>
+</head>
+<body>
+<header class="top">
+  <h1 id="biz-name">Holiday</h1>
+  <p id="biz-about" class="about"></p>
+  <div id="biz-meta" class="meta"></div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="properties" class="active">Properties</button>
+  <button data-tab="book">Book</button>
+  <button data-tab="bookings">Bookings</button>
+  <button data-tab="setup">Setup</button>
+</nav>
+
+<main>
+  <section id="view-properties" class="view"></section>
+  <section id="view-book" class="view" hidden></section>
+  <section id="view-bookings" class="view" hidden></section>
+  <section id="view-setup" class="view" hidden></section>
+</main>
+
+<footer class="foot">
+  <a href="#" id="back-link">← Back</a>
+  <span class="hint">Demo template — the owner edits everything in Setup.</span>
+</footer>
+
+<script>
+  /* Bootstrap: work out this folder's own address from the URL itself, so a
+     copied folder just works under its new name — with or without a
+     trailing slash. No folder name is written anywhere in this page's code.
+     The stylesheet and app script are injected from the computed address
+     (plain relative links would break on the no-trailing-slash URL). */
+  (function () {
+    var path = window.location.pathname.replace(/\/+$/, '');
+    var slug = path.substring(path.lastIndexOf('/') + 1) || 'holiday';
+    var base = window.location.pathname;
+    if (!\/$/.test(base)) base += '/';
+    window.RMS_SLUG = slug;
+    window.RMS_BASE = base;
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = base + 'style.css';
+    document.head.appendChild(link);
+    var script = document.createElement('script');
+    script.src = base + 'app.js';
+    document.body.appendChild(script);
+  })();
+</script>
+</body>
+</html>

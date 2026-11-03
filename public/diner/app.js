@@ -81,8 +81,15 @@
       headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
       body: JSON.stringify(body)
     }).then(function (res) {
-      if (!res.ok) return res.json().then(function (j) { throw new Error((j && j.message) || 'request failed'); });
-      return res.json();
+      /* Some calls (save/upload) return no body at all — read text first
+         and only parse when there is something to parse, so an empty
+         success reply is not mistaken for a failure. */
+      return res.text().then(function (t) {
+        var j = null;
+        try { j = t ? JSON.parse(t) : null; } catch (e) {}
+        if (!res.ok) throw new Error((j && j.message) || 'request failed');
+        return j;
+      });
     });
   }
   function notifyEmail(subject, record) {
@@ -473,12 +480,11 @@
   document.querySelectorAll('#tabs button').forEach(function (btn) {
     btn.addEventListener('click', function () { show(btn.getAttribute('data-view')); });
   });
-  /* Black ↑ Top pill at the bottom-left, like the shop pages: appears
-     once you scroll down, tap it to jump back to the top. */
+  /* Black ↑ Top pill at the bottom-left, exactly like the shop pages:
+     always visible, tap it to jump back to the top. */
   var toTop = $('to-top');
   if (toTop) {
     toTop.addEventListener('click', function () { window.scrollTo(0, 0); });
-    window.onscroll = function () { toTop.hidden = window.scrollY < 300; };
   }
   if (!SLUG) {
     $('site-name').textContent = 'Restaurant not found';

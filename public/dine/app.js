@@ -18,6 +18,12 @@
     .replace(/[^a-z0-9]+/gi, '-').toLowerCase();
   var ORDER_KEY = 'rms-orders-' + SLUG;
 
+  /* Public by design: the same publishable key the main AutoFly site ships
+     in its own pages. Used only for the Setup sign-in check below. */
+  var SUPABASE_URL = 'https://deykvlxikzwwrygmkdly.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_e2uwGgFB0SvVQS-TZahArQ_mjypz9Vr';
+  var SETUP_KEY = 'folder-pass-' + SLUG;
+
   var data = null;
   var orders = loadOrders();
   var cart = {}; // menu index -> quantity
@@ -54,6 +60,55 @@
     kc.textContent = active;
   }
 
+  /* ---------- Setup sign-in ---------- */
+  /* Setup opens freely when the admin has set no pass for this folder.
+     Once a pass exists, Setup asks for that folder's username + password
+     (set in Admin) and unlocks for this browser session only. The password
+     itself is never sent to the page: the database only answers yes/no. */
+  function setupUnlocked() {
+    try { return sessionStorage.getItem(SETUP_KEY) === '1'; } catch (e) { return false; }
+  }
+  function rpc(name, body) {
+    return fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+      body: JSON.stringify(body)
+    }).then(function (res) { if (!res.ok) throw new Error('rpc failed'); return res.json(); });
+  }
+  function openSetup() {
+    if (setupUnlocked()) { renderSetup(); return; }
+    var el = $('view-setup');
+    el.innerHTML = '<h2>Setup</h2><div class="card"><p class="info">Checking…</p></div>';
+    rpc('folder_pass_status', { p_folder: SLUG }).then(function (status) {
+      if (status === 'open') { renderSetup(); return; }
+      renderSetupLogin(el);
+    }).catch(function () {
+      el.innerHTML = '<h2>Setup</h2><div class="card"><p class="error">Could not reach the sign-in check. Please try again in a moment.</p></div>';
+    });
+  }
+  function renderSetupLogin(el) {
+    el.innerHTML = '<h2>Setup sign-in</h2><div class="card">' +
+      '<p class="info">This setup page is protected. Enter the username and password set by the admin for this folder.</p>' +
+      '<label>Username</label><input id="fp-user" type="text" autocomplete="username">' +
+      '<label>Password</label><input id="fp-pass" type="password" autocomplete="current-password">' +
+      '<div class="row"><button id="fp-go">Sign in</button></div>' +
+      '<div id="fp-out" style="margin-top:12px"></div></div>';
+    $('fp-go').addEventListener('click', function () {
+      var out = $('fp-out');
+      out.innerHTML = '<p class="info">Checking…</p>';
+      rpc('check_folder_pass', { p_folder: SLUG, p_username: $('fp-user').value.trim(), p_password: $('fp-pass').value }).then(function (ok) {
+        if (ok === true) {
+          try { sessionStorage.setItem(SETUP_KEY, '1'); } catch (e) {}
+          renderSetup();
+        } else {
+          out.innerHTML = '<p class="error">Wrong username or password.</p>';
+        }
+      }).catch(function () {
+        out.innerHTML = '<p class="error">Could not reach the sign-in check. Please try again in a moment.</p>';
+      });
+    });
+  }
+
   function show(view) {
     currentView = view;
     ['menu', 'order', 'kitchen', 'receipt', 'setup'].forEach(function (v) {
@@ -66,7 +121,7 @@
     if (view === 'order') renderOrder();
     if (view === 'kitchen') renderKitchen();
     if (view === 'receipt') renderReceiptForm();
-    if (view === 'setup') renderSetup();
+    if (view === 'setup') openSetup();
     window.scrollTo(0, 0);
   }
 

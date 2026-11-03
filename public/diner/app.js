@@ -6,9 +6,10 @@
    login is what AutoFly sells); Setup edits save as a draft, and the
    Upload button sends the draft to the admin for approval. Approval
    makes the draft live instantly — no file swap, no redeploy wait.
-   The Kitchen tab is staff-only (same login) and polls the shared
-   order list every few seconds while open, so new orders appear with
-   no manual refresh, from any phone. Login credentials live in memory
+   The Kitchen tab is OPEN to anyone with the restaurant link and
+   polls the shared order list every few seconds while open, so new
+   orders appear with no manual refresh, from any phone. Only Setup
+   asks for the login. Login credentials live in memory
    only: a reload asks for login again, exactly like the barber
    intake form. */
 (function () {
@@ -103,9 +104,10 @@
   }
 
   /* ---------- Staff sign-in ---------- */
-  /* Setup and Kitchen share one login: the restaurant's own username +
-     password, checked against that restaurant only. Credentials stay in
-     memory for this page only — a reload asks for login again. */
+  /* Setup only: the restaurant's own username + password, checked
+     against that restaurant only. Credentials stay in memory for this
+     page only — a reload asks for login again. The Kitchen tab needs
+     no login at all. */
   function staffUnlocked() { return !!staffCreds; }
   function renderStaffLogin(el, heading, after) {
     el.innerHTML = '<h2>' + heading + '</h2><div class="card">' +
@@ -259,18 +261,14 @@
     });
   }
 
-  /* ---------- Kitchen (staff only, shared across devices) ---------- */
+  /* ---------- Kitchen (open to anyone with the link, shared across devices) ---------- */
   function openKitchen() {
-    if (!staffUnlocked()) {
-      renderStaffLogin($('view-kitchen'), 'Kitchen sign-in', function () { openKitchen(); });
-      return;
-    }
     fetchKitchen();
     stopKitchenPoll();
     kitchenTimer = setInterval(fetchKitchen, 5000);
   }
   function fetchKitchen() {
-    rpc('list_diner_orders', { p_slug: SLUG, p_username: staffCreds.u, p_password: staffCreds.p }).then(function (rows) {
+    rpc('list_diner_orders_open', { p_slug: SLUG }).then(function (rows) {
       kitchenOrders = rows || [];
       updateBadges();
       if (currentView === 'kitchen') renderKitchen();
@@ -311,21 +309,21 @@
         var order = kitchenOrders.filter(function (o) { return String(o.id) === parts[0]; })[0];
         if (!order) return;
         order.data.items[Number(parts[1])].cooked = box.checked;
-        rpc('update_diner_order', { p_slug: SLUG, p_username: staffCreds.u, p_password: staffCreds.p, p_order_id: order.id, p_data: order.data, p_status: 'active' }).then(fetchKitchen).catch(fetchKitchen);
+        rpc('update_diner_order_open', { p_slug: SLUG, p_order_id: order.id, p_data: order.data, p_status: 'active' }).then(fetchKitchen).catch(fetchKitchen);
       });
     });
     el.querySelectorAll('[data-fulfil]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var order = kitchenOrders.filter(function (o) { return String(o.id) === btn.getAttribute('data-fulfil'); })[0];
         if (!order) return;
-        rpc('update_diner_order', { p_slug: SLUG, p_username: staffCreds.u, p_password: staffCreds.p, p_order_id: order.id, p_data: order.data, p_status: 'done' }).then(fetchKitchen).catch(fetchKitchen);
+        rpc('update_diner_order_open', { p_slug: SLUG, p_order_id: order.id, p_data: order.data, p_status: 'done' }).then(fetchKitchen).catch(fetchKitchen);
       });
     });
     el.querySelectorAll('[data-delorder]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         if (!window.confirm('Delete this order?')) return;
         var id = Number(btn.getAttribute('data-delorder'));
-        rpc('delete_diner_order', { p_slug: SLUG, p_username: staffCreds.u, p_password: staffCreds.p, p_order_id: id }).then(fetchKitchen).catch(fetchKitchen);
+        rpc('delete_diner_order_open', { p_slug: SLUG, p_order_id: id }).then(fetchKitchen).catch(fetchKitchen);
       });
     });
   }
@@ -360,7 +358,7 @@
     });
   }
 
-  /* ---------- Setup (staff only: draft + Upload for approval) ---------- */
+  /* ---------- Setup (login only: draft + Upload for approval) ---------- */
   function openSetup() {
     if (!staffUnlocked()) {
       renderStaffLogin($('view-setup'), 'Setup sign-in', function () { openSetup(); });
@@ -503,8 +501,9 @@
       if (data.address) foot.push(esc(data.address));
       if (data.phone) foot.push(esc(data.phone));
       if (data.hours) foot.push(esc(data.hours));
-      foot.push('Powered by AutoFly');
-      $('site-footer').innerHTML = foot.join(' · ');
+      var firstLine = foot.join(' · ');
+      $('site-footer').innerHTML = (firstLine ? '<div>' + firstLine + '</div>' : '') +
+        '<div>Powered by AutoFly</div>';
       updateBadges();
       renderMenu();
     }).catch(function () {

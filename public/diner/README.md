@@ -7,10 +7,10 @@ the database, and the page knows which restaurant from the link.
 ## Links
 
 - Visitor link: `autofly.us.com/diner?r=<slug>` — menu, ordering,
-  and receipts. No login needed.
-- Staff (Setup + Kitchen): same link, then the Setup or Kitchen tab
-  asks for the restaurant's username + password. Credentials live in
-  memory only — a reload asks for login again.
+  receipts, and the Kitchen. No login needed.
+- Setup only: the Setup tab asks for the restaurant's username +
+  password. Credentials live in memory only — a reload asks for
+  login again.
 - New restaurants start with the demo menu (the old dine menu). The
   customer changes it in Setup.
 
@@ -29,10 +29,20 @@ the database, and the page knows which restaurant from the link.
 ## Kitchen (shared across devices)
 
 Orders go to the shared order list for that restaurant. The Kitchen
-tab polls the list every 5 seconds while open, so orders from any
-phone appear with no manual refresh. Each restaurant sees only its
-own orders. Cooked ticks, Fulfil, and Delete all write back to the
-shared list.
+tab is OPEN to anyone with the restaurant link — only Setup asks
+for the login — and it polls the list every 5 seconds while open,
+so orders from any phone appear with no manual refresh. Each
+restaurant sees only its own orders. Cooked ticks, Fulfil, and
+Delete all write back to the shared list. (The Kitchen RPCs are
+the `_open` versions in SQL part 4; the older login-checked
+versions from part 3 are left in place, unused.)
+
+## Footer and tabs
+
+The footer is centered, on two lines: the hours line first, then
+"Powered by AutoFly". The Menu / My Order / Kitchen / Receipt /
+Setup tabs are centered inside the oval, including on narrow
+screens where they wrap.
 
 ## Receipts
 

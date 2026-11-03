@@ -8,10 +8,23 @@
 <body>
 <header class="top">
   <h1>Join AutoFly — Barber intake</h1>
-  <p class="about">Fill this in once and AutoFly will build your barber page. It takes a few minutes. Your answers are emailed to AutoFly when you send the form.</p>
+  <p class="about">Log in with the form name, username and password AutoFly gave you, then fill in your shop's details. Your answers wait for AutoFly's approval, and then your page is built.</p>
 </header>
 
 <main>
+<section class="card" id="login-card">
+  <h2>Log in</h2>
+  <form id="login-form">
+    <label>Form name * <input id="f-login-form" required></label>
+    <p class="note">The form name AutoFly gave you — not your page word, which you choose below after logging in.</p>
+    <label>Username * <input id="f-login-user" required></label>
+    <label>Password * <input id="f-login-pass" type="password" required></label>
+    <p id="login-status" class="status" role="status"></p>
+    <button type="submit" id="login-btn" class="btn-primary">Log in</button>
+  </form>
+</section>
+
+<div id="intake-wrap" hidden>
 <form id="intake-form">
   <section class="card">
     <h2>Your shop</h2>
@@ -53,7 +66,7 @@
   <section class="card">
     <h2>Your page</h2>
     <label>Page word * <input id="f-slug" required></label>
-    <p class="note">This becomes your address: autofly.us.com/<span id="slug-preview">your-word</span> — it cannot be "admin".</p>
+    <p class="note">This becomes your address: autofly.us.com/<span id="slug-preview">your-word</span> — it cannot be "admin". If that word is already taken, AutoFly will ask you for another one.</p>
     <label>Header slogan <input id="f-hslogan"></label>
     <label>Header short description <textarea id="f-hdesc" rows="2"></textarea></label>
     <label>Body: the main texts you want on the page <textarea id="f-body" rows="4"></textarea></label>
@@ -65,12 +78,13 @@
 
   <p id="form-status" class="status" role="status"></p>
   <button type="submit" id="submit-btn" class="btn-primary">Send to AutoFly</button>
-  <p class="note">No payment is taken here. AutoFly will confirm your page once it is built.</p>
+  <p class="note">No payment is taken here. AutoFly will confirm your page once your details are approved.</p>
 </form>
+</div>
 </main>
 
 <footer class="foot">
-  <span class="hint">AutoFly barber intake — your answers are emailed to AutoFly only.</span>
+  <span class="hint">AutoFly barber intake — your answers go to AutoFly for approval.</span>
 </footer>
 
 <script>

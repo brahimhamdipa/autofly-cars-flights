@@ -3,8 +3,9 @@ import { useBarberCart } from '../lib/BarberCartContext'
 
 // Shared submenu for the Barbers area — same look and behavior as the
 // Shopping / Cars / Flights menus (white circular button, plain list).
-// Two links only: My Cart (with the live barber-cart count) then
-// Barbers. Mirrors GroceryMenu exactly, reading the separate barber
+// Three links: My Cart (with the live barber-cart count), Barbers
+// (the live booking system), then Simple Barbershop (the $10 static
+// page) last. Mirrors GroceryMenu exactly, reading the separate barber
 // cart instead of the shopping cart.
 export default function BarbersMenu({ go }) {
   const [open, setOpen] = useState(false)
@@ -29,6 +30,7 @@ export default function BarbersMenu({ go }) {
         <div className="car-submenu">
           <button onClick={() => pick('barber-cart')}>My Cart {count > 0 && <span className="menu-count">{count}</span>}</button>
           <button onClick={() => pick('barbers')}>Barbers</button>
+          <button onClick={() => pick('simple-barbershop')}>Simple Barbershop</button>
         </div>
       )}
     </div>

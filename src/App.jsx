@@ -27,6 +27,7 @@ import AdminPage from './components/AdminPage'
 import { CartProvider } from './lib/CartContext'
 import { BarberCartProvider } from './lib/BarberCartContext'
 import BarbersPage from './components/BarbersPage'
+import SimpleBarbershopPage from './components/SimpleBarbershopPage'
 import RestaurantsPage from './components/RestaurantsPage'
 import RestaurantsCartPage from './components/RestaurantsCartPage'
 import { RestaurantCartProvider } from './lib/RestaurantCartContext'
@@ -104,9 +105,9 @@ export default function App() {
   }, [])
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
-  const BARBER_TABS = ['barbers', 'barber-cart']
+  const BARBER_TABS = ['barbers', 'barber-cart', 'simple-barbershop']
   const RESTAURANT_TABS = ['restaurants', 'restaurant-cart']
-  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes', 'restaurants', 'restaurant-cart', 'barbers', 'barber-cart'].includes(tab)
+  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes', 'restaurants', 'restaurant-cart', 'barbers', 'barber-cart', 'simple-barbershop'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -191,6 +192,7 @@ export default function App() {
           <BarberCartProvider>
             {tab === 'barbers' && <BarbersPage go={go} />}
             {tab === 'barber-cart' && <BarberCartPage go={go} />}
+            {tab === 'simple-barbershop' && <SimpleBarbershopPage go={go} />}
           </BarberCartProvider>
         )}
         {tab === 'clothes' && <ClothesPage />}

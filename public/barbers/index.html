@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barbers</title>
+<link rel="icon" href="data:,">
+</head>
+<body>
+<div id="app">
+  <header id="site-header">
+    <div class="brand">
+      <img id="site-logo" alt="" hidden>
+      <div>
+        <h1 id="site-name">Loading…</h1>
+        <p id="site-about"></p>
+      </div>
+    </div>
+    <nav id="tabs" role="tablist">
+      <button data-view="book" class="active">Book</button>
+      <button data-view="bookings">Bookings <span id="bookings-count" class="badge" hidden></span></button>
+      <button data-view="serving">Serving Now</button>
+      <button data-view="setup">Setup</button>
+    </nav>
+  </header>
+  <main>
+    <section id="view-book" class="view"></section>
+    <section id="view-bookings" class="view" hidden></section>
+    <section id="view-serving" class="view" hidden></section>
+    <section id="view-setup" class="view" hidden></section>
+  </main>
+  <footer id="site-footer"></footer>
+  <button id="to-top" class="to-top">↑ Top</button>
+</div>
+<script>
+  /* Bootstrap: work out this folder's own address from the URL itself, so
+     the app loads its own style.css and app.js under any domain. No folder
+     name is written anywhere in this page's code. The shop itself
+     comes from the link (?s=<slug>), not from a file. */
+  (function () {
+    var p = location.pathname;
+    var last = p.split('/').pop();
+    var base = last.indexOf('.') !== -1
+      ? p.replace(/\/[^\/]*$/, '/')
+      : (p.charAt(p.length - 1) === '/' ? p : p + '/');
+    window.RMS_BASE = base;
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = base + 'style.css';
+    document.head.appendChild(link);
+    var script = document.createElement('script');
+    script.src = base + 'app.js';
+    document.body.appendChild(script);
+  })();
+</script>
+</body>
+</html>

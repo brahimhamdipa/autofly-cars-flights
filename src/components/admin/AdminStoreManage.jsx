@@ -46,6 +46,9 @@ const TABLES = [
   ['diner_restaurants', 'Diner Restaurants', 'diner_restaurants'],
   ['diner_approvals', 'Diner Approvals', 'diner_restaurants'],
   ['diner_orders', 'Diner Orders', 'diner_orders'],
+  ['barbershop_shops', 'Barbershop Shops', 'barbershop_shops'],
+  ['barbershop_approvals', 'Barbershop Approvals', 'barbershop_shops'],
+  ['barbershop_bookings', 'Barbershop Bookings', 'barbershop_bookings'],
 ]
 
 const slugify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
@@ -80,6 +83,9 @@ const blankDraft = (table) => {
   if (table === 'diner_restaurants') return { slug: '', name: '', u: '', p: '', epass: '', note: '' }
   if (table === 'diner_approvals') return {}
   if (table === 'diner_orders') return {}
+  if (table === 'barbershop_shops') return { slug: '', name: '', u: '', p: '', epass: '', note: '' }
+  if (table === 'barbershop_approvals') return {}
+  if (table === 'barbershop_bookings') return {}
   return { name: '' }
 }
 
@@ -96,6 +102,27 @@ function DinerRestaurantForm({ draft, setDraft, onSubmit, submitLabel, onCancel 
       <input placeholder="Employee password (optional — one shared password for ordering + kitchen)" value={draft.epass || ''} onChange={e => setDraft({ ...draft, epass: e.target.value })} />
       <p className="hint">Give this to the owner with the login above. Anyone with the restaurant link sees the menu, but ordering and the kitchen need this password. Leave it empty and the restaurant stays fully open, as before.</p>
       <input placeholder="Note for yourself (optional — not shown to the restaurant)" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+function BarbershopShopForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <input required placeholder="Shop name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
+      <input required placeholder="Slug — the word in autofly.us.com/barbers?s=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The customer shares autofly.us.com/barbers?s={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their own customers. New shops start with the demo services.</p>
+      <input required placeholder="Username for the shop" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
+      <input required placeholder="Password for the shop" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
+      <p className="hint">This login is what you sell — use a throwaway password you invent for this shop, never your own password. Only you can see it here.</p>
+      <input placeholder="Employee password (optional — one shared password for Bookings)" value={draft.epass || ''} onChange={e => setDraft({ ...draft, epass: e.target.value })} />
+      <p className="hint">Give this to the owner with the login above. Anyone can book, but Bookings needs this password. Leave it empty and Bookings stays fully open, as before.</p>
+      <input placeholder="Note for yourself (optional — not shown to the shop)" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
       <div className="store-actions">
         <button type="submit" className="btn-primary">{submitLabel}</button>
         {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
@@ -147,6 +174,7 @@ export default function AdminStoreManage() {
   const [detail, setDetail] = useState(null)
   const [pageWord, setPageWord] = useState('')
   const [dinerRestaurantsList, setDinerRestaurantsList] = useState([])
+  const [barbershopShopsList, setBarbershopShopsList] = useState([])
 
   const [query, setQuery] = useState('')
 
@@ -192,6 +220,8 @@ export default function AdminStoreManage() {
     if (table === 'intake_submissions') q = supabase.from(tableName).select('*').order('status', { ascending: false }).order('id')
     if (table === 'diner_approvals') q = supabase.from(tableName).select('*').eq('draft_status', 'pending').order('id')
     if (table === 'diner_orders') q = supabase.from(tableName).select('*').order('id', { ascending: false })
+    if (table === 'barbershop_approvals') q = supabase.from(tableName).select('*').eq('draft_status', 'pending').order('id')
+    if (table === 'barbershop_bookings') q = supabase.from(tableName).select('*').order('id', { ascending: false })
     q.then(({ data, error }) => {
       if (error) { setStatus('Error: ' + error.message); setRows([]) }
       else setRows(data || [])
@@ -209,6 +239,7 @@ export default function AdminStoreManage() {
     supabase.from('barber_style').select('*').order('id').then(({ data }) => setBarberStyles(data || [])).catch(() => {})
     supabase.from('barber_intake_forms').select('id,f').order('f').then(({ data }) => setIntakeFormsList(data || [])).catch(() => {})
     supabase.from('diner_restaurants').select('id,slug,name').order('name').then(({ data }) => setDinerRestaurantsList(data || [])).catch(() => {})
+    supabase.from('barbershop_shops').select('id,slug,name').order('name').then(({ data }) => setBarbershopShopsList(data || [])).catch(() => {})
   }
 
   useEffect(reload, [table])
@@ -237,7 +268,7 @@ export default function AdminStoreManage() {
   }, [rows, query])
 
   // One label per row, used by the Name cell and the delete confirm.
-  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : table === 'restaurant_orders' ? r.customer_name : table === 'intake_forms' ? r.f : table === 'intake_submissions' ? ((r.payload && r.payload.shop_name) || ('Submission #' + r.id)) : table === 'diner_restaurants' ? r.name : table === 'diner_approvals' ? r.name : table === 'diner_orders' ? ('Order #' + r.id) : r.name
+  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : table === 'restaurant_orders' ? r.customer_name : table === 'intake_forms' ? r.f : table === 'intake_submissions' ? ((r.payload && r.payload.shop_name) || ('Submission #' + r.id)) : table === 'diner_restaurants' ? r.name : table === 'diner_approvals' ? r.name : table === 'diner_orders' ? ('Order #' + r.id) : table === 'barbershop_shops' ? r.name : table === 'barbershop_approvals' ? r.name : table === 'barbershop_bookings' ? ('Booking #' + r.id) : r.name
 
   const remove = async (row) => {
     const label = rowLabel(row)
@@ -285,6 +316,15 @@ export default function AdminStoreManage() {
     const { data, error } = await supabase.rpc('approve_diner_draft', { p_restaurant_id: row.id })
     if (error) { setStatus('Cannot approve: ' + error.message); return }
     setStatus(`✓ Approved — "${data?.name || row.name}" menu is now live.`)
+    setDetail(null)
+    reload()
+  }
+
+  // Barbershop approval: one tap makes the pending draft live.
+  const approveBarbershop = async (row) => {
+    const { data, error } = await supabase.rpc('approve_barbershop_draft', { p_shop_id: row.id })
+    if (error) { setStatus('Cannot approve: ' + error.message); return }
+    setStatus(`✓ Approved — "${data?.name || row.name}" services are now live.`)
     setDetail(null)
     reload()
   }
@@ -383,6 +423,12 @@ export default function AdminStoreManage() {
       if (fields.slug === 'admin') { setStatus('Error: "admin" is reserved — pick another slug.'); return }
       if (!fields.name || !fields.u || !fields.p) { setStatus('Error: name, username and password are all required.'); return }
     }
+    if (table === 'barbershop_shops') {
+      fields.slug = slugify(fields.slug || '')
+      if (!fields.slug) { setStatus('Error: the slug has to contain a letter or number.'); return }
+      if (fields.slug === 'admin') { setStatus('Error: "admin" is reserved — pick another slug.'); return }
+      if (!fields.name || !fields.u || !fields.p) { setStatus('Error: name, username and password are all required.'); return }
+    }
     if (table === 'intake_forms') {
       fields.f = slugify(fields.f || '')
       if (!fields.f) { setStatus('Error: the form name has to contain a letter or number.'); return }
@@ -444,12 +490,14 @@ export default function AdminStoreManage() {
     reload()
   }
 
-  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : table === 'restaurant_orders' ? 'restaurant order' : table === 'intake_forms' ? 'intake form' : table === 'intake_submissions' ? 'intake submission' : table === 'diner_restaurants' ? 'diner restaurant' : table === 'diner_approvals' ? 'diner approval' : table === 'diner_orders' ? 'diner order' : 'row'
+  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : table === 'restaurant_orders' ? 'restaurant order' : table === 'intake_forms' ? 'intake form' : table === 'intake_submissions' ? 'intake submission' : table === 'diner_restaurants' ? 'diner restaurant' : table === 'diner_approvals' ? 'diner approval' : table === 'diner_orders' ? 'diner order' : table === 'barbershop_shops' ? 'barbershop shop' : table === 'barbershop_approvals' ? 'barbershop approval' : table === 'barbershop_bookings' ? 'barbershop booking' : 'row'
 
   const formTitle = table === 'intake_submissions'
     ? (detail ? `Intake submission — ${rowLabel(detail)}` : 'Intake submissions')
     : table === 'diner_approvals'
     ? (detail ? `Diner approval — ${rowLabel(detail)}` : 'Diner approvals')
+    : table === 'barbershop_approvals'
+    ? (detail ? `Barbershop approval — ${rowLabel(detail)}` : 'Barbershop approvals')
     : draft.id ? `Edit ${kindLabel} — ${rowLabel(draft)}` : `New ${kindLabel}`
 
   const submitLabel = draft.id ? 'Save changes' : `Save ${kindLabel}`
@@ -597,6 +645,28 @@ export default function AdminStoreManage() {
       {table === 'diner_orders' && (
         <p className="hint">Orders placed by visitors — view and delete only, no editing. The kitchen handles them live on the restaurant page.</p>
       )}
+      {table === 'barbershop_shops' && (
+        <BarbershopShopForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+          onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
+      )}
+      {table === 'barbershop_approvals' && !detail && (
+        <p className="hint">Drafts shops uploaded for approval — open Details to review the services, then Approve to make them live. Deleting a shop is done in Barbershop Shops, not here.</p>
+      )}
+      {table === 'barbershop_approvals' && detail && (
+        <div className="form-card">
+          <h3>{detail.name}</h3>
+          <p>Link: autofly.us.com/barbers?s={detail.slug} · Status: {detail.draft_status}</p>
+          <p>Draft services (what the shop uploaded):</p>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{detail.draft_data ? JSON.stringify(detail.draft_data, null, 2) : 'No draft yet.'}</pre>
+          <div className="store-actions">
+            {detail.draft_status === 'pending' && <button type="button" className="btn-primary" onClick={() => approveBarbershop(detail)}>Approve</button>}
+            <button type="button" className="btn-soft" onClick={() => setDetail(null)}>Close</button>
+          </div>
+        </div>
+      )}
+      {table === 'barbershop_bookings' && (
+        <p className="hint">Bookings placed by visitors — view and delete only, no editing. The barber handles them live on the shop page.</p>
+      )}
       {table === 'intake_submissions' && !detail && (
         <p className="hint">Submissions arrive from the intake form — open Details to review, fix the page word if it is taken, then Approve to build the shop, or Delete to reject.</p>
       )}
@@ -674,6 +744,9 @@ export default function AdminStoreManage() {
               {table === 'diner_restaurants' && <><th>Slug</th><th>Username</th><th>Draft</th></>}
               {table === 'diner_approvals' && <><th>Slug</th><th>Draft</th></>}
               {table === 'diner_orders' && <><th>Restaurant</th><th>Table</th><th>Items</th><th>Status</th><th>Date</th></>}
+              {table === 'barbershop_shops' && <><th>Slug</th><th>Username</th><th>Draft</th></>}
+              {table === 'barbershop_approvals' && <><th>Slug</th><th>Draft</th></>}
+              {table === 'barbershop_bookings' && <><th>Shop</th><th>Customer</th><th>Service</th><th>Date</th><th>Status</th></>}
               <th>Edit</th><th>Delete</th>
             </tr>
           </thead>
@@ -720,13 +793,17 @@ export default function AdminStoreManage() {
             {table === 'diner_restaurants' && <><td>{r.slug}</td><td>{r.u}</td><td>{r.draft_status}</td></>}
             {table === 'diner_approvals' && <><td>{r.slug}</td><td>{r.draft_status}</td></>}
             {table === 'diner_orders' && <><td>{dinerRestaurantsList.find(x => x.id === r.restaurant_id)?.name || r.restaurant_id}</td><td>{r.order_data?.table ?? '—'}</td><td>{(r.order_data?.items || []).length}</td><td>{r.status}</td><td>{(r.created_at || '').slice(0, 10)}</td></>}
+            {table === 'barbershop_shops' && <><td>{r.slug}</td><td>{r.u}</td><td>{r.draft_status}</td></>}
+            {table === 'barbershop_approvals' && <><td>{r.slug}</td><td>{r.draft_status}</td></>}
+            {table === 'barbershop_bookings' && <><td>{barbershopShopsList.find(x => x.id === r.shop_id)?.name || r.shop_id}</td><td>{r.booking_data?.name || '—'}</td><td>{r.booking_data?.service || '—'}</td><td>{r.booking_data?.date || '—'}</td><td>{r.status}</td></>}
                 <td>
                   {table === 'items' && r.pending_approval && <button type="button" className="btn-mini" onClick={() => approve(r)}>Approve</button>}{' '}
                   {table === 'intake_submissions' && <><button type="button" className="btn-mini" onClick={() => { setDetail(r); setPageWord(r.payload?.page_word || '') }}>Details</button>{' '}{r.status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveSubmission(r)}>Approve</button>}{' '}</>}
                   {table === 'diner_approvals' && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.draft_status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveDiner(r)}>Approve</button>}{' '}</>}
-                  {table !== 'barber_orders' && table !== 'restaurant_orders' && table !== 'intake_submissions' && table !== 'diner_approvals' && table !== 'diner_orders' && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
+                  {table === 'barbershop_approvals' && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.draft_status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveBarbershop(r)}>Approve</button>}{' '}</>}
+                  {table !== 'barber_orders' && table !== 'restaurant_orders' && table !== 'intake_submissions' && table !== 'diner_approvals' && table !== 'diner_orders' && table !== 'barbershop_approvals' && table !== 'barbershop_bookings' && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
                 </td>
-                <td>{table !== 'diner_approvals' && <button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button>}</td>
+                <td>{table !== 'diner_approvals' && table !== 'barbershop_approvals' && <button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button>}</td>
               </tr>
             ))}
             {rows && filtered.length === 0 && <tr><td colSpan="12">Nothing here yet.</td></tr>}

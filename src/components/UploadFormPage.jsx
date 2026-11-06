@@ -35,21 +35,32 @@ export default function UploadFormPage({ slug, goBack }) {
     if (hideTimer.current) clearTimeout(hideTimer.current)
     hideTimer.current = setTimeout(() => setControlsVisible(false), 3000)
   }
+  const toggleControls = () => {
+    if (controlsVisible) { setControlsVisible(false); if (hideTimer.current) clearTimeout(hideTimer.current) } else pokeControls()
+  }
   useEffect(() => {
     if (viewIndex === null) return
     pokeControls()
+    // Give the gallery itself the focus, so a TV remote's keys land
+    // here instead of on whichever button was last touched.
+    galleryRef.current?.focus()
     return () => { if (hideTimer.current) clearTimeout(hideTimer.current) }
   }, [viewIndex])
   useEffect(() => {
     if (viewIndex === null) return
     const onKey = (e) => {
-      if (e.key === 'ArrowLeft') { setViewIndex((viewIndex - 1 + pics.length) % pics.length); pokeControls() }
-      if (e.key === 'ArrowRight') { setViewIndex((viewIndex + 1) % pics.length); pokeControls() }
+      // TV remotes (and keyboards) drive the gallery with keys. Keep
+      // the arrows on the pictures only: without preventDefault the TV
+      // would also move its focus between the buttons on every press.
+      // Volume keys never reach a website at all — the TV keeps those.
+      if (e.key === 'ArrowLeft') { e.preventDefault(); setViewIndex((viewIndex - 1 + pics.length) % pics.length); pokeControls() }
+      if (e.key === 'ArrowRight') { e.preventDefault(); setViewIndex((viewIndex + 1) % pics.length); pokeControls() }
+      if (e.key === 'Enter') { e.preventDefault(); toggleControls() }
       if (e.key === 'Escape') closeGallery()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [viewIndex, pics.length])
+  }, [viewIndex, pics.length, controlsVisible])
 
   const closeGallery = () => {
     setViewIndex(null)
@@ -152,8 +163,8 @@ export default function UploadFormPage({ slug, goBack }) {
       )}
 
       {viewIndex !== null && pics.length > 0 && (
-        <div ref={galleryRef} style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={closeGallery}>
-          <img src={pics[viewIndex].url} alt={pics[viewIndex].name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onClick={e => { e.stopPropagation(); if (controlsVisible) { setControlsVisible(false); if (hideTimer.current) clearTimeout(hideTimer.current) } else pokeControls() }} />
+        <div ref={galleryRef} tabIndex={-1} style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', outline: 'none' }} onClick={closeGallery}>
+          <img src={pics[viewIndex].url} alt={pics[viewIndex].name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onClick={e => { e.stopPropagation(); toggleControls() }} />
           <div style={{ position: 'absolute', bottom: 16, left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: '#fff', opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }}>
             <span style={{ fontSize: 12, opacity: 0.7 }}>Tap the picture to hide these buttons</span>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12 }}>

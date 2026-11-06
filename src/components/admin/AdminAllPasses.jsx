@@ -4,7 +4,7 @@ import { supabase } from '../../lib/supabaseClient'
 
 // All Passes: every login the admin has handed out, in one place —
 // the link, the username, the password, who uses it, and the note.
-// Grouped by area (Stores, Diner, Barbers, Websites, Chat), with a
+// Grouped by area (Stores, Diner, POS, Barbers, Websites, Chat), with a
 // search box over everything. Display only: a pass is created, edited
 // or deleted in its own table, this page just gathers them.
 // Passwords show readable here BY DESIGN, like everywhere else in
@@ -19,6 +19,7 @@ import { supabase } from '../../lib/supabaseClient'
 const GROUPS = [
   { key: 'stores', title: 'Stores' },
   { key: 'diner', title: 'Diner' },
+  { key: 'pos', title: 'POS' },
   { key: 'barbers', title: 'Barbers' },
   { key: 'websites', title: 'Websites' },
   { key: 'chat', title: 'Chat' },
@@ -38,7 +39,7 @@ export default function AdminAllPasses() {
       if (error) { failedGroups.push(key); return [] }
       return data || []
     }
-    const [providers, formRows, employees, passRows, intakeRows, dinerRows, shopRows, uploadRows, folderRows] = await Promise.all([
+    const [providers, formRows, employees, passRows, intakeRows, dinerRows, shopRows, uploadRows, folderRows, posRows] = await Promise.all([
       grab('stores', supabase.from('store_providers').select('id, name')),
       grab('stores', supabase.from('providersForm').select('id, provider_id, f, u, p, comment').order('f')),
       grab('chat', supabase.from('employees').select('id, firstName, lastName')),
@@ -48,6 +49,7 @@ export default function AdminAllPasses() {
       grab('barbers', supabase.from('barbershop_shops').select('id, slug, name, u, p, epass, note').order('name')),
       grab('websites', supabase.from('upload_forms').select('id, f, u, p, folder, note').order('f')),
       grab('websites', supabase.from('folder_passes').select('id, folder, username, password, note').order('folder')),
+      grab('pos', supabase.from('pos_stores').select('id, slug, name, u, p, epass, note').order('name')),
     ])
     const providerName = (id) => providers.find(p => p.id === id)?.name || '—'
     const employeeName = (id) => {
@@ -63,6 +65,11 @@ export default function AdminAllPasses() {
       ...dinerRows.map(r => ({
         key: 'diner-' + r.id, group: 'diner', kind: 'Diner pass',
         link: '/diner?r=' + r.slug, linkText: 'autofly.us.com/diner?r=' + r.slug,
+        user: r.u, pass: r.p, passExtra: r.epass ? 'Team: ' + r.epass : '', customer: r.name || '—', note: r.note || '',
+      })),
+      ...posRows.map(r => ({
+        key: 'pos-' + r.id, group: 'pos', kind: 'POS pass',
+        link: '/pos?s=' + r.slug, linkText: 'autofly.us.com/pos?s=' + r.slug,
         user: r.u, pass: r.p, passExtra: r.epass ? 'Team: ' + r.epass : '', customer: r.name || '—', note: r.note || '',
       })),
       ...shopRows.map(r => ({

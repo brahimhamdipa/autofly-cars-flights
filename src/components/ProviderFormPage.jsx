@@ -8,6 +8,7 @@ import BarberTemplatePage from './BarberTemplatePage'
 
 import { PicField } from './admin/StoreFormBits'
 import EmployeeChatView from './EmployeeChatView'
+import UploadFormPage from './UploadFormPage'
 
 // Public provider form page, reached at autofly.us.com/<form name>.
 // The store owner logs in with the username and password the admin
@@ -46,32 +47,46 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange }) {
 
   const [item, setItem] = useState(blankItem)
 
+  // Bulk list (data.json approval): built one item at a time, kept in
+  // this browser so the store can take its time, sent as one batch.
+  const [bulkItem, setBulkItem] = useState(blankItem)
+  const [batchItems, setBatchItems] = useState(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('autofly-batch-' + slug) || '[]')
+      return Array.isArray(saved) ? saved : []
+    } catch { return [] }
+  })
+  const [batchStatus, setBatchStatus] = useState('')
+  const [batchBusy, setBatchBusy] = useState(false)
+
   // Barber template lookup: null = not a barber slug (normal login
   // flow), a row = render the public template page instead.
   const [barberDomain, setBarberDomain] = useState(null)
-  const [barberChecking, setBarberChecking] = useState(true)
+  const [uploadForm, setUploadForm] = useState(false)
+  const [slugChecking, setSlugChecking] = useState(true)
 
   const [status, setStatus] = useState('')
 
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    loadBarberDomain(slug)
-      .then(d => {
-        setBarberDomain(d)
-        // The template page needs no categories — skip those loads
-        // when this slug is a barber website.
-        if (!d) {
-          loadItemCategories().then(setCategories).catch(() => {})
-          loadSubCategories().then(setSubcats).catch(() => {})
-        }
-      })
-      .catch(() => {
+    Promise.all([
+      loadBarberDomain(slug).catch(() => null),
+      supabase.rpc('upload_form_exists', { p_f: slug }).then(({ data }) => !!data).catch(() => false),
+    ]).then(([d, isUpload]) => {
+      setBarberDomain(d)
+      setUploadForm(isUpload)
+      // The template and upload pages need no categories — skip those
+      // loads when this slug is one of them.
+      if (!d && !isUpload) {
         loadItemCategories().then(setCategories).catch(() => {})
         loadSubCategories().then(setSubcats).catch(() => {})
-      })
-      .finally(() => setBarberChecking(false))
+      }
+    }).finally(() => setSlugChecking(false))
   }, [slug])
+  useEffect(() => {
+    try { localStorage.setItem('autofly-batch-' + slug, JSON.stringify(batchItems)) } catch {}
+  }, [batchItems, slug])
   useEffect(() => {
     if (onAuthedChange) onAuthedChange(!!authed)
   }, [authed])
@@ -139,7 +154,87 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange }) {
       setStatus(s => s + ' (Note: the item is saved, but the owner email failed.)')
     }
   }
-  if (barberChecking) {
+  const normalizeBulkItem = (it) => ({
+    category_id: it.category_id === '' || it.category_id === null || it.category_id === undefined ? '' : Number(it.category_id),
+    name: (it.name || '').trim(),
+    price: Number(it.price),
+    description: it.description || '',
+    delivery_address: it.delivery_address || '',
+    pickup_address: it.pickup_address || '',
+    delivery: !!it.delivery,
+    pickup: !!it.pickup,
+    stock: it.stock === '' || it.stock === null || it.stock === undefined ? null : Number(it.stock),
+    pics: it.pics || [],
+    subcategoryIds: (it.subcategoryIds || []).map(Number),
+  })
+
+  const addBulkItem = (e) => {
+    e.preventDefault()
+    setBatchItems([...batchItems, normalizeBulkItem(bulkItem)])
+    setBulkItem(blankItem())
+    setBatchStatus(`Added — ${batchItems.length + 1} item${batchItems.length === 0 ? '' : 's'} in the list.`)
+  }
+
+  const downloadBatch = () => {
+    const blob = new Blob([JSON.stringify(batchItems, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url; a.download = 'data.json'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const loadBatchFile = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const parsed = JSON.parse(await file.text())
+      if (!Array.isArray(parsed)) throw new Error('The file must hold a list of items.')
+      const items = parsed.map(normalizeBulkItem)
+      for (const it of items) {
+        if (!it.name) throw new Error('Every item in the file needs a name.')
+        if (!(it.price >= 0)) throw new Error(`Item "${it.name}" needs a price.`)
+      }
+      setBatchItems(items)
+      setBatchStatus(`Loaded ${items.length} item${items.length === 1 ? '' : 's'} from ${file.name} — this replaced the list.`)
+    } catch (err) {
+      setBatchStatus('Could not load that file: ' + err.message)
+    }
+    e.target.value = ''
+  }
+
+  const submitBatch = async () => {
+    if (batchItems.length === 0) { setBatchStatus('Add at least one item first.'); return }
+    setBatchBusy(true); setBatchStatus('Sending the list for approval...')
+    const { data, error } = await supabase.rpc('submit_store_item_batch', {
+      p_slug: slug, p_username: username, p_password: password, p_items: batchItems,
+    })
+    setBatchBusy(false)
+    if (error) {
+      if (error.message.includes('Invalid form login')) {
+        setAuthed(null)
+        setLoginError('This form is no longer available — please contact AutoFly.')
+      } else {
+        setBatchStatus('Error: ' + error.message)
+      }
+      return
+    }
+    setBatchItems([])
+    setBatchStatus(`✓ Sent ${data.items} item${data.items === 1 ? '' : 's'} for approval (batch #${data.batch_id}). They will appear on the store once AutoFly approves them.`)
+    try {
+      await supabase.functions.invoke('send-notification', {
+        body: {
+          to: NOTIFY_EMAIL,
+          subject: `Items batch for approval — ${authed.providerName}`,
+          table: 'store_item_batches',
+          record: { store: authed.providerName, items: data.items, batch_id: data.batch_id },
+        },
+      })
+    } catch {
+      setBatchStatus(s => s + ' (Note: the list is saved, but the owner email failed.)')
+    }
+  }
+
+  if (slugChecking) {
     return (
       <div>
         <div className="hero-card">
@@ -151,6 +246,9 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange }) {
   }
   if (barberDomain) {
     return <BarberTemplatePage domain={barberDomain} goBack={goBack} />
+  }
+  if (uploadForm) {
+    return <UploadFormPage slug={slug} goBack={goBack} />
   }
   if (authed?.kind === 'employee') {
     return <EmployeeChatView creds={authed.creds} employee={authed.employee} goBack={goBack} />
@@ -204,6 +302,54 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange }) {
           <button type="submit" disabled={submitting}>{submitting ? 'Saving...' : 'Submit item'}</button>
           {status && <p className="status">{status}</p>}
         </form>
+      )}
+      {authed?.kind === 'provider' && (
+        <div className="form-card">
+          <h3>Add items in bulk</h3>
+          <p>Fill items one by one below — take your time, the list is kept in this browser. When you are done, download it as data.json to keep a copy, or send the whole list for approval at once.</p>
+          <form onSubmit={addBulkItem}>
+            <select required value={bulkItem.category_id} onChange={e => setBulkItem({ ...bulkItem, category_id: e.target.value, subcategoryIds: []})}>
+              <option value="">— Category —</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+            {subcats.filter(s => s.category_id === Number(bulkItem.category_id)).map(s => (
+            <label key={s.id} style={{ display: 'block'}}>
+              <input
+                type="checkbox"
+                checked={(bulkItem.subcategoryIds || []).includes(s.id)}
+                onChange={() => setBulkItem(prev => ({...prev, subcategoryIds: (prev.subcategoryIds || []).includes(s.id)? prev.subcategoryIds.filter(x => x!== s.id): [...prev.subcategoryIds, s.id]}))}
+                /> {formatVariant(s)}
+            </label>
+            ))}
+            <input required placeholder="Item name" value={bulkItem.name} onChange={e => setBulkItem({ ...bulkItem, name: e.target.value })} />
+            <input required placeholder="Price" type="number" step="0.01" min="0" value={bulkItem.price} onChange={e => setBulkItem({ ...bulkItem, price: e.target.value })} />
+            <textarea placeholder="Description" value={bulkItem.description} onChange={e => setBulkItem({ ...bulkItem, description: e.target.value })} />
+            <input placeholder="Delivery address (where delivery comes from)" value={bulkItem.delivery_address} onChange={e => setBulkItem({ ...bulkItem, delivery_address: e.target.value })} />
+            <input placeholder="Pickup address (where to pick up)" value={bulkItem.pickup_address} onChange={e => setBulkItem({ ...bulkItem, pickup_address: e.target.value })} />
+            <label><input type="checkbox" checked={bulkItem.delivery} onChange={e => setBulkItem({ ...bulkItem, delivery: e.target.checked })} /> Delivery available</label>
+            <label><input type="checkbox" checked={bulkItem.pickup} onChange={e => setBulkItem({ ...bulkItem, pickup: e.target.checked })} /> Pickup available</label>
+            <input placeholder="Stock (how many available — leave empty if not tracked)" type="number" min="0" value={bulkItem.stock} onChange={e => setBulkItem({ ...bulkItem, stock: e.target.value })} />
+            <PicField pics={bulkItem.pics} setPics={pics => setBulkItem({ ...bulkItem, pics })} />
+            <button type="submit">Add an Item</button>
+          </form>
+          {batchItems.length > 0 && (
+            <div>
+              <p><b>Items in this list ({batchItems.length}):</b></p>
+              {batchItems.map((it, i) => (
+                <p key={i}>{it.name} — ${it.price} <button type="button" className="btn-mini" onClick={() => setBatchItems(batchItems.filter((_, j) => j !== i))}>Remove</button></p>
+              ))}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+            <button type="button" onClick={downloadBatch} disabled={batchItems.length === 0}>Download data.json</button>
+            <label className="btn-soft" style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 16px', borderRadius: 10, cursor: 'pointer' }}>
+              Load a data.json file
+              <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={loadBatchFile} />
+            </label>
+            <button type="button" onClick={submitBatch} disabled={batchBusy || batchItems.length === 0}>{batchBusy ? 'Sending...' : 'Upload for approval'}</button>
+          </div>
+          {batchStatus && <p className="status">{batchStatus}</p>}
+        </div>
       )}
     </div>
   )

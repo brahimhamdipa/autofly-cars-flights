@@ -4,8 +4,6 @@ import { supabase } from '../lib/supabaseClient'
 
 import { isAdminUser } from '../lib/admin'
 
-import AdminDashboard from './AdminDashboard'
-
 import AdminProducts from './AdminProducts'
 
 import AdminOrders from './AdminOrders'
@@ -16,37 +14,79 @@ import AdminStoreAdd from './admin/AdminStoreAdd'
 
 import AdminStoreManage from './admin/AdminStoreManage'
 
-import AdminStoreReports from './admin/AdminStoreReports'
-
 import AdminChat from './admin/AdminChat'
 
 import AdminFolderPasses from './admin/AdminFolderPasses'
 import AdminRestaurantPages from './admin/AdminRestaurantPages'
 
-const SECTIONS = [
-  ['dashboard', '📊 Dashboard'],
-  ['products', '🛒 Products & Stock'],
-  ['orders', '🧾 Orders'],
-  ['submissions', '✉️ Form Submissions'],
-  ['store-add', '➕ Add'],
-  ['store-manage', '✏️ Manage'],
-  ['store-reports', '📄 Store Reports'],
-  ['chat', '💬 Chat'],
-  ['folder-passes', '🔐 Folder Passes'],
-  ['restaurant-pages', '🍽️ Restaurant Pages'],
-]
-
-// Sections grouped under one ☰ submenu button (same look and behavior
-// as the website's area submenus): tapping a section switches to it
-// and closes the menu. Every section and what it does is unchanged —
-// only the navigation moved from two sticky button rows into one
-// button, so a long form never traps you at the bottom.
-const GROUPS = [
-  ['Overview', ['dashboard']],
-  ['Shop', ['products', 'orders']],
-  ['Stores', ['store-add', 'store-manage', 'store-reports']],
-  ['Messages', ['submissions', 'chat']],
-  ['Websites', ['folder-passes', 'restaurant-pages']],
+// Five numbered menus, top left. A leaf has a section (an AdminPage
+// section) or a table (a Manage table, opened inside the Manage
+// section) or the signout action. A branch has children and opens in
+// place when tapped — the phone-friendly pattern, no flyouts. Menus 2
+// and 3 (Cars, Flights) are empty for now and will grow later.
+// Labels are the admin's own names for the tables, not the database
+// table names.
+const MENUS = [
+  { n: 1, name: 'Shopping', items: [
+    { label: 'Products & Stock', section: 'products' },
+    { label: 'Orders', section: 'orders' },
+    { label: 'Form Submissions', section: 'submissions' },
+    { label: 'Stores', children: [
+      { label: 'Store Passes', table: 'forms' },
+      { label: 'Items Approval', table: 'item_batches' },
+      { label: 'Items Add.Edit.Del.Approve', table: 'items' },
+      { label: 'Store Add.Edit.Del', table: 'providers' },
+      { label: 'Delivery Add.Edit.Del', table: 'fromdel' },
+      { label: 'Pickup Add.Edit.Del', table: 'topick' },
+      { label: 'Category Add.Edit.Del', table: 'itemcats' },
+      { label: 'SubCategory Add.Edit.Del', table: 'subcats' },
+    ] },
+    { label: 'Add', section: 'store-add' },
+    { label: 'Sign out', action: 'signout' },
+  ] },
+  { n: 2, name: 'Cars', items: [] },
+  { n: 3, name: 'Flights', items: [] },
+  { n: 4, name: 'More', items: [
+    { label: 'Diner', children: [
+      { label: 'Diner Passes', table: 'diner_restaurants' },
+      { label: 'Diner Approvals', table: 'diner_approvals' },
+      { label: 'Diner Kitchen', table: 'diner_orders' },
+    ] },
+    { label: 'Barbers', children: [
+      { label: 'Barber Passes', table: 'barbershop_shops' },
+      { label: 'Barber Bookings', table: 'barbershop_bookings' },
+    ] },
+    { label: 'Websites', children: [
+      { label: 'Website PrePasses -Domain', table: 'website_domains' },
+      { label: 'Website Add.Edit Pass', table: 'intake_forms' },
+      { label: 'Website Submission.Approval', table: 'intake_submissions' },
+      { label: 'Upload Forms', table: 'upload_forms' },
+      { label: 'Website Types', table: 'website_types' },
+      { label: 'Header1', table: 'website_headers' },
+      { label: 'Header2', table: 'barber_stores' },
+      { label: 'Orders', children: [
+        { label: 'Body 2.6.titles', table: 'website_bodies' },
+        { label: 'Restaurants', table: 'restaurant_orders' },
+      ] },
+      { label: 'Body3', table: 'barber_styles' },
+      { label: 'Body4', table: 'barber_locations' },
+      { label: 'Body5', table: 'open_times' },
+      { label: 'Customers List', table: 'barber_customers' },
+      { label: 'Cust.Subm.DB', table: 'barber_reservations' },
+      { label: 'Barbers', table: 'barber_orders' },
+      { label: 'Folder Passes', section: 'folder-passes' },
+      { label: 'Restaurant Pages', section: 'restaurant-pages' },
+    ] },
+  ] },
+  { n: 5, name: 'Chat', items: [
+    { label: 'Live Chat', section: 'chat' },
+    { label: 'Chat', children: [
+      { label: 'Job Add.Edit.Del', table: 'jobs' },
+      { label: 'Employee Add.Edit.Del', table: 'employees' },
+      { label: 'Language Add.Edit.Del', table: 'languages' },
+      { label: 'Employee Passes', table: 'passes' },
+    ] },
+  ] },
 ]
 
 // Admin area: email + password login (Supabase Auth). Only the owner's
@@ -65,9 +105,13 @@ export default function AdminPage() {
 
   const [authMsg, setAuthMsg] = useState('')
 
-  const [section, setSection] = useState('dashboard')
+  const [section, setSection] = useState('products')
 
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [openMenu, setOpenMenu] = useState(null) // null or 1..5
+
+  const [expanded, setExpanded] = useState([]) // branch keys open in the menu
+
+  const [manageTable, setManageTable] = useState('providers')
 
   const menuRef = useRef(null)
 
@@ -81,13 +125,13 @@ export default function AdminPage() {
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  // Outside tap closes the submenu (same pattern as the website menus).
+  // Outside tap closes the open menu (same pattern as the website menus).
   useEffect(() => {
-    if (!menuOpen) return
-    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false) }
+    if (openMenu === null) return
+    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setOpenMenu(null) }
     window.addEventListener('pointerdown', onDown)
     return () => window.removeEventListener('pointerdown', onDown)
-  }, [menuOpen])
+  }, [openMenu])
 
   const submitAuth = async (e) => {
     e.preventDefault()
@@ -116,6 +160,44 @@ export default function AdminPage() {
   }
 
   const signOut = async () => { await supabase.auth.signOut() }
+
+  const closeMenus = () => { setOpenMenu(null); setExpanded([]) }
+
+  const toggleMenu = (n) => { setOpenMenu(openMenu === n ? null : n); setExpanded([]) }
+
+  const toggleBranch = (key) => {
+    setExpanded(expanded.includes(key) ? expanded.filter(k => k !== key) : [...expanded, key])
+  }
+
+  const goSection = (v) => { setSection(v); closeMenus() }
+
+  const goTable = (t) => { setManageTable(t); setSection('store-manage'); closeMenus() }
+
+  // Recursive menu list: branches open in place, leaves navigate.
+  const renderMenuItems = (items, depth, prefix) => items.map((it, i) => {
+    const key = prefix + '-' + i
+    if (it.children) {
+      const open = expanded.includes(key)
+      return (
+        <div key={key}>
+          <button type="button" onClick={() => toggleBranch(key)} style={{ paddingLeft: 8 + depth * 14 }}>
+            {open ? '▾' : '▸'} {it.label}
+          </button>
+          {open && renderMenuItems(it.children, depth + 1, key)}
+        </div>
+      )
+    }
+    return (
+      <button key={key} type="button" style={{ paddingLeft: 8 + depth * 14 }}
+        onClick={() => {
+          if (it.action === 'signout') { closeMenus(); signOut(); return }
+          if (it.table) goTable(it.table)
+          else if (it.section) goSection(it.section)
+        }}>
+        {it.label}
+      </button>
+    )
+  })
 
   const sendReset = async () => {
     if (!email.trim()) { setAuthMsg('Type your admin email above first, then tap Forgot password.'); return }
@@ -175,52 +257,41 @@ export default function AdminPage() {
     )
   }
 
-  const labelOf = (v) => (SECTIONS.find(([val]) => val === v) || [v, v])[1]
-
   return (
     <div>
       <div className="admin-nav no-print">
         <div className="car-submenu-wrap" ref={menuRef}>
-          <button className="car-submenu-btn" onClick={() => setMenuOpen(o => !o)} aria-haspopup="true" aria-expanded={menuOpen} aria-label="Admin menu">
-            <span className="burger" aria-hidden="true"><span /><span /><span /></span>
-          </button>
-          {menuOpen && (
+          <div style={{ display: 'flex', gap: 10 }}>
+            {MENUS.map(m => (
+              <div key={m.n} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <button className="car-submenu-btn" onClick={() => toggleMenu(m.n)} aria-haspopup="true" aria-expanded={openMenu === m.n} aria-label={'Menu ' + m.n + ' — ' + m.name}>
+                  <span style={{ fontWeight: 800 }}>{m.n}</span>
+                </button>
+                <span style={{ fontSize: 11 }}>{m.name}</span>
+              </div>
+            ))}
+          </div>
+          {openMenu !== null && (
             <div className="car-submenu">
-              {GROUPS.map(([label, secs]) => (
-                <div key={label}>
-                  <p style={{ margin: '10px 0 2px', fontWeight: 'bold' }}>{label}</p>
-                  {secs.map(v => (
-                    <button
-                      key={v} type="button"
-                      onClick={() => { setSection(v); setMenuOpen(false) }}
-                    >
-                      {labelOf(v)}
-                    </button>
-                  ))}
-                </div>
-              ))}
+              <p style={{ margin: '10px 0 2px', fontWeight: 'bold' }}>Menu {openMenu} — {MENUS[openMenu - 1].name}</p>
+              {MENUS[openMenu - 1].items.length === 0
+                ? <p className="hint">Nothing here yet — more to come.</p>
+                : renderMenuItems(MENUS[openMenu - 1].items, 0, 'm' + openMenu)}
             </div>
           )}
         </div>
-        <div className="admin-actions">
-          <button type="button" onClick={() => window.print()}>🖨 Print / Save PDF</button>
-          <button type="button" className="btn-soft" onClick={signOut}>Sign out</button>
-        </div>
       </div>
-      <p className="hint no-print">Printing makes a clean report of whatever section you're viewing — on iPhone: Print → pinch out / share → Save to Files as PDF.</p>
       <form className="pw-row no-print" onSubmit={changePassword}>
         <span>🔑 Change password:</span>
         <input type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
         <button type="submit" className="btn-mini">Change password</button>
         {pwMsg && <span className="status">{pwMsg}</span>}
       </form>
-      {section === 'dashboard' && <AdminDashboard />}
       {section === 'products' && <AdminProducts />}
       {section === 'orders' && <AdminOrders />}
       {section === 'submissions' && <AdminSubmissions />}
       {section === 'store-add' && <AdminStoreAdd />}
-      {section === 'store-manage' && <AdminStoreManage />}
-      {section === 'store-reports' && <AdminStoreReports />}
+      {section === 'store-manage' && <AdminStoreManage table={manageTable} onTableChange={setManageTable} />}
       {section === 'chat' && <AdminChat />}
       {section === 'folder-passes' && <AdminFolderPasses />}
       {section === 'restaurant-pages' && <AdminRestaurantPages />}

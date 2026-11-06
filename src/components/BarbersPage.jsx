@@ -39,7 +39,7 @@ export default function BarbersPage({ go }) {
       <div className="g-topbar"><BarbersMenu go={go} /></div>
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>✂️ Your barbershop, taking bookings online</h2>
-        <p style={{ fontSize: 18, color: '#f5c542' }}>Live bookings, a live queue, and a stopwatch for every cut. No apps, no hardware.</p>
+        <p style={{ fontSize: 18, color: '#f5c542' }}>Your booking page for $15/month. First month free. Live bookings, a live queue, and a stopwatch for every cut. No apps, no hardware.</p>
         <p>Customers book from their phones. Your queue runs live in the shop — and your customers can watch it live too, privately.</p>
       </div>
 
@@ -61,6 +61,11 @@ export default function BarbersPage({ go }) {
           <li><b>Step 2 — AutoFly sets you up</b> with your booking page and your logins: one for you (Setup), one shared password for your team (Bookings).</li>
           <li><b>Step 3 — Share your link.</b> Customers book, your team runs the queue, and Serving Now keeps everyone in the loop.</li>
         </ul>
+      </div>
+
+      <div className="hero-card">
+        <h3>Simple, honest pricing</h3>
+        <p><b>$15/month.</b> That's it — your booking page, live queue, and stopwatch. No setup fee, no commission on your bookings. First month free, collected manually for now.</p>
       </div>
 
       <div className="hero-card">

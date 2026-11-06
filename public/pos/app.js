@@ -1,13 +1,19 @@
-/* POS template app — one folder per shop.
-   The folder's own address is worked out from the URL, never written here,
-   so copying this folder under a new name just works. Content lives in
-   data.json; sales live in this browser only (one key per folder).
-   A completed sale is emailed to the business email in Setup (or to
-   AutoFly's inbox when that is empty). Setup edits never change the live
-   page by themselves: they download a new data.json, and the owner
-   replaces the folder's file with it. Card payments are NOT processed
-   online: "Card" only records that the card was taken at the counter
-   terminal, the same way "Cash" records a cash payment. */
+/* POS page app — ONE folder for every store.
+   The store comes from the link (?s=<slug>), and its info, items, and
+   sales live in the database — there is no data.json file here.
+   Every store has its own items and sales, but they all use this same POS.
+   Visitors see the public price list (Shop tab). The register (Sell) and
+   the sales history (Receipts) need the store's shared employee password
+   (one password for all staff, set by the admin; stores with none set
+   stay fully open). Setup needs the owner's own username + password.
+   Setup edits save as a draft, and the Upload button sends the draft to
+   the admin for approval — approval makes it live instantly. Items are
+   different: the owner adds, edits, and deletes items live in Setup, and
+   every completed sale lowers the stock by itself. A voided sale puts
+   the stock back. All credentials live in memory only: a reload asks
+   again, exactly like the diner and barbershop pages.
+   "Card" only records that the card was taken at the counter terminal —
+   no card is charged online. */
 (function () {
   'use strict';
 
@@ -18,22 +24,37 @@
     return p.charAt(p.length - 1) === '/' ? p : p + '/';
   }
   var BASE = window.RMS_BASE || folderBase();
-  var SLUG = (BASE.replace(/^\/|\/$/g, '').split('/').pop() || 'pos')
-    .replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-  var SALE_KEY = 'pos-sales-' + SLUG;
-  var SETUP_KEY = 'folder-pass-' + SLUG;
+  var params = {};
+  try {
+    location.search.replace(/[?&]+([^=&]+)=([^&]*)/gi, function (m, k, v) {
+      params[decodeURIComponent(k)] = decodeURIComponent(v);
+    });
+  } catch (e) {}
+  var SLUG = String(params.s || '').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
 
   /* Public by design: the same publishable key the main AutoFly site ships
-     in its own pages. It only allows what the database rules allow, and the
-     sale email goes through AutoFly's notification service. */
+     in its own pages. Used only for the database calls below. */
   var SUPABASE_URL = 'https://deykvlxikzwwrygmkdly.supabase.co';
   var SUPABASE_ANON_KEY = 'sb_publishable_e2uwGgFB0SvVQS-TZahArQ_mjypz9Vr';
 
-  var data = null;
-  var sales = loadSales();
-  var cart = {};
-  var saleFilter = 'All';
-  var saleSearch = '';
+  var store = null; // live store info + items (visitors)
+  var draft = null; // owner draft (Setup)
+  var draftStatus = 'editing';
+  var ownerCreds = null; // {u, p} in memory only, never stored
+  var empPass = null; // employee password in memory only, never stored
+  var empUnlocked = false; // true once the employee password is entered, or when the store has none set
+  var passLocked = false;
+  var cart = {}; // item id -> quantity
+  var sales = [];
+  var lastReceipt = null;
+  var currentView = 'shop';
+  var receiptsTimer = null;
+  var itemEditId = null; // item being edited in Setup, null = adding
+  var scanner = null; // running Html5Qrcode scanner, if any
+  var scanTarget = null; // 'sell' (add to cart) or 'setup' (fill the barcode field)
+  var lastScanCode = '';
+  var lastScanAt = 0;
+  var scanOverlay = null; // fixed overlay holding the camera view
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -41,413 +62,653 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  function money(n) { return '$' + Number(n).toFixed(2).replace(/\.00$/, ''); }
+  function money(n) { return '$' + Number(n || 0).toFixed(2); }
   function round2(n) { return Math.round(n * 100) / 100; }
   function fmtDT(iso) {
     var d = new Date(iso);
     var p = function (n) { return ('0' + n).slice(-2); };
     return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
-  function loadSales() {
-    try { return JSON.parse(localStorage.getItem(SALE_KEY) || '[]'); } catch (e) { return []; }
+  function rpc(name, body) {
+    return fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+      body: JSON.stringify(body)
+    }).then(function (res) {
+      /* Some calls (save/upload) return no body at all — read text first
+         and only parse when there is something to parse, so an empty
+         success reply is not mistaken for a failure. */
+      return res.text().then(function (t) {
+        var j = null;
+        try { j = t ? JSON.parse(t) : null; } catch (e) {}
+        if (!res.ok) throw new Error((j && j.message) || 'request failed');
+        return j;
+      });
+    });
   }
-  function saveSales() {
-    try { localStorage.setItem(SALE_KEY, JSON.stringify(sales)); } catch (e) { /* private mode */ }
+  function notifyEmail(subject, record) {
+    try {
+      fetch(SUPABASE_URL + '/functions/v1/send-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+        body: JSON.stringify({ subject: subject, table: 'pos_draft', record: record })
+      }).catch(function () {});
+    } catch (e) {}
   }
   function itemById(id) {
-    return (data.items || []).filter(function (p) { return String(p.id) === String(id); })[0] || null;
+    return (store.items || []).filter(function (p) { return String(p.id) === String(id); })[0] || null;
   }
-  function soldQty(itemId) {
+  function cartCount() {
     var n = 0;
-    sales.forEach(function (s) {
-      if (s.status === 'voided') return;
-      (s.items || []).forEach(function (l) { if (String(l.id) === String(itemId)) n += l.qty; });
-    });
+    Object.keys(cart).forEach(function (k) { n += cart[k]; });
     return n;
   }
-  function effStock(item) {
-    if (item.stock == null || item.stock === '') return null;
-    return Number(item.stock) - soldQty(item.id);
+  function updateBadges() {
+    var cc = $('cart-count');
+    var c = cartCount();
+    cc.hidden = c === 0;
+    cc.textContent = c;
   }
-  function cartQty(itemId) { return cart[String(itemId)] || 0; }
-  function totals() {
+  function taxRate() { return Number(store && store.taxRate != null ? store.taxRate : 0.08); }
+  function cartTotals() {
     var sub = 0;
     Object.keys(cart).forEach(function (id) {
       var it = itemById(id);
       if (it) sub += Number(it.price) * cart[id];
     });
     sub = round2(sub);
-    var discPct = parseFloat(($('ps-discount') && $('ps-discount').value) || 0) || 0;
-    if (discPct < 0) discPct = 0;
-    if (discPct > 100) discPct = 100;
-    var discAmt = round2(sub * discPct / 100);
-    var taxRate = Number(data.taxRate) || 0;
-    var taxAmt = round2((sub - discAmt) * taxRate / 100);
-    return { sub: sub, discPct: discPct, discAmt: discAmt, taxRate: taxRate, taxAmt: taxAmt, total: round2(sub - discAmt + taxAmt) };
+    var tax = round2(sub * taxRate());
+    return { sub: sub, tax: tax, total: round2(sub + tax) };
   }
 
-  /* ---------- tabs ---------- */
-  function showTab(name) {
-    ['sale', 'receipts', 'setup'].forEach(function (t) {
-      $('view-' + t).hidden = (t !== name);
+  /* ---------- views ---------- */
+  function show(view) {
+    currentView = view;
+    ['shop', 'sell', 'receipts', 'setup'].forEach(function (v) {
+      var el = $('view-' + v);
+      if (el) el.hidden = v !== view;
     });
-    Array.prototype.forEach.call($('tabs').children, function (b) {
-      b.className = (b.getAttribute('data-tab') === name) ? 'active' : '';
-    });
-    if (name === 'sale') renderSale();
-    if (name === 'receipts') renderReceipts();
-    if (name === 'setup') openSetup();
+    var tabs = document.querySelectorAll('#tabs button');
+    tabs.forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-view') === view); });
+    if (receiptsTimer) { clearInterval(receiptsTimer); receiptsTimer = null; }
+    if (view === 'shop') renderShop();
+    if (view === 'sell') renderSell();
+    if (view === 'receipts') { renderReceipts(); receiptsTimer = setInterval(function () { if (currentView === 'receipts' && empUnlocked) loadSales(true); }, 10000); }
+    if (view === 'setup') renderSetup();
     window.scrollTo(0, 0);
   }
+  document.querySelectorAll('#tabs button').forEach(function (b) {
+    b.addEventListener('click', function () { show(b.getAttribute('data-view')); });
+  });
+  $('to-top').addEventListener('click', function () { window.scrollTo(0, 0); });
 
-  /* ---------- header ---------- */
-  function renderHeader() {
-    var b = data.business || {};
-    document.title = b.name || 'POS';
-    $('biz-name').textContent = b.name || 'POS';
-    $('biz-about').textContent = b.about || '';
-    var parts = [];
-    if (b.phone) parts.push('Phone: ' + esc(b.phone));
-    if (b.email) parts.push('Email: <a href="mailto:' + esc(b.email) + '">' + esc(b.email) + '</a>');
-    if (b.address) parts.push(esc(b.address));
-    if (b.hours) parts.push(esc(b.hours));
-    $('biz-meta').innerHTML = parts.join(' &nbsp;·&nbsp; ');
+  function setHeader() {
+    $('site-name').textContent = store ? store.name : 'POS';
+    $('site-about').textContent = store
+      ? [store.address, store.phone].filter(Boolean).join(' · ')
+      : '';
+    $('site-footer').innerHTML = store
+      ? esc([store.address, store.phone].filter(Boolean).join(' · ')) + '<br>Powered by AutoFly'
+      : 'Powered by AutoFly';
+    document.title = (store ? store.name : 'POS') + ' — Point of Sale';
   }
 
-  /* ---------- sale (register) ---------- */
-  function categories() {
-    var seen = [];
-    (data.items || []).forEach(function (p) {
-      if (p.category && seen.indexOf(p.category) === -1) seen.push(p.category);
+  /* ---------- Shop (public price list) ---------- */
+  function renderShop() {
+    var el = $('view-shop');
+    if (!store) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
+    var items = store.items || [];
+    var cats = [];
+    items.forEach(function (it) {
+      if (cats.indexOf(it.category || '') === -1) cats.push(it.category || '');
     });
-    return seen;
-  }
-  function renderChips() {
-    var cats = ['All'].concat(categories());
-    $('ps-chips').innerHTML = cats.map(function (c) {
-      return '<button class="' + (c === saleFilter ? 'active' : '') + '" data-chip="' + esc(c) + '">' + esc(c) + '</button>';
-    }).join('');
-  }
-  function renderGrid() {
-    var q = saleSearch.trim().toLowerCase();
-    var list = (data.items || []).filter(function (p) {
-      if (saleFilter !== 'All' && p.category !== saleFilter) return false;
-      if (q && (String(p.name).toLowerCase().indexOf(q) === -1 && String(p.category || '').toLowerCase().indexOf(q) === -1)) return false;
-      return true;
-    });
-    var el = $('ps-grid');
-    if (!list.length) { el.innerHTML = '<div class="card"><p>No items match. The owner adds items in Setup.</p></div>'; return; }
-    el.innerHTML = list.map(function (p) {
-      var st = effStock(p);
-      var cq = cartQty(p.id);
-      var out = st != null && st - cq <= 0;
-      var stockLine = st == null ? '' : (out ? '<p>Out of stock</p>' : '<p>Stock: ' + esc(st - cq) + ' left</p>');
-      return '<div class="card"><span class="badge">' + esc(p.category || '') + '</span>' +
-        '<h3>' + esc(p.name) + '</h3>' +
-        '<p><span class="price">' + money(p.price) + '</span></p>' + stockLine +
-        '<button data-add="' + p.id + '"' + (out ? ' disabled' : '') + '>' + (cq ? 'Add more (' + cq + ' in cart)' : 'Add') + '</button></div>';
-    }).join('');
-  }
-  function renderCart() {
-    var ids = Object.keys(cart).filter(function (id) { return cart[id] > 0; });
-    var el = $('ps-cart');
-    if (!ids.length) {
-      el.innerHTML = '<div class="card"><p>Cart is empty. Tap Add on an item to ring it up.</p></div>';
-      $('ps-totals').innerHTML = '';
+    var h = '<h2>' + esc(store.name) + '</h2>';
+    if (store.address || store.phone) h += '<p class="info">' + esc([store.address, store.phone].filter(Boolean).join(' · ')) + '</p>';
+    if (!items.length) {
+      h += '<div class="card"><p class="info">No items yet — the owner adds items in Setup.</p></div>';
+      el.innerHTML = h;
       return;
     }
-    el.innerHTML = '<div class="card">' + ids.map(function (id) {
-      var it = itemById(id);
-      if (!it) return '';
-      var st = effStock(it);
-      var atCap = st != null && cart[id] >= st;
-      return '<div class="cartline"><div><strong>' + esc(it.name) + '</strong><br>' +
-        money(it.price) + ' each</div>' +
-        '<div><button class="qtybtn secondary" data-dec="' + id + '">−</button> ' + cart[id] + ' ' +
-        '<button class="qtybtn secondary" data-inc="' + id + '"' + (atCap ? ' disabled' : '') + '>+</button> ' +
-        money(Number(it.price) * cart[id]) +
-        ' <button class="qtybtn danger" data-del="' + id + '">×</button></div></div>';
-    }).join('') + '</div>';
-    var t = totals();
-    $('ps-totals').innerHTML = '<div class="card totals">' +
-      'Subtotal: ' + money(t.sub) + '<br>' +
-      (t.discAmt ? 'Discount (' + t.discPct + '%): −' + money(t.discAmt) + '<br>' : '') +
-      'Tax (' + t.taxRate + '%): ' + money(t.taxAmt) + '<br>' +
-      '<strong>Total: ' + money(t.total) + '</strong></div>';
-  }
-  function renderSale() {
-    var el = $('view-sale');
-    el.innerHTML = '<h2>Sale</h2>' +
-      '<div class="note">Ring up items, then tap Cash or Card. Card is only recorded as taken at the counter — no card is charged online.</div>' +
-      '<label>Search items</label><input id="ps-search" type="text" value="' + esc(saleSearch) + '" placeholder="Name or category…">' +
-      '<div class="chips" id="ps-chips"></div>' +
-      '<div class="grid" id="ps-grid"></div>' +
-      '<h3>Cart</h3><div id="ps-cart"></div><div id="ps-totals"></div>' +
-      '<div class="card"><h3>Checkout</h3>' +
-      '<label>Customer name (optional)</label><input id="ps-customer" type="text">' +
-      '<label>Discount % (optional)</label><input id="ps-discount" type="number" min="0" max="100" step="1" value="0">' +
-      '<div class="row"><button id="ps-cash">Cash</button><button id="ps-card">Card</button></div>' +
-      '<div id="sale-out" style="margin-top:12px"></div></div>';
-    renderChips();
-    renderGrid();
-    renderCart();
-    $('ps-search').addEventListener('input', function (e) { saleSearch = e.target.value; renderGrid(); });
-    $('ps-cash').addEventListener('click', function () { checkout('Cash'); });
-    $('ps-card').addEventListener('click', function () { checkout('Card'); });
-  }
-  function checkout(payment) {
-    var ids = Object.keys(cart).filter(function (id) { return cart[id] > 0; });
-    var out = $('sale-out');
-    if (!ids.length) { out.innerHTML = '<p class="error">The cart is empty. Add an item first.</p>'; return; }
-    var t = totals();
-    var customer = $('ps-customer').value.trim();
-    var lines = ids.map(function (id) {
-      var it = itemById(id);
-      return { id: it.id, name: it.name, price: Number(it.price), qty: cart[id] };
+    cats.forEach(function (c) {
+      h += '<h3>' + esc(c || 'Items') + '</h3><div class="item-grid">';
+      items.filter(function (it) { return (it.category || '') === c; }).forEach(function (it) {
+        h += '<div class="item-card"><h3>' + esc(it.name) + '</h3>' +
+          '<span class="price">' + money(it.price) + '</span>' +
+          (Number(it.stock) > 0
+            ? '<span class="stock">' + Number(it.stock) + ' in stock</span>'
+            : '<span class="out">Out of stock</span>') +
+          '</div>';
+      });
+      h += '</div>';
     });
-    var sale = { id: Date.now(), items: lines, subtotal: t.sub, discountPct: t.discPct,
-      discountAmt: t.discAmt, taxRate: t.taxRate, taxAmt: t.taxAmt, total: t.total,
-      payment: payment, customer: customer, status: 'completed', createdAt: new Date().toISOString() };
-    sales.unshift(sale);
-    saveSales();
-    cart = {};
-    var ref = 'PS-' + String(sale.id).slice(-6);
-    var to = (data.business && data.business.email) || '';
-    var itemLines = lines.map(function (l) { return esc(l.name) + ' × ' + l.qty + ' — ' + money(l.price * l.qty); }).join('<br>');
-    out.innerHTML = '<div class="receipt"><h3>Sale complete</h3>' +
-      '<p><strong>Reference:</strong> ' + ref + '<br>' +
-      '<strong>When:</strong> ' + esc(fmtDT(sale.createdAt)) + '<br>' +
-      (customer ? '<strong>Customer:</strong> ' + esc(customer) + '<br>' : '') +
-      '<strong>Payment:</strong> ' + esc(payment) + '</p>' +
-      '<p>' + itemLines + '</p>' +
-      '<p>Subtotal: ' + money(t.sub) + '<br>' +
-      (t.discAmt ? 'Discount (' + t.discPct + '%): −' + money(t.discAmt) + '<br>' : '') +
-      'Tax (' + t.taxRate + '%): ' + money(t.taxAmt) + '<br>' +
-      '<strong>Total: ' + money(t.total) + '</strong></p>' +
-      '<p class="hint">Find this sale any time in the Receipts tab.</p>' +
-      '<p id="sale-mail" class="hint">Sending the business a copy…</p></div>';
-    renderGrid();
-    renderCart();
-    fetch(SUPABASE_URL + '/functions/v1/send-notification', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
-      body: JSON.stringify({ to: to || undefined, subject: 'POS sale: ' + ref,
-        table: 'pos_sale',
-        record: { reference: ref, items: lines.map(function (l) { return l.name + ' x' + l.qty; }).join(', '),
-          subtotal: t.sub, discount: t.discAmt, tax: t.taxAmt, total: t.total,
-          payment: payment, customer: customer, date: fmtDT(sale.createdAt) } })
+    h += '<div class="card"><p class="info">Staff: open the <b>Sell</b> tab to ring up a sale. Tax ' + Math.round(taxRate() * 100) + '% is added at the till.</p></div>';
+    el.innerHTML = h;
+  }
+
+  /* ---------- Sell (cashier) ---------- */
+  function empGate(el, heading, after) {
+    el.innerHTML = '<h2>' + heading + '</h2><div class="card">' +
+      '<p class="info">Enter the employee password for this store to open the register.</p>' +
+      '<label>Employee password</label><input id="emp-pass" type="password" autocomplete="current-password">' +
+      '<div class="row"><button id="emp-go">Unlock</button></div>' +
+      '<p class="error" id="emp-err" hidden></p></div>';
+    $('emp-go').addEventListener('click', function () {
+      var pw = $('emp-pass').value;
+      rpc('check_pos_employee_pass', { p_slug: SLUG, p_password: pw }).then(function (ok) {
+        if (!ok) {
+          var e = $('emp-err');
+          e.hidden = false;
+          e.textContent = 'Wrong employee password.';
+          return;
+        }
+        empPass = pw;
+        empUnlocked = true;
+        after();
+      }).catch(function (err) {
+        var e = $('emp-err');
+        e.hidden = false;
+        e.textContent = 'Error: ' + err.message;
+      });
+    });
+  }
+  function renderSell() {
+    var el = $('view-sell');
+    if (!store) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
+    if (passLocked && !empUnlocked) { empGate(el, 'Sell', renderSell); return; }
+    var items = store.items || [];
+    var cats = [];
+    items.forEach(function (it) {
+      if (cats.indexOf(it.category || '') === -1) cats.push(it.category || '');
+    });
+    var h = '<h2>Sell — ' + esc(store.name) + '</h2>';
+    h += '<div class="card"><div class="row"><button id="sell-scan">📷 Scan barcode</button>' +
+      '<span class="info">Point the phone camera at a product barcode to add it to the sale.</span></div>' +
+      '<p class="info" id="scan-note" hidden></p></div>';
+    if (lastReceipt) h += receiptHtml(lastReceipt);
+    if (!items.length) {
+      h += '<div class="card"><p class="info">No items to sell yet — add items in Setup first.</p></div>';
+      el.innerHTML = h;
+      return;
+    }
+    cats.forEach(function (c) {
+      h += '<h3>' + esc(c || 'Items') + '</h3><div class="item-grid">';
+      items.filter(function (it) { return (it.category || '') === c; }).forEach(function (it) {
+        var inCart = cart[it.id] || 0;
+        h += '<div class="item-card"><h3>' + esc(it.name) + '</h3>' +
+          '<span class="price">' + money(it.price) + '</span>' +
+          (Number(it.stock) > 0
+            ? '<span class="stock">' + Number(it.stock) + ' in stock</span>'
+            : '<span class="out">Out of stock</span>') +
+          (Number(it.stock) > 0
+            ? '<button class="small" data-add="' + it.id + '">Add' + (inCart ? ' (' + inCart + ')' : '') + '</button>'
+            : '<button class="small" disabled>Out of stock</button>') +
+          '</div>';
+      });
+      h += '</div>';
+    });
+    h += '<div class="card"><h3>Current sale</h3><div id="cart-lines"></div>' +
+      '<div id="cart-totals"></div>' +
+      '<label>Customer name (optional)</label><input id="sale-name" type="text" placeholder="Name for the receipt">' +
+      '<label>Customer phone (optional)</label><input id="sale-phone" type="tel" placeholder="Phone for the receipt">' +
+      '<label>Payment</label><select id="sale-pay"><option value="cash">Cash</option><option value="card">Card</option></select>' +
+      '<p class="info">Card only records that the card was taken at the counter terminal — no card is charged online.</p>' +
+      '<label>Cash tendered</label><input id="sale-tendered" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00">' +
+      '<div class="row"><button id="sale-complete">Complete sale</button>' +
+      '<button id="sale-clear" class="secondary">Clear</button></div>' +
+      '<p class="error" id="sale-err" hidden></p></div>';
+    el.innerHTML = h;
+    var pb = $('receipt-print');
+    if (pb) pb.addEventListener('click', printReceipt);
+    var scanBtn = $('sell-scan');
+    if (scanBtn) scanBtn.addEventListener('click', function () { openScanner('sell'); });
+    el.querySelectorAll('[data-add]').forEach(function (b) {
+      b.addEventListener('click', function () { addToCart(Number(b.getAttribute('data-add'))); });
+    });
+    $('sale-clear').addEventListener('click', function () { cart = {}; lastReceipt = null; updateBadges(); renderSell(); });
+    $('sale-complete').addEventListener('click', completeSale);
+    renderCartLines();
+  }
+  function addToCart(id) {
+    var it = itemById(id);
+    if (!it || Number(it.stock) <= 0) return;
+    var cur = cart[id] || 0;
+    if (cur + 1 > Number(it.stock)) {
+      var e = $('sale-err');
+      if (e) { e.hidden = false; e.textContent = 'Only ' + Number(it.stock) + ' in stock for ' + it.name + '.'; }
+      return;
+    }
+    cart[id] = cur + 1;
+    updateBadges();
+    renderSell();
+  }
+  function renderCartLines() {
+    var lines = $('cart-lines');
+    var totals = $('cart-totals');
+    if (!lines || !totals) return;
+    var ids = Object.keys(cart);
+    if (!ids.length) {
+      lines.innerHTML = '<p class="info">Nothing in this sale yet — tap Add on an item.</p>';
+      totals.innerHTML = '';
+      return;
+    }
+    var h = '';
+    ids.forEach(function (id) {
+      var it = itemById(id);
+      if (!it) return;
+      h += '<div class="cart-line"><div><b>' + esc(it.name) + '</b><br><span class="info">' + money(it.price) + ' each</span></div>' +
+        '<div class="qty"><button data-dec="' + id + '" aria-label="Less">−</button><span>' + cart[id] + '</span>' +
+        '<button data-inc="' + id + '" aria-label="More">+</button></div>' +
+        '<b>' + money(Number(it.price) * cart[id]) + '</b></div>';
+    });
+    lines.innerHTML = h;
+    lines.querySelectorAll('[data-inc]').forEach(function (b) {
+      b.addEventListener('click', function () { addToCart(Number(b.getAttribute('data-inc'))); });
+    });
+    lines.querySelectorAll('[data-dec]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-dec');
+        cart[id] -= 1;
+        if (cart[id] <= 0) delete cart[id];
+        updateBadges();
+        renderSell();
+      });
+    });
+    var t = cartTotals();
+    totals.innerHTML = '<div class="total">Subtotal ' + money(t.sub) + '<br>Tax (' + Math.round(taxRate() * 100) + '%) ' + money(t.tax) +
+      '<br><span class="big">Total ' + money(t.total) + '</span></div>';
+  }
+  function completeSale() {
+    var ids = Object.keys(cart);
+    var err = $('sale-err');
+    if (!ids.length) { err.hidden = false; err.textContent = 'The sale is empty.'; return; }
+    var t = cartTotals();
+    var pay = $('sale-pay').value;
+    var tendered = Number($('sale-tendered').value || 0);
+    if (pay === 'cash' && tendered < t.total) {
+      err.hidden = false;
+      err.textContent = 'Cash tendered (' + money(tendered) + ') is less than the total (' + money(t.total) + ').';
+      return;
+    }
+    err.hidden = true;
+    var items = ids.map(function (id) { return { id: Number(id), qty: cart[id] }; });
+    rpc('place_pos_sale', {
+      p_slug: SLUG, p_epass: empPass, p_items: items,
+      p_tendered: tendered, p_payment: pay,
+      p_customer: { name: $('sale-name').value.trim(), phone: $('sale-phone').value.trim() }
     }).then(function (res) {
-      if (!res.ok) throw new Error('send failed');
-      var m = $('sale-mail');
-      if (m) m.textContent = 'A copy was emailed to the business.';
-    }).catch(function () {
-      var m = $('sale-mail');
-      if (m) m.textContent = 'The email copy did not go through — your sale is still saved here. ' +
-        (to ? 'You can also reach the business at ' + to + '.' : 'Please tell the business about this sale.');
+      cart = {};
+      updateBadges();
+      lastReceipt = {
+        ref: res.ref, items: items.map(function (l) {
+          var it = itemById(l.id);
+          return { name: it ? it.name : 'Item', price: it ? Number(it.price) : 0, qty: l.qty };
+        }),
+        subtotal: res.subtotal, tax: res.tax, total: res.total, change: res.change,
+        payment: pay, customer: $('sale-name').value.trim()
+      };
+      return loadStore();
+    }).then(function () { renderSell(); })
+    .catch(function (e2) {
+      err.hidden = false;
+      err.textContent = 'Error: ' + e2.message;
+    });
+  }
+  function receiptHtml(r) {
+    var h = '<div class="receipt"><h3>' + esc(store.name) + '</h3>' +
+      '<p class="center">Receipt ' + esc(r.ref) + (r.customer ? ' · ' + esc(r.customer) : '') + '</p>';
+    (r.items || []).forEach(function (l) {
+      h += '<div class="line"><span>' + esc(l.name) + ' × ' + l.qty + '</span><span>' + money(Number(l.price) * l.qty) + '</span></div>';
+    });
+    h += '<div class="line"><span>Subtotal</span><span>' + money(r.subtotal) + '</span></div>' +
+      '<div class="line"><span>Tax</span><span>' + money(r.tax) + '</span></div>' +
+      '<div class="line"><b>Total</b><b>' + money(r.total) + '</b></div>' +
+      '<div class="line"><span>Paid (' + esc(r.payment || 'cash') + ')</span><span>' + money(Number(r.total) + Number(r.change || 0)) + '</span></div>';
+    if (Number(r.change || 0) > 0) h += '<div class="line"><span>Change</span><span>' + money(r.change) + '</span></div>';
+    h += '<p class="center">' + esc(store.receiptMessage || 'Thank you!') + '</p>' +
+      '<div class="row" style="justify-content:center"><button class="small" id="receipt-print">Print receipt</button></div></div>';
+    return h;
+  }
+  function loadStore() {
+    return rpc('get_pos_live', { p_slug: SLUG }).then(function (d) {
+      store = d;
+      setHeader();
+      return d;
     });
   }
 
-  /* ---------- receipts (this device) ---------- */
+  /* ---------- Receipts (cashier) ---------- */
+  function loadSales(quiet) {
+    return rpc('list_pos_sales', { p_slug: SLUG, p_epass: empPass, p_limit: 50 }).then(function (d) {
+      sales = d || [];
+      if (currentView === 'receipts') renderReceiptsList();
+      return sales;
+    }).catch(function (e) { if (!quiet) throw e; });
+  }
   function renderReceipts() {
     var el = $('view-receipts');
-    el.innerHTML = '<h2>Receipts</h2>' +
-      '<div class="note">Sales made on this device only. A sale made on another phone does not appear here. Voiding a sale puts its items back in stock.</div>';
-    if (!sales.length) { el.innerHTML += '<div class="card"><p>No sales yet.</p></div>'; return; }
-    el.innerHTML += sales.map(function (s) {
-      var ref = 'PS-' + String(s.id).slice(-6);
-      var itemLines = (s.items || []).map(function (l) { return esc(l.name) + ' × ' + l.qty + ' — ' + money(l.price * l.qty); }).join('<br>');
-      var actions = s.status === 'completed'
-        ? '<div class="row"><button class="danger" data-void="' + s.id + '">Void sale</button></div>' : '';
-      return '<div class="card"><span class="badge">' + esc(s.status) + '</span>' +
-        '<h3>' + ref + ' — ' + money(s.total) + '</h3>' +
-        '<p>' + esc(fmtDT(s.createdAt)) + ' &nbsp;·&nbsp; ' + esc(s.payment) +
-        (s.customer ? ' &nbsp;·&nbsp; ' + esc(s.customer) : '') + '</p>' +
-        '<p>' + itemLines + '</p>' +
-        '<p>Subtotal: ' + money(s.subtotal) +
-        (s.discountAmt ? ' &nbsp;·&nbsp; Discount: −' + money(s.discountAmt) : '') +
-        ' &nbsp;·&nbsp; Tax: ' + money(s.taxAmt) + '</p>' + actions + '</div>';
-    }).join('');
-    Array.prototype.forEach.call(el.querySelectorAll('[data-void]'), function (btn) {
-      btn.addEventListener('click', function () {
-        var s = sales.filter(function (x) { return String(x.id) === btn.getAttribute('data-void'); })[0];
-        if (s) s.status = 'voided';
-        saveSales(); renderReceipts();
+    if (!store) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
+    if (passLocked && !empUnlocked) { empGate(el, 'Receipts', renderReceipts); return; }
+    el.innerHTML = '<h2>Receipts — ' + esc(store.name) + '</h2><div id="sales-list"><p class="info">Loading…</p></div>';
+    loadSales().catch(function (e) {
+      var l = $('sales-list');
+      if (l) l.innerHTML = '<p class="error">Error: ' + esc(e.message) + '</p>';
+    });
+  }
+  function renderReceiptsList() {
+    var el = $('sales-list');
+    if (!el) return;
+    if (!sales.length) { el.innerHTML = '<div class="card"><p class="info">No sales yet.</p></div>'; return; }
+    var h = '';
+    sales.forEach(function (s) {
+      var items = s.items || [];
+      var names = items.map(function (l) { return esc(l.name) + ' × ' + l.qty; }).join(', ');
+      h += '<div class="card"><h3>' + esc(s.ref) + ' — ' + money(s.total) +
+        (s.status === 'voided' ? ' <span class="voided">(voided)</span>' : '') + '</h3>' +
+        '<p class="info">' + esc(fmtDT(s.created_at)) + ' · ' + esc(s.payment || 'cash') +
+        (s.customer_name ? ' · ' + esc(s.customer_name) : '') + '</p>' +
+        '<p>' + names + '</p>' +
+        (s.status !== 'voided'
+          ? '<button class="small danger" data-void="' + s.id + '">Void sale</button>'
+          : '') +
+        '</div>';
+    });
+    el.innerHTML = h;
+    el.querySelectorAll('[data-void]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        if (!confirm('Void this sale? The stock goes back.')) return;
+        rpc('void_pos_sale', { p_slug: SLUG, p_epass: empPass, p_sale_id: Number(b.getAttribute('data-void')) })
+          .then(function () { return loadStore(); })
+          .then(function () { return loadSales(); })
+          .catch(function (e) { alert('Error: ' + e.message); });
       });
     });
   }
-
-  /* ---------- Setup sign-in ---------- */
-  /* Setup opens freely when the admin has set no pass for this folder.
-     Once a pass exists, Setup asks for that folder's username + password
-     (set in Admin) and unlocks for this browser session only. The password
-     itself is never sent to the page: the database only answers yes/no. */
-  function setupUnlocked() {
-    try { return sessionStorage.getItem(SETUP_KEY) === '1'; } catch (e) { return false; }
-  }
-  function rpc(name, body) {
-    return fetch(SUPABASE_URL + '/rest/v1/rpc/' + name, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
-      body: JSON.stringify(body)
-    }).then(function (res) { if (!res.ok) throw new Error('rpc failed'); return res.json(); });
-  }
-  function openSetup() {
-    if (setupUnlocked()) { renderSetup(); return; }
-    var el = $('view-setup');
-    el.innerHTML = '<h2>Setup</h2><div class="card"><p class="hint">Checking…</p></div>';
-    rpc('folder_pass_status', { p_folder: SLUG }).then(function (status) {
-      if (status === 'open') { renderSetup(); return; }
-      renderSetupLogin(el);
-    }).catch(function () {
-      el.innerHTML = '<h2>Setup</h2><div class="card"><p class="error">Could not reach the sign-in check. Please try again in a moment.</p></div>';
+  function printReceipt() {
+    if (!lastReceipt) return;
+    var r = lastReceipt;
+    var h = '<div style="font-family:system-ui,sans-serif;max-width:420px;margin:0 auto">' +
+      '<h3 style="text-align:center">' + esc(store.name) + '</h3>' +
+      '<p style="text-align:center">Receipt ' + esc(r.ref) + '</p>';
+    (r.items || []).forEach(function (l) {
+      h += '<div style="display:flex;justify-content:space-between"><span>' + esc(l.name) + ' × ' + l.qty + '</span><span>' + money(Number(l.price) * l.qty) + '</span></div>';
     });
-  }
-  function renderSetupLogin(el) {
-    el.innerHTML = '<h2>Setup sign-in</h2><div class="card">' +
-      '<p>Setup for this shop is protected. Enter the username and password set by the admin for this folder.</p>' +
-      '<label>Username</label><input id="fp-user" type="text" autocomplete="username">' +
-      '<label>Password</label><input id="fp-pass" type="password" autocomplete="current-password">' +
-      '<div class="row"><button id="fp-go">Sign in</button></div>' +
-      '<div id="fp-out" style="margin-top:12px"></div></div>';
-    $('fp-go').addEventListener('click', function () {
-      var out = $('fp-out');
-      out.innerHTML = '<p class="hint">Checking…</p>';
-      rpc('check_folder_pass', { p_folder: SLUG, p_username: $('fp-user').value.trim(), p_password: $('fp-pass').value }).then(function (ok) {
-        if (ok === true) {
-          try { sessionStorage.setItem(SETUP_KEY, '1'); } catch (e) {}
-          renderSetup();
-        } else {
-          out.innerHTML = '<p class="error">Wrong username or password.</p>';
-        }
-      }).catch(function () {
-        out.innerHTML = '<p class="error">Could not reach the sign-in check. Please try again in a moment.</p>';
-      });
-    });
+    h += '<div style="display:flex;justify-content:space-between"><span>Subtotal</span><span>' + money(r.subtotal) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between"><span>Tax</span><span>' + money(r.tax) + '</span></div>' +
+      '<div style="display:flex;justify-content:space-between"><b>Total</b><b>' + money(r.total) + '</b></div>';
+    if (Number(r.change || 0) > 0) h += '<div style="display:flex;justify-content:space-between"><span>Change</span><span>' + money(r.change) + '</span></div>';
+    h += '<p style="text-align:center">' + esc(store.receiptMessage || 'Thank you!') + '</p></div>';
+    $('print-area').innerHTML = h;
+    window.print();
   }
 
-  /* ---------- setup (owner) ---------- */
+  /* ---------- Barcode scanner (phone camera) ---------- */
+  /* The camera reads the barcode with the phone itself — no extra
+     hardware. The code is matched against this store's items, which
+     are already loaded. In Sell it adds the item to the sale; in
+     Setup it fills the barcode field of the item being added. The
+     same code stays on screen while scanning, so one scan must not
+     add the same item ten times — repeats within 2 seconds are
+     ignored. */
+  function openScanner(target) {
+    scanTarget = target;
+    if (typeof window.Html5Qrcode === 'undefined') {
+      var note = $('scan-note');
+      if (note) { note.hidden = false; note.textContent = 'Scanner could not load — check your connection and try again.'; }
+      else alert('Scanner could not load — check your connection and try again.');
+      return;
+    }
+    if (!scanOverlay) {
+      scanOverlay = document.createElement('div');
+      scanOverlay.id = 'scan-overlay';
+      document.body.appendChild(scanOverlay);
+    }
+    scanOverlay.innerHTML = '<div class="scan-overlay"><h3>Scan barcode</h3>' +
+      '<div id="pos-scanner"></div>' +
+      '<p class="scan-status" id="scan-status">Point the camera at a barcode…</p>' +
+      '<button id="scan-close">Close scanner</button></div>';
+    scanOverlay.querySelector('#scan-close').addEventListener('click', closeScanner);
+    scanner = new window.Html5Qrcode('pos-scanner');
+    scanner.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 250, height: 150 } },
+      function (code) { onScan(String(code).trim()); },
+      function () { /* scan errors (no code in frame) are normal — ignore */ }
+    ).catch(function (e) {
+      var st = scanOverlay.querySelector('#scan-status');
+      if (st) st.textContent = 'Could not open the camera: ' + (e && e.message ? e.message : e) + ' — allow camera access and try again.';
+    });
+  }
+  function closeScanner() {
+    if (scanner) {
+      var s = scanner;
+      scanner = null;
+      try { s.stop().then(function () { try { s.clear(); } catch (e) {} }).catch(function () {}); } catch (e) {}
+    }
+    if (scanOverlay) scanOverlay.innerHTML = '';
+    scanTarget = null;
+  }
+  function onScan(code) {
+    if (!code) return;
+    var now = Date.now();
+    if (code === lastScanCode && now - lastScanAt < 2000) return;
+    lastScanCode = code;
+    lastScanAt = now;
+    var st = scanOverlay && scanOverlay.querySelector('#scan-status');
+    if (scanTarget === 'setup') {
+      var field = $('i-barcode');
+      if (field) field.value = code;
+      if (st) st.textContent = '✓ Barcode ' + code + ' — tap Close scanner to keep it.';
+      return;
+    }
+    var it = (store.items || []).filter(function (p) { return String(p.barcode || '') !== '' && String(p.barcode) === code; })[0];
+    if (!it) {
+      if (st) st.textContent = 'No item with barcode ' + code + ' — add it in Setup first.';
+      return;
+    }
+    if (Number(it.stock) <= 0) {
+      if (st) st.textContent = it.name + ' is out of stock.';
+      return;
+    }
+    var cur = cart[it.id] || 0;
+    if (cur + 1 > Number(it.stock)) {
+      if (st) st.textContent = 'Only ' + Number(it.stock) + ' in stock for ' + it.name + '.';
+      return;
+    }
+    cart[it.id] = cur + 1;
+    updateBadges();
+    if (st) st.textContent = '✓ Added ' + it.name + ' — scan the next item.';
+    renderSell();
+  }
+
+  /* ---------- Setup (owner) ---------- */
   function renderSetup() {
     var el = $('view-setup');
-    var b = data.business || {};
-    function field(label, id, value, type) {
-      return '<label>' + label + '</label><input id="' + id + '" type="' + (type || 'text') + '" value="' + esc(value == null ? '' : value) + '">';
+    if (!store) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
+    if (!ownerCreds) {
+      el.innerHTML = '<h2>Setup</h2><div class="card">' +
+        '<p class="info">Enter the username and password AutoFly gave this store.</p>' +
+        '<label>Username</label><input id="st-user" type="text" autocomplete="username">' +
+        '<label>Password</label><input id="st-pass" type="password" autocomplete="current-password">' +
+        '<div class="row"><button id="st-go">Log in</button></div>' +
+        '<p class="error" id="st-err" hidden></p></div>';
+      $('st-go').addEventListener('click', function () {
+        var u = $('st-user').value.trim();
+        var p = $('st-pass').value;
+        rpc('check_pos_login', { p_slug: SLUG, p_u: u, p_p: p }).then(function (ok) {
+          if (!ok) {
+            var e = $('st-err');
+            e.hidden = false;
+            e.textContent = 'Wrong username or password.';
+            return;
+          }
+          ownerCreds = { u: u, p: p };
+          loadDraft();
+        }).catch(function (err) {
+          var e = $('st-err');
+          e.hidden = false;
+          e.textContent = 'Error: ' + err.message;
+        });
+      });
+      return;
     }
-    var itemHtml = (data.items || []).map(function (p, i) {
-      return '<div class="card" data-item="' + i + '">' +
-        '<label>Item name</label><input class="it-name" value="' + esc(p.name) + '">' +
-        '<label>Category</label><input class="it-cat" value="' + esc(p.category || '') + '">' +
-        '<label>Price ($)</label><input class="it-price" type="number" min="0" step="0.01" value="' + esc(p.price) + '">' +
-        '<label>Stock (empty = unlimited)</label><input class="it-stock" type="number" min="0" step="1" value="' + esc(p.stock == null ? '' : p.stock) + '">' +
-        '<div class="row"><button class="danger it-del">Delete item</button></div></div>';
-    }).join('');
-    el.innerHTML = '<h2>Setup</h2>' +
-      '<div class="note">Edit the shop here, then press “Download data.json”. ' +
-      'To put the changes live, replace the <strong>data.json</strong> file inside this folder with the downloaded file, then reload the page. ' +
-      'Nothing on this tab changes the live page by itself — and that is on purpose, so visitors cannot change your items.</div>' +
-      '<div class="card"><h3>Business details</h3>' +
-      field('Business name', 'st-name', b.name) +
-      field('About', 'st-about', b.about) +
-      field('Phone', 'st-phone', b.phone, 'tel') +
-      field('Email (sale copies go here; empty = AutoFly inbox)', 'st-email', b.email, 'email') +
-      field('Address', 'st-address', b.address) +
-      field('Hours', 'st-hours', b.hours) +
-      '<label>Tax rate (%)</label><input id="st-tax" type="number" min="0" step="0.01" value="' + esc(data.taxRate == null ? 0 : data.taxRate) + '"></div>' +
-      '<h3>Items</h3>' + itemHtml +
-      '<div class="card"><h3>Add an item</h3>' +
-      '<label>Item name</label><input id="it-new-name">' +
-      '<label>Category</label><input id="it-new-cat">' +
-      '<label>Price ($)</label><input id="it-new-price" type="number" min="0" step="0.01">' +
-      '<label>Stock (empty = unlimited)</label><input id="it-new-stock" type="number" min="0" step="1">' +
-      '<div class="row"><button id="it-add">Add item</button></div></div>' +
-      '<div class="row"><button id="setup-download">Download data.json</button></div>';
-    Array.prototype.forEach.call(el.querySelectorAll('.it-del'), function (btn) {
-      btn.addEventListener('click', function () {
-        var card = btn.closest('[data-item]');
-        data.items.splice(Number(card.getAttribute('data-item')), 1);
-        renderSetup();
+    if (!draft) {
+      el.innerHTML = '<p class="info">Loading your setup…</p>';
+      loadDraft();
+      return;
+    }
+    var h = '<h2>Setup — ' + esc(store.name) + '</h2>' +
+      '<div class="card"><h3>Store details</h3>' +
+      '<p class="info">Changes save as a draft. Upload for approval and the admin makes them live.</p>' +
+      '<label>Store name</label><input id="d-name" type="text" value="' + esc(draft.name || '') + '">' +
+      '<label>Address</label><input id="d-address" type="text" value="' + esc(draft.address || '') + '">' +
+      '<label>Phone</label><input id="d-phone" type="tel" value="' + esc(draft.phone || '') + '">' +
+      '<label>Tax rate (%)</label><input id="d-tax" type="number" min="0" max="30" step="0.1" value="' + (Number(draft.taxRate || 0.08) * 100) + '">' +
+      '<label>Receipt message</label><input id="d-msg" type="text" value="' + esc(draft.receiptMessage || '') + '">' +
+      '<div class="row"><button id="d-save">Save draft</button>' +
+      '<button id="d-upload" class="secondary">Upload for approval</button></div>' +
+      '<p class="info" id="d-status">Draft status: ' + esc(draftStatus) + (draftStatus === 'pending' ? ' — waiting for AutoFly to approve it.' : draftStatus === 'approved' ? ' — approved, live now.' : ' — not sent yet.') + '</p>' +
+      '<p class="error" id="d-err" hidden></p></div>' +
+      '<div class="card"><h3>Items</h3>' +
+      '<p class="info">Items go live right away — no approval needed. Stock drops by itself with every sale.</p>' +
+      '<div id="items-list"></div>' +
+      '<h3 id="item-form-title">Add an item</h3>' +
+      '<label>Name</label><input id="i-name" type="text">' +
+      '<label>Price</label><input id="i-price" type="number" min="0" step="0.01" inputmode="decimal">' +
+      '<label>Stock</label><input id="i-stock" type="number" min="0" step="1" inputmode="numeric" value="0">' +
+      '<label>Category</label><input id="i-cat" type="text" placeholder="Drinks, Food, Other…">' +
+      '<label>Barcode (optional)</label><input id="i-barcode" type="text" inputmode="numeric" placeholder="The number under the product barcode">' +
+      '<div class="row"><button type="button" class="secondary" id="i-scan">📷 Scan barcode</button></div>' +
+      '<div class="row"><button id="i-save">Save item</button>' +
+      '<button id="i-cancel" class="secondary" hidden>Cancel edit</button></div>' +
+      '<p class="error" id="i-err" hidden></p></div>';
+    el.innerHTML = h;
+    renderItemsList();
+    $('d-save').addEventListener('click', function () { saveDraft(false); });
+    $('d-upload').addEventListener('click', function () { saveDraft(true); });
+    $('i-save').addEventListener('click', saveItem);
+    var scanItemBtn = $('i-scan');
+    if (scanItemBtn) scanItemBtn.addEventListener('click', function () { openScanner('setup'); });
+    $('i-cancel').addEventListener('click', function () { itemEditId = null; renderSetup(); });
+  }
+  function renderItemsList() {
+    var el = $('items-list');
+    if (!el) return;
+    var items = store.items || [];
+    if (!items.length) { el.innerHTML = '<p class="info">No items yet.</p>'; return; }
+    var h = '';
+    items.forEach(function (it) {
+      h += '<div class="cart-line"><div><b>' + esc(it.name) + '</b><br><span class="info">' + esc(it.category || '') + ' · ' + money(it.price) + ' · stock ' + Number(it.stock) + (it.barcode ? ' · #' + esc(it.barcode) : '') + '</span></div>' +
+        '<div class="row"><button class="small secondary" data-edit="' + it.id + '">Edit</button>' +
+        '<button class="small danger" data-del="' + it.id + '">Delete</button></div></div>';
+    });
+    el.innerHTML = h;
+    el.querySelectorAll('[data-edit]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var it = itemById(Number(b.getAttribute('data-edit')));
+        if (!it) return;
+        itemEditId = it.id;
+        $('i-name').value = it.name;
+        $('i-price').value = it.price;
+        $('i-stock').value = it.stock;
+        $('i-cat').value = it.category || '';
+        $('i-barcode').value = it.barcode || '';
+        $('item-form-title').textContent = 'Edit item — ' + it.name;
+        $('i-cancel').hidden = false;
+        window.scrollTo(0, document.getElementById('item-form-title').offsetTop - 80);
       });
     });
-    $('it-add').addEventListener('click', function () {
-      var name = $('it-new-name').value.trim();
-      var price = parseFloat($('it-new-price').value);
-      if (!name || isNaN(price)) return;
-      var maxId = (data.items || []).reduce(function (m, p) { return Math.max(m, p.id || 0); }, 0);
-      var stock = parseInt($('it-new-stock').value, 10);
-      data.items.push({ id: maxId + 1, name: name, category: $('it-new-cat').value.trim(),
-        price: price, stock: isNaN(stock) ? null : stock });
-      renderSetup();
-    });
-    $('setup-download').addEventListener('click', function () {
-      var next = { business: { name: $('st-name').value.trim(), about: $('st-about').value.trim(),
-          phone: $('st-phone').value.trim(), email: $('st-email').value.trim(),
-          address: $('st-address').value.trim(), hours: $('st-hours').value.trim() },
-        taxRate: parseFloat($('st-tax').value) || 0, items: [] };
-      Array.prototype.forEach.call(el.querySelectorAll('[data-item]'), function (card, i) {
-        var stock = parseInt(card.querySelector('.it-stock').value, 10);
-        next.items.push({ id: (data.items[i] && data.items[i].id) || (i + 1),
-          name: card.querySelector('.it-name').value.trim(),
-          category: card.querySelector('.it-cat').value.trim(),
-          price: parseFloat(card.querySelector('.it-price').value) || 0,
-          stock: isNaN(stock) ? null : stock });
+    el.querySelectorAll('[data-del]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var it = itemById(Number(b.getAttribute('data-del')));
+        if (!it || !confirm('Delete "' + it.name + '"?')) return;
+        rpc('delete_pos_item', { p_slug: SLUG, p_u: ownerCreds.u, p_p: ownerCreds.p, p_item_id: it.id })
+          .then(function () { return loadStore(); })
+          .then(function () { renderSetup(); })
+          .catch(function (e) { var er = $('i-err'); if (er) { er.hidden = false; er.textContent = 'Error: ' + e.message; } });
       });
-      var blob = new Blob([JSON.stringify(next, null, 2)], { type: 'application/json' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'data.json';
-      a.click();
-      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
     });
   }
+  function collectDraft() {
+    return {
+      name: $('d-name').value.trim(),
+      address: $('d-address').value.trim(),
+      phone: $('d-phone').value.trim(),
+      taxRate: round2(Number($('d-tax').value || 0) / 100),
+      receiptMessage: $('d-msg').value.trim()
+    };
+  }
+  function saveDraft(upload) {
+    var d = collectDraft();
+    var err = $('d-err');
+    if (!d.name) { err.hidden = false; err.textContent = 'Store name is required.'; return; }
+    err.hidden = true;
+    rpc('save_pos_draft', { p_slug: SLUG, p_u: ownerCreds.u, p_p: ownerCreds.p, p_draft: d })
+      .then(function () {
+        draft = d;
+        draftStatus = 'editing';
+        if (!upload) {
+          $('d-status').textContent = 'Draft status: editing — saved, not sent yet.';
+          return;
+        }
+        return rpc('submit_pos_draft', { p_slug: SLUG, p_u: ownerCreds.u, p_p: ownerCreds.p }).then(function () {
+          draftStatus = 'pending';
+          $('d-status').textContent = 'Draft status: pending — waiting for AutoFly to approve it.';
+          notifyEmail('POS draft for approval: ' + d.name, { slug: SLUG, name: d.name });
+        });
+      })
+      .catch(function (e) { err.hidden = false; err.textContent = 'Error: ' + e.message; });
+  }
+  function saveItem() {
+    var err = $('i-err');
+    var name = $('i-name').value.trim();
+    var price = Number($('i-price').value);
+    var stock = Math.max(0, Math.floor(Number($('i-stock').value || 0)));
+    var cat = $('i-cat').value.trim();
+    var barcode = $('i-barcode').value.trim();
+    if (!name) { err.hidden = false; err.textContent = 'Item name is required.'; return; }
+    if (!(price >= 0)) { err.hidden = false; err.textContent = 'Price must be 0 or more.'; return; }
+    err.hidden = true;
+    var item = { name: name, price: price, stock: stock, category: cat, barcode: barcode, is_active: true };
+    if (itemEditId) item.id = itemEditId;
+    rpc('save_pos_item', { p_slug: SLUG, p_u: ownerCreds.u, p_p: ownerCreds.p, p_item: item })
+      .then(function () { itemEditId = null; return loadStore(); })
+      .then(function () { renderSetup(); })
+      .catch(function (e) { err.hidden = false; err.textContent = 'Error: ' + e.message; });
+  }
+  function loadDraft() {
+    rpc('get_pos_draft', { p_slug: SLUG, p_u: ownerCreds.u, p_p: ownerCreds.p })
+      .then(function (d) {
+        draft = d || {};
+        draftStatus = 'editing';
+        renderSetup();
+      })
+      .catch(function (e) {
+        var el = $('view-setup');
+        el.innerHTML = '<p class="error">Error: ' + esc(e.message) + '</p>';
+      });
+  }
 
-  /* ---------- init ---------- */
-  Array.prototype.forEach.call($('tabs').children, function (btn) {
-    btn.addEventListener('click', function () { showTab(btn.getAttribute('data-tab')); });
-  });
-  $('back-link').addEventListener('click', function (e) {
-    e.preventDefault();
-    showTab('sale');
-  });
-  $('view-sale').addEventListener('click', function (e) {
-    var t = e.target;
-    var add = t.getAttribute && t.getAttribute('data-add');
-    var inc = t.getAttribute && t.getAttribute('data-inc');
-    var dec = t.getAttribute && t.getAttribute('data-dec');
-    var del = t.getAttribute && t.getAttribute('data-del');
-    var chip = t.getAttribute && t.getAttribute('data-chip');
-    if (add) {
-      var it = itemById(add);
-      var st = effStock(it);
-      if (st == null || cartQty(add) < st) cart[String(add)] = cartQty(add) + 1;
-      renderGrid(); renderCart();
-    } else if (inc) {
-      var it2 = itemById(inc);
-      var st2 = effStock(it2);
-      if (st2 == null || cartQty(inc) < st2) cart[String(inc)] = cartQty(inc) + 1;
-      renderGrid(); renderCart();
-    } else if (dec) {
-      cart[String(dec)] = cartQty(dec) - 1;
-      if (cart[String(dec)] <= 0) delete cart[String(dec)];
-      renderGrid(); renderCart();
-    } else if (del) {
-      delete cart[String(del)];
-      renderGrid(); renderCart();
-    } else if (chip) {
-      saleFilter = chip;
-      renderChips(); renderGrid();
+  /* ---------- start ---------- */
+  function init() {
+    if (!SLUG) {
+      $('site-name').textContent = 'POS';
+      $('view-shop').innerHTML = '<div class="card"><h2>Store not found</h2><p class="info">This POS page needs a store link like autofly.us.com/pos?s=your-store.</p></div>';
+      return;
     }
-  });
-  fetch(BASE + 'data.json')
-    .then(function (res) { if (!res.ok) throw new Error('data.json not found'); return res.json(); })
-    .then(function (json) {
-      data = json;
-      data.business = data.business || {};
-      data.items = data.items || [];
-      if (data.taxRate == null) data.taxRate = 0;
-      renderHeader();
-      showTab('sale');
-    })
-    .catch(function () {
-      $('view-sale').innerHTML = '<div class="error">This folder has no <strong>data.json</strong> file yet. ' +
-        'Add one (see the README in this folder) and reload the page.</div>';
+    loadStore().then(function (d) {
+      if (!d) {
+        $('site-name').textContent = 'POS';
+        $('view-shop').innerHTML = '<div class="card"><h2>Store not found</h2><p class="info">No store with this link yet. Ask AutoFly to set it up.</p></div>';
+        return;
+      }
+      return rpc('pos_pass_status', { p_slug: SLUG }).then(function (st) {
+        passLocked = st === 'locked';
+        empUnlocked = !passLocked;
+        renderShop();
+      });
+    }).catch(function (e) {
+      $('view-shop').innerHTML = '<p class="error">Error: ' + esc(e.message) + '</p>';
     });
+  }
+  init();
 })();

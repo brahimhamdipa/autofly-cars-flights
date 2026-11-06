@@ -86,6 +86,12 @@ export default function RestaurantsPage({ go }) {
         )}
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>🧾 Point of sale for your shop</h3>
+        <p>Your own register page with live stock and receipts — for shops that also want to ring up sales at the counter.</p>
+        <button onClick={() => go && go('pos')}>See the POS page</button>
+      </div>
+
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your restaurant online</h3>
         <div className="row">

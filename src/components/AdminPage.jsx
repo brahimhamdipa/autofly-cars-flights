@@ -53,6 +53,11 @@ const MENUS = [
       { label: 'Diner Approvals', table: 'diner_approvals' },
       { label: 'Diner Kitchen', table: 'diner_orders' },
     ] },
+    { label: 'POS', children: [
+      { label: 'POS Passes', table: 'pos_stores' },
+      { label: 'POS Approval', table: 'pos_approvals' },
+      { label: 'POS Sales', table: 'pos_sales' },
+    ] },
     { label: 'Barbers', children: [
       { label: 'Barber Passes', table: 'barbershop_shops' },
       { label: 'Barber Bookings', table: 'barbershop_bookings' },

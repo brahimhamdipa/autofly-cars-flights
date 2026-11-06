@@ -315,7 +315,32 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
 
   const remove = async (row) => {
     const label = rowLabel(row)
-    if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return
+    // Deleting an upload form also deletes its folder and every picture
+    // in it, so nothing is left behind in storage. The form itself is
+    // only deleted once the folder is gone — if the folder cannot be
+    // deleted, the form stays so the delete can be tried again.
+    if (table === 'upload_forms' && row.folder) {
+      if (!window.confirm(`Delete "${label}"? Its folder "${row.folder}" and all the pictures in it will be deleted too. This cannot be undone.`)) return
+      let offset = 0
+      for (;;) {
+        const { data: files, error: listErr } = await supabase.storage.from('product-images').list('store/' + row.folder, { limit: 1000, offset })
+        if (listErr) { setStatus(`Cannot delete: the folder "${row.folder}" could not be read (${listErr.message}) — the form was NOT deleted. Try again.`); return }
+        const paths = (files || []).map(f => 'store/' + row.folder + '/' + f.name)
+        if (paths.length > 0) {
+          const { error: rmErr } = await supabase.storage.from('product-images').remove(paths)
+          if (rmErr) { setStatus(`Cannot delete: the folder "${row.folder}" could not be deleted (${rmErr.message}) — the form was NOT deleted. Try again.`); return }
+        }
+        if ((files || []).length < 1000) break
+        offset += 1000
+      }
+      // A storage delete can report no error and still leave files
+      // behind, so check the folder is really empty before the form
+      // itself is deleted — otherwise the pictures would be orphaned
+      // with no form pointing at them.
+      const { data: left, error: checkErr } = await supabase.storage.from('product-images').list('store/' + row.folder, { limit: 1 })
+      if (checkErr) { setStatus(`Cannot delete: the folder "${row.folder}" could not be checked (${checkErr.message}) — the form was NOT deleted. Try again.`); return }
+      if (left && left.length > 0) { setStatus(`Cannot delete: the pictures in "${row.folder}" could not be deleted — the form was NOT deleted. Try again.`); return }
+    } else if (!window.confirm(`Delete "${label}"? This cannot be undone.`)) return
     const { error } = await supabase.from(tableName).delete().eq('id', row.id)
     if (error) { setStatus('Cannot delete: ' + error.message + (table === 'providers' ? ' — delete or move its items first.' : '')); return }
     setStatus(`✓ Deleted "${label}".`)

@@ -55,6 +55,9 @@
   var lastScanCode = '';
   var lastScanAt = 0;
   var scanOverlay = null; // fixed overlay holding the camera view
+  var voidConfirmId = null; // sale id awaiting an in-page void confirmation
+  var voidErr = ''; // last void error, shown inline above the sales list
+  var delConfirmId = null; // item id awaiting an in-page delete confirmation
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -399,6 +402,7 @@
     if (!el) return;
     if (!sales.length) { el.innerHTML = '<div class="card"><p class="info">No sales yet.</p></div>'; return; }
     var h = '';
+    if (voidErr) h += '<p class="error">' + esc(voidErr) + '</p>';
     sales.forEach(function (s) {
       var items = s.items || [];
       var names = items.map(function (l) { return esc(l.name) + ' × ' + l.qty; }).join(', ');
@@ -408,18 +412,31 @@
         (s.customer_name ? ' · ' + esc(s.customer_name) : '') + '</p>' +
         '<p>' + names + '</p>' +
         (s.status !== 'voided'
-          ? '<button class="small danger" data-void="' + s.id + '">Void sale</button>'
+          ? (voidConfirmId === s.id
+            ? '<p><b>Void this sale? The stock goes back.</b></p><div class="row"><button class="small danger" data-void-yes="' + s.id + '">Yes, void it</button><button class="small secondary" data-void-no="' + s.id + '">Keep it</button></div>'
+            : '<button class="small danger" data-void="' + s.id + '">Void sale</button>')
           : '') +
         '</div>';
     });
     el.innerHTML = h;
     el.querySelectorAll('[data-void]').forEach(function (b) {
       b.addEventListener('click', function () {
-        if (!confirm('Void this sale? The stock goes back.')) return;
-        rpc('void_pos_sale', { p_slug: SLUG, p_epass: empPass, p_sale_id: Number(b.getAttribute('data-void')) })
-          .then(function () { return loadStore(); })
+        voidConfirmId = Number(b.getAttribute('data-void'));
+        voidErr = '';
+        renderReceiptsList();
+      });
+    });
+    el.querySelectorAll('[data-void-no]').forEach(function (b) {
+      b.addEventListener('click', function () { voidConfirmId = null; renderReceiptsList(); });
+    });
+    el.querySelectorAll('[data-void-yes]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = Number(b.getAttribute('data-void-yes'));
+        b.disabled = true;
+        rpc('void_pos_sale', { p_slug: SLUG, p_epass: empPass, p_sale_id: id })
+          .then(function () { voidConfirmId = null; voidErr = ''; return loadStore(); })
           .then(function () { return loadSales(); })
-          .catch(function (e) { alert('Error: ' + e.message); });
+          .catch(function (e) { voidConfirmId = null; voidErr = 'Error: ' + e.message; renderReceiptsList(); });
       });
     });
   }
@@ -599,7 +616,9 @@
     items.forEach(function (it) {
       h += '<div class="cart-line"><div><b>' + esc(it.name) + '</b><br><span class="info">' + esc(it.category || '') + ' · ' + money(it.price) + ' · stock ' + Number(it.stock) + (it.barcode ? ' · #' + esc(it.barcode) : '') + '</span></div>' +
         '<div class="row"><button class="small secondary" data-edit="' + it.id + '">Edit</button>' +
-        '<button class="small danger" data-del="' + it.id + '">Delete</button></div></div>';
+        (delConfirmId === it.id
+          ? '<span><b>Delete "' + esc(it.name) + '"?</b> <button class="small danger" data-del-yes="' + it.id + '">Yes, delete</button> <button class="small secondary" data-del-no="' + it.id + '">Keep it</button></span>'
+          : '<button class="small danger" data-del="' + it.id + '">Delete</button>') + '</div></div>';
     });
     el.innerHTML = h;
     el.querySelectorAll('[data-edit]').forEach(function (b) {
@@ -619,12 +638,22 @@
     });
     el.querySelectorAll('[data-del]').forEach(function (b) {
       b.addEventListener('click', function () {
-        var it = itemById(Number(b.getAttribute('data-del')));
-        if (!it || !confirm('Delete "' + it.name + '"?')) return;
+        delConfirmId = Number(b.getAttribute('data-del'));
+        renderItemsList();
+      });
+    });
+    el.querySelectorAll('[data-del-no]').forEach(function (b) {
+      b.addEventListener('click', function () { delConfirmId = null; renderItemsList(); });
+    });
+    el.querySelectorAll('[data-del-yes]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var it = itemById(Number(b.getAttribute('data-del-yes')));
+        if (!it) return;
+        b.disabled = true;
         rpc('delete_pos_item', { p_slug: SLUG, p_u: ownerCreds.u, p_p: ownerCreds.p, p_item_id: it.id })
-          .then(function () { return loadStore(); })
+          .then(function () { delConfirmId = null; return loadStore(); })
           .then(function () { renderSetup(); })
-          .catch(function (e) { var er = $('i-err'); if (er) { er.hidden = false; er.textContent = 'Error: ' + e.message; } });
+          .catch(function (e) { delConfirmId = null; renderItemsList(); var er = $('i-err'); if (er) { er.hidden = false; er.textContent = 'Error: ' + e.message; } });
       });
     });
   }

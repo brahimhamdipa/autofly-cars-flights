@@ -275,6 +275,18 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
 
   useEffect(reload, [table])
 
+  // The AdminPage menus can change the table from outside (deep links),
+  // not just through the table switcher below, so the form must reset
+  // whenever the table changes — otherwise the previous table's fields
+  // leak into the save. (That leak is what made Upload Forms fail with
+  // "Could not find the 'about' column": the form still carried the
+  // store table's `about` field.)
+  useEffect(() => {
+    setDraft(blankDraft(table))
+    setDetail(null)
+    setStatus('')
+  }, [table])
+
   // Outside tap closes the table submenu (same pattern as the website menus).
   useEffect(() => {
     if (!menuOpen) return

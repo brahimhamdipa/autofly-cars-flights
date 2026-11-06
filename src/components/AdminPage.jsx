@@ -18,6 +18,7 @@ import AdminChat from './admin/AdminChat'
 
 import AdminFolderPasses from './admin/AdminFolderPasses'
 import AdminRestaurantPages from './admin/AdminRestaurantPages'
+import AdminAllPasses from './admin/AdminAllPasses'
 
 // Five numbered menus, top left. A leaf has a section (an AdminPage
 // section) or a table (a Manage table, opened inside the Manage
@@ -79,6 +80,7 @@ const MENUS = [
     ] },
   ] },
   { n: 5, name: 'Chat', items: [
+    { label: 'All Passes', section: 'all-passes' },
     { label: 'Live Chat', section: 'chat' },
     { label: 'Chat', children: [
       { label: 'Job Add.Edit.Del', table: 'jobs' },
@@ -293,6 +295,7 @@ export default function AdminPage() {
       {section === 'store-add' && <AdminStoreAdd />}
       {section === 'store-manage' && <AdminStoreManage table={manageTable} onTableChange={setManageTable} />}
       {section === 'chat' && <AdminChat />}
+      {section === 'all-passes' && <AdminAllPasses />}
       {section === 'folder-passes' && <AdminFolderPasses />}
       {section === 'restaurant-pages' && <AdminRestaurantPages />}
       <button type="button" className="admin-to-top no-print" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Top</button>

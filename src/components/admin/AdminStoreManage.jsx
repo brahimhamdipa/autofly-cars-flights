@@ -17,38 +17,40 @@ import { money } from '../../lib/storeData'
 // Categories" tab) and link to items via tick boxes on the Items form;
 // the old store_categories table is gone.
 const TABLES = [
-  ['providers', 'Providers', 'store_providers'],
-  ['items', 'Items', 'store_items'],
-  ['forms', 'Provider Forms', 'providersForm'],
-  ['fromdel', 'Delivery Locations', 'fromDel'],
-  ['topick', 'Pickup Locations', 'toPick'],
-  ['itemcats', 'Item Categories', 'category'],
-  ['subcats', 'Sub Categories', 'subCategory'],
-  ['jobs', 'Jobs', 'jobs'],
-  ['employees', 'Employees', 'employees'],
-  ['languages', 'Languages', 'languages'],
+  ['providers', 'Store Add.Edit.Del', 'store_providers'],
+  ['items', 'Items Add.Edit.Del.Approve', 'store_items'],
+  ['item_batches', 'Items Approval', 'store_item_batches'],
+  ['forms', 'Store Passes', 'providersForm'],
+  ['fromdel', 'Delivery Add.Edit.Del', 'fromDel'],
+  ['topick', 'Pickup Add.Edit.Del', 'toPick'],
+  ['itemcats', 'Category Add.Edit.Del', 'category'],
+  ['subcats', 'SubCategory Add.Edit.Del', 'subCategory'],
+  ['jobs', 'Job Add.Edit.Del', 'jobs'],
+  ['employees', 'Employee Add.Edit.Del', 'employees'],
+  ['languages', 'Language Add.Edit.Del', 'languages'],
   ['passes', 'Employee Passes', 'fPasses'],
-  ['barber_stores', 'Barber Stores', 'barber_store'],
-  ['barber_locations', 'Barber Locations', 'barber_location'],
-  ['open_times', 'Open Hours', 'open_time'],
-  ['barber_customers', 'Barber Customers', 'barber_customer'],
-  ['barber_styles', 'Barber Styles', 'barber_style'],
-  ['website_domains', 'Barber Websites', 'website_domain'],
+  ['barber_stores', 'Header2', 'barber_store'],
+  ['barber_locations', 'Body4', 'barber_location'],
+  ['open_times', 'Body5', 'open_time'],
+  ['barber_customers', 'Customers List', 'barber_customer'],
+  ['barber_styles', 'Body3', 'barber_style'],
+  ['website_domains', 'Website PrePasses -Domain', 'website_domain'],
   ['website_types', 'Website Types', 'website_type'],
-  ['website_headers', 'Website Headers', 'website_header'],
-  ['website_bodies', 'Website Bodies', 'website_body'],
+  ['website_headers', 'Header1', 'website_header'],
+  ['website_bodies', 'Body 2.6.titles', 'website_body'],
   ['website_footers', 'Website Footers', 'website_footer'],
-  ['barber_reservations', 'Barber Reservations', 'barber_reservation'],
-  ['barber_orders', 'Barber Orders', 'barber_order'],
-  ['restaurant_orders', 'Restaurant Orders', 'restaurant_order'],
-  ['intake_forms', 'Barber Intake Forms', 'barber_intake_forms'],
-  ['intake_submissions', 'Barber Intake Submissions', 'barber_intake_submissions'],
-  ['diner_restaurants', 'Diner Restaurants', 'diner_restaurants'],
+  ['barber_reservations', 'Cust.Subm.DB', 'barber_reservation'],
+  ['barber_orders', 'Barbers', 'barber_order'],
+  ['restaurant_orders', 'Restaurants', 'restaurant_order'],
+  ['intake_forms', 'Website Add.Edit Pass', 'barber_intake_forms'],
+  ['intake_submissions', 'Website Submission.Approval', 'barber_intake_submissions'],
+  ['upload_forms', 'Upload Forms', 'upload_forms'],
+  ['diner_restaurants', 'Diner Passes', 'diner_restaurants'],
   ['diner_approvals', 'Diner Approvals', 'diner_restaurants'],
-  ['diner_orders', 'Diner Orders', 'diner_orders'],
-  ['barbershop_shops', 'Barbershop Shops', 'barbershop_shops'],
+  ['diner_orders', 'Diner Kitchen', 'diner_orders'],
+  ['barbershop_shops', 'Barber Passes', 'barbershop_shops'],
   ['barbershop_approvals', 'Barbershop Approvals', 'barbershop_shops'],
-  ['barbershop_bookings', 'Barbershop Bookings', 'barbershop_bookings'],
+  ['barbershop_bookings', 'Barber Bookings', 'barbershop_bookings'],
 ]
 
 const slugify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
@@ -86,6 +88,8 @@ const blankDraft = (table) => {
   if (table === 'barbershop_shops') return { slug: '', name: '', u: '', p: '', epass: '', note: '' }
   if (table === 'barbershop_approvals') return {}
   if (table === 'barbershop_bookings') return {}
+  if (table === 'item_batches') return {}
+  if (table === 'upload_forms') return { f: '', u: '', p: '', folder: '', note: '' }
   return { name: '' }
 }
 
@@ -149,9 +153,34 @@ function IntakeFormForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
   )
 }
 
-export default function AdminStoreManage() {
+function UploadFormForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <input required placeholder="Form name — the word in autofly.us.com/form-name" value={draft.f || ''} onChange={e => setDraft({ ...draft, f: e.target.value })} />
+      <p className="hint">The customer logs in at autofly.us.com/{(draft.f || 'form-name').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with a username and a password.</p>
+      <input required placeholder="Username for the customer" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
+      <input required placeholder="Password for the customer" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
+      <p className="hint">This login is what you sell — use a throwaway password you invent for this customer, never your own password. Only you can see it here.</p>
+      <input required placeholder="Upload folder name — where the pictures will go" value={draft.folder || ''} onChange={e => setDraft({ ...draft, folder: e.target.value })} />
+      <p className="hint">Saving creates this folder for real in the picture storage, so the customer can upload into it right away. The customer sees Upload and View on their page.</p>
+      <input placeholder="Note for yourself (optional — not shown to the customer)" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
 
-  const [table, setTable] = useState('providers')
+export default function AdminStoreManage({ table: tableProp, onTableChange }) {
+
+  const [tableInner, setTableInner] = useState('providers')
+
+  // The AdminPage menus pick the table (deep links); on its own the
+  // Manage section keeps its own table switcher as before.
+  const table = tableProp ?? tableInner
+  const setTable = onTableChange ?? setTableInner
 
   const [rows, setRows] = useState(null)
 
@@ -222,6 +251,8 @@ export default function AdminStoreManage() {
     if (table === 'diner_orders') q = supabase.from(tableName).select('*').order('id', { ascending: false })
     if (table === 'barbershop_approvals') q = supabase.from(tableName).select('*').eq('draft_status', 'pending').order('id')
     if (table === 'barbershop_bookings') q = supabase.from(tableName).select('*').order('id', { ascending: false })
+    if (table === 'item_batches') q = supabase.from(tableName).select('*').eq('status', 'pending').order('id')
+    if (table === 'upload_forms') q = supabase.from(tableName).select('*').order('f')
     q.then(({ data, error }) => {
       if (error) { setStatus('Error: ' + error.message); setRows([]) }
       else setRows(data || [])
@@ -268,7 +299,7 @@ export default function AdminStoreManage() {
   }, [rows, query])
 
   // One label per row, used by the Name cell and the delete confirm.
-  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : table === 'restaurant_orders' ? r.customer_name : table === 'intake_forms' ? r.f : table === 'intake_submissions' ? ((r.payload && r.payload.shop_name) || ('Submission #' + r.id)) : table === 'diner_restaurants' ? r.name : table === 'diner_approvals' ? r.name : table === 'diner_orders' ? ('Order #' + r.id) : table === 'barbershop_shops' ? r.name : table === 'barbershop_approvals' ? r.name : table === 'barbershop_bookings' ? ('Booking #' + r.id) : r.name
+  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : table === 'restaurant_orders' ? r.customer_name : table === 'intake_forms' ? r.f : table === 'intake_submissions' ? ((r.payload && r.payload.shop_name) || ('Submission #' + r.id)) : table === 'diner_restaurants' ? r.name : table === 'diner_approvals' ? r.name : table === 'diner_orders' ? ('Order #' + r.id) : table === 'barbershop_shops' ? r.name : table === 'barbershop_approvals' ? r.name : table === 'barbershop_bookings' ? ('Booking #' + r.id) : table === 'item_batches' ? ('Batch #' + r.id) : table === 'upload_forms' ? r.f : r.name
 
   const remove = async (row) => {
     const label = rowLabel(row)
@@ -325,6 +356,16 @@ export default function AdminStoreManage() {
     const { data, error } = await supabase.rpc('approve_barbershop_draft', { p_shop_id: row.id })
     if (error) { setStatus('Cannot approve: ' + error.message); return }
     setStatus(`✓ Approved — "${data?.name || row.name}" services are now live.`)
+    setDetail(null)
+    reload()
+  }
+
+  // Items approval: one tap adds every item in the batch to the shop
+  // at once (all active, none left pending), then marks the batch done.
+  const approveItemBatch = async (row) => {
+    const { data, error } = await supabase.rpc('approve_store_item_batch', { p_batch_id: row.id })
+    if (error) { setStatus('Cannot approve: ' + error.message); return }
+    setStatus(`✓ Approved — ${data?.inserted ?? '?'} item(s) added to the shop.`)
     setDetail(null)
     reload()
   }
@@ -387,6 +428,8 @@ export default function AdminStoreManage() {
       if (passRowsF && passRowsF.length > 0) { setStatus('That form name is already used by an employee pass — pick another.'); return }
       const { data: domainRowsF } = await supabase.from('website_domain').select('id').eq('slug', fields.f)
       if (domainRowsF && domainRowsF.length > 0) { setStatus('That form name is already used by a barber website — pick another.'); return }
+      const { data: uploadRowsF } = await supabase.from('upload_forms').select('id').eq('f', fields.f)
+      if (uploadRowsF && uploadRowsF.length > 0) { setStatus('That form name is already used by a picture upload form — pick another.'); return }
     }
     if (table === 'employees') {
       if (fields.job_id !== undefined) fields.job_id = fields.job_id === '' ? null : Number(fields.job_id)
@@ -416,6 +459,8 @@ export default function AdminStoreManage() {
       if (formRows && formRows.length > 0) { setStatus('That slug is already used by a provider form — pick another.'); return }
       const { data: passRows } = await supabase.from('fPasses').select('id').eq('formName', fields.slug)
       if (passRows && passRows.length > 0) { setStatus('That slug is already used by an employee pass — pick another.'); return }
+      const { data: uploadRowsD } = await supabase.from('upload_forms').select('id').eq('f', fields.slug)
+      if (uploadRowsD && uploadRowsD.length > 0) { setStatus('That slug is already used by a picture upload form — pick another.'); return }
     }
     if (table === 'diner_restaurants') {
       fields.slug = slugify(fields.slug || '')
@@ -440,6 +485,24 @@ export default function AdminStoreManage() {
       if (passRowsI && passRowsI.length > 0) { setStatus('That form name is already used by an employee pass — pick another.'); return }
       const { data: domainRowsI } = await supabase.from('website_domain').select('id').eq('slug', fields.f)
       if (domainRowsI && domainRowsI.length > 0) { setStatus('That form name is already used by a barber website — pick another.'); return }
+      const { data: uploadRowsI } = await supabase.from('upload_forms').select('id').eq('f', fields.f)
+      if (uploadRowsI && uploadRowsI.length > 0) { setStatus('That form name is already used by a picture upload form — pick another.'); return }
+    }
+    if (table === 'upload_forms') {
+      fields.f = slugify(fields.f || '')
+      if (!fields.f) { setStatus('Error: the form name has to contain a letter or number.'); return }
+      if (fields.f === 'admin') { setStatus('Error: "admin" is reserved — pick another form name.'); return }
+      if (!fields.u || !fields.p) { setStatus('Error: username and password are both required.'); return }
+      fields.folder = slugify(fields.folder || '')
+      if (!fields.folder) { setStatus('Error: the upload folder name has to contain a letter or number.'); return }
+      const { data: formRowsU } = await supabase.from('providersForm').select('id').eq('f', fields.f)
+      if (formRowsU && formRowsU.length > 0) { setStatus('That form name is already used by a provider form — pick another.'); return }
+      const { data: passRowsU } = await supabase.from('fPasses').select('id').eq('formName', fields.f)
+      if (passRowsU && passRowsU.length > 0) { setStatus('That form name is already used by an employee pass — pick another.'); return }
+      const { data: domainRowsU } = await supabase.from('website_domain').select('id').eq('slug', fields.f)
+      if (domainRowsU && domainRowsU.length > 0) { setStatus('That form name is already used by a barber website — pick another.'); return }
+      const { data: intakeRowsU } = await supabase.from('barber_intake_forms').select('id').eq('f', fields.f)
+      if (intakeRowsU && intakeRowsU.length > 0) { setStatus('That form name is already used by a barber intake form — pick another.'); return }
     }
     if (table === 'passes') {
       fields.formName = slugify(fields.formName || '')
@@ -449,6 +512,8 @@ export default function AdminStoreManage() {
       if (formRows && formRows.length > 0) { setStatus('That form name is already used by a provider form — pick another.'); return }
       const { data: domainRowsP } = await supabase.from('website_domain').select('id').eq('slug', fields.formName)
       if (domainRowsP && domainRowsP.length > 0) { setStatus('That form name is already used by a barber website — pick another.'); return }
+      const { data: uploadRowsP } = await supabase.from('upload_forms').select('id').eq('f', fields.formName)
+      if (uploadRowsP && uploadRowsP.length > 0) { setStatus('That form name is already used by a picture upload form — pick another.'); return }
       const { chat, ...passFields } = fields
       const q = id
       ? supabase.from(tableName).update(passFields).eq('id', id)
@@ -485,12 +550,24 @@ export default function AdminStoreManage() {
       const { error } = await q
       if (error) { setStatus('Error: ' + error.message); return }
     }
-    setStatus(`✓ Saved "${rowLabel(draft)}".`)
+    // Saving an upload form creates its folder for real in the picture
+    // storage (an empty marker file), so the customer can upload into
+    // it right away. Best effort: a storage failure leaves the form
+    // saved and says so, instead of losing the form.
+    let folderNote = ''
+    if (table === 'upload_forms') {
+      const folder = fields.folder || draft.folder
+      if (folder) {
+        const { error: folderErr } = await supabase.storage.from('product-images').upload('store/' + folder + '/.keep', new Blob([''], { type: 'text/plain' }), { upsert: true })
+        if (folderErr) folderNote = ` The folder "${folder}" could not be created (${folderErr.message}) — the form is saved; save it again to retry.`
+      }
+    }
+    setStatus(`✓ Saved "${rowLabel(draft)}".${folderNote}`)
     setDraft(blankDraft(table))
     reload()
   }
 
-  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : table === 'restaurant_orders' ? 'restaurant order' : table === 'intake_forms' ? 'intake form' : table === 'intake_submissions' ? 'intake submission' : table === 'diner_restaurants' ? 'diner restaurant' : table === 'diner_approvals' ? 'diner approval' : table === 'diner_orders' ? 'diner order' : table === 'barbershop_shops' ? 'barbershop shop' : table === 'barbershop_approvals' ? 'barbershop approval' : table === 'barbershop_bookings' ? 'barbershop booking' : 'row'
+  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : table === 'restaurant_orders' ? 'restaurant order' : table === 'intake_forms' ? 'intake form' : table === 'intake_submissions' ? 'intake submission' : table === 'diner_restaurants' ? 'diner restaurant' : table === 'diner_approvals' ? 'diner approval' : table === 'diner_orders' ? 'diner order' : table === 'barbershop_shops' ? 'barbershop shop' : table === 'barbershop_approvals' ? 'barbershop approval' : table === 'barbershop_bookings' ? 'barbershop booking' : table === 'item_batches' ? 'items approval' : table === 'upload_forms' ? 'upload form' : 'row'
 
   const formTitle = table === 'intake_submissions'
     ? (detail ? `Intake submission — ${rowLabel(detail)}` : 'Intake submissions')
@@ -498,6 +575,8 @@ export default function AdminStoreManage() {
     ? (detail ? `Diner approval — ${rowLabel(detail)}` : 'Diner approvals')
     : table === 'barbershop_approvals'
     ? (detail ? `Barbershop approval — ${rowLabel(detail)}` : 'Barbershop approvals')
+    : table === 'item_batches'
+    ? (detail ? `Items approval — ${rowLabel(detail)}` : 'Items approvals')
     : draft.id ? `Edit ${kindLabel} — ${rowLabel(draft)}` : `New ${kindLabel}`
 
   const submitLabel = draft.id ? 'Save changes' : `Save ${kindLabel}`
@@ -628,7 +707,7 @@ export default function AdminStoreManage() {
           onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
       )}
       {table === 'diner_approvals' && !detail && (
-        <p className="hint">Drafts restaurants uploaded for approval — open Details to review the menu, then Approve to make it live. Deleting a restaurant is done in Diner Restaurants, not here.</p>
+        <p className="hint">Drafts restaurants uploaded for approval — open Details to review the menu, then Approve to make it live. Deleting a restaurant is done in Diner Passes, not here.</p>
       )}
       {table === 'diner_approvals' && detail && (
         <div className="form-card">
@@ -650,7 +729,7 @@ export default function AdminStoreManage() {
           onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
       )}
       {table === 'barbershop_approvals' && !detail && (
-        <p className="hint">Drafts shops uploaded for approval — open Details to review the services, then Approve to make them live. Deleting a shop is done in Barbershop Shops, not here.</p>
+        <p className="hint">Drafts shops uploaded for approval — open Details to review the services, then Approve to make them live. Deleting a shop is done in Barber Passes, not here.</p>
       )}
       {table === 'barbershop_approvals' && detail && (
         <div className="form-card">
@@ -666,6 +745,29 @@ export default function AdminStoreManage() {
       )}
       {table === 'barbershop_bookings' && (
         <p className="hint">Bookings placed by visitors — view and delete only, no editing. The barber handles them live on the shop page.</p>
+      )}
+      {table === 'upload_forms' && (
+        <UploadFormForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+          onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
+      )}
+      {table === 'item_batches' && !detail && (
+        <p className="hint">Item lists stores uploaded for approval — open Details to review the items, then Approve to add them all to the shop at once, or Delete to reject the batch. One-by-one items are still handled in Items Add.Edit.Del.Approve.</p>
+      )}
+      {table === 'item_batches' && detail && (
+        <div className="form-card">
+          <h3>{(detail.batch_data && detail.batch_data.provider_name) || ('Batch #' + detail.id)}</h3>
+          <p>Store: {(detail.batch_data && detail.batch_data.provider_name) || '—'} · Items: {((detail.batch_data && detail.batch_data.items) || []).length} · Status: {detail.status} · Sent: {(detail.created_at || '').slice(0, 10)}</p>
+          <p>Items in this batch:</p>
+          {((detail.batch_data && detail.batch_data.items) || []).map((it, i) => (
+            <p key={i}>{it.name || ('Item ' + (i + 1))}{it.price !== undefined && it.price !== '' ? ' — $' + it.price : ''}{it.description ? ' — ' + it.description : ''}</p>
+          ))}
+          <p>Full list (as uploaded):</p>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{detail.batch_data ? JSON.stringify(detail.batch_data, null, 2) : 'No items yet.'}</pre>
+          <div className="store-actions">
+            {detail.status === 'pending' && <button type="button" className="btn-primary" onClick={() => approveItemBatch(detail)}>Approve</button>}
+            <button type="button" className="btn-soft" onClick={() => setDetail(null)}>Close</button>
+          </div>
+        </div>
       )}
       {table === 'intake_submissions' && !detail && (
         <p className="hint">Submissions arrive from the intake form — open Details to review, fix the page word if it is taken, then Approve to build the shop, or Delete to reject.</p>
@@ -747,6 +849,8 @@ export default function AdminStoreManage() {
               {table === 'barbershop_shops' && <><th>Slug</th><th>Username</th><th>Draft</th></>}
               {table === 'barbershop_approvals' && <><th>Slug</th><th>Draft</th></>}
               {table === 'barbershop_bookings' && <><th>Shop</th><th>Customer</th><th>Service</th><th>Date</th><th>Status</th></>}
+              {table === 'item_batches' && <><th>Store</th><th>Items</th><th>Status</th><th>Sent</th></>}
+              {table === 'upload_forms' && <><th>Folder</th><th>Username</th></>}
               <th>Edit</th><th>Delete</th>
             </tr>
           </thead>
@@ -796,12 +900,15 @@ export default function AdminStoreManage() {
             {table === 'barbershop_shops' && <><td>{r.slug}</td><td>{r.u}</td><td>{r.draft_status}</td></>}
             {table === 'barbershop_approvals' && <><td>{r.slug}</td><td>{r.draft_status}</td></>}
             {table === 'barbershop_bookings' && <><td>{barbershopShopsList.find(x => x.id === r.shop_id)?.name || r.shop_id}</td><td>{r.booking_data?.name || '—'}</td><td>{r.booking_data?.service || '—'}</td><td>{r.booking_data?.date || '—'}</td><td>{r.status}</td></>}
+            {table === 'item_batches' && <><td>{r.batch_data?.provider_name || ('Provider ' + (r.batch_data?.provider_id ?? '—'))}</td><td>{(r.batch_data?.items || []).length}</td><td>{r.status}</td><td>{(r.created_at || '').slice(0, 10)}</td></>}
+            {table === 'upload_forms' && <><td>{r.folder}</td><td>{r.u}</td></>}
                 <td>
                   {table === 'items' && r.pending_approval && <button type="button" className="btn-mini" onClick={() => approve(r)}>Approve</button>}{' '}
                   {table === 'intake_submissions' && <><button type="button" className="btn-mini" onClick={() => { setDetail(r); setPageWord(r.payload?.page_word || '') }}>Details</button>{' '}{r.status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveSubmission(r)}>Approve</button>}{' '}</>}
                   {table === 'diner_approvals' && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.draft_status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveDiner(r)}>Approve</button>}{' '}</>}
                   {table === 'barbershop_approvals' && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.draft_status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveBarbershop(r)}>Approve</button>}{' '}</>}
-                  {table !== 'barber_orders' && table !== 'restaurant_orders' && table !== 'intake_submissions' && table !== 'diner_approvals' && table !== 'diner_orders' && table !== 'barbershop_approvals' && table !== 'barbershop_bookings' && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
+                  {table === 'item_batches' && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveItemBatch(r)}>Approve</button>}{' '}</>}
+                  {table !== 'barber_orders' && table !== 'restaurant_orders' && table !== 'intake_submissions' && table !== 'diner_approvals' && table !== 'diner_orders' && table !== 'barbershop_approvals' && table !== 'barbershop_bookings' && table !== 'item_batches' && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
                 </td>
                 <td>{table !== 'diner_approvals' && table !== 'barbershop_approvals' && <button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button>}</td>
               </tr>

@@ -159,6 +159,16 @@ export function EmployeePassForm({ draft, setDraft, onSubmit, submitLabel, onCan
 }
 
 export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, providers, linkData }) {
+  // Categories + their options live in a popup (the same pattern as
+  // the products filter), so the form stays one screen tall until the
+  // admin opens the picker.
+  const [catOpen, setCatOpen] = useState(false)
+  const pickedCats = (linkData?.itemCategories || []).filter(c => (linkData.selected.categoryIds || []).includes(c.id))
+  const pickedSubs = (linkData?.selected.subcategoryIds || []).length
+  const catSummary = pickedCats.length === 0
+    ? 'None picked'
+    : pickedCats.map(c => c.label).join(', ') + (pickedSubs > 0 ? ` · ${pickedSubs} option${pickedSubs === 1 ? '' : 's'}` : '')
+  const clearCats = () => { (linkData.selected.categoryIds || []).forEach(id => linkData.onToggle('cat', id)) }
   return (
     <form onSubmit={onSubmit} className="form-card">
       <select required value={draft.provider_id || ''} onChange={e => setDraft({ ...draft, provider_id: e.target.value })}>
@@ -178,19 +188,48 @@ export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, pro
       <PicField pics={draft.pics || []} setPics={pics => setDraft({ ...draft, pics })} />
       {linkData && (
         <div>
-          <p><b>Item categories</b></p>
-          {(linkData.itemCategories || []).length === 0 && <p className="hint">No item categories yet.</p>}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
-            {(linkData.itemCategories || []).map(c => {
-              const checked = linkData.selected.categoryIds.includes(c.id)
-              return (
-                <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', border: '1px solid #d8dbe8', borderRadius: 8, cursor: 'pointer', background: checked ? '#e8eaf6' : '#fff' }}>
-                  <input type="checkbox" checked={checked} onChange={() => linkData.onToggle('cat', c.id)} />
-                  <b style={{ fontSize: 14 }}>{c.label}</b>
-                </label>
-              )
-            })}
-          </div>
+          <button type="button" className="btn-soft" onClick={() => setCatOpen(true)} style={{ width: '100%', textAlign: 'left' }}>
+            <b>Item categories</b> — {catSummary}
+          </button>
+          {catOpen && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 60, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 60 }} onClick={() => setCatOpen(false)}>
+              <div className="form-card" style={{ width: 'calc(100% - 32px)', maxWidth: 560, maxHeight: '80vh', overflow: 'auto', margin: 0 }} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <h3 style={{ margin: 0, flex: 1 }}>Item categories</h3>
+                  <button type="button" className="btn-soft" onClick={clearCats}>Clear</button>
+                  <button type="button" onClick={() => setCatOpen(false)}>Done</button>
+                  <button type="button" className="btn-soft" onClick={() => setCatOpen(false)}>×</button>
+                </div>
+                {(linkData.itemCategories || []).length === 0 && <p className="hint">No item categories yet.</p>}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>
+                  {(linkData.itemCategories || []).map(c => {
+                    const checked = linkData.selected.categoryIds.includes(c.id)
+                    return (
+                      <label key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 10px', border: '1px solid #d8dbe8', borderRadius: 8, cursor: 'pointer', background: checked ? '#e8eaf6' : '#fff' }}>
+                        <input type="checkbox" checked={checked} onChange={() => linkData.onToggle('cat', c.id)} />
+                        <b style={{ fontSize: 14 }}>{c.label}</b>
+                      </label>
+                    )
+                  })}
+                </div>
+                {(linkData.selected.categoryIds || []).map(catId => {
+                  const cat = (linkData.itemCategories || []).find(c => c.id === catId)
+                  const subs = (linkData.subcats || []).filter(s => s.category_id === catId)
+                  return (
+                    <div key={catId} style={{ marginLeft: 16, borderLeft: '3px solid #e8e8f0', paddingLeft: 10, marginTop: 8 }}>
+                      <label style={{ fontWeight: 600 }}>Options for {cat ? cat.label : 'category'}:</label>
+                      {subs.length === 0 && <div className="hint">No options defined for this category yet — add them in Sub Categories.</div>}
+                      {subs.map(s => (
+                        <label key={s.id} style={{ display: 'block' }}>
+                          <input type="checkbox" checked={(linkData.selected.subcategoryIds || []).includes(s.id)} onChange={() => linkData.onToggle('sub', s.id)} /> {formatVariant(s)}
+                        </label>
+                      ))}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
           <p><b>Delivery locations</b></p>
           {(linkData.fromdel || []).length === 0 && <p className="hint">No delivery locations yet.</p>}
           {(linkData.fromdel || []).map(r => (
@@ -201,25 +240,6 @@ export function ItemForm({ draft, setDraft, onSubmit, submitLabel, onCancel, pro
           {(linkData.topick || []).map(r => (
             <label key={r.id}><input type="checkbox" checked={linkData.selected.topickIds.includes(r.id)} onChange={() => linkData.onToggle('to', r.id)} /> {r.tname}{r.tcity ? ` — ${r.tcity}` : ''}</label>
           ))}
-      {(linkData.selected.categoryIds || []).map(catId => {
-      const cat = (linkData.itemCategories || []).find(c => c.id === catId)
-                const subs = (linkData.subcats || []).filter(s => s.category_id === catId)
-                return (
-                              <div key={catId} style={{ marginLeft: 16, borderLeft: '3px solid #e8e8f0', paddingLeft: 10, marginTop: 8 }}>
-                                              <label style={{ fontWeight: 600 }}>Options for {cat ? cat.label : 'category'}:</label>
-                                {subs.length === 0 && <div className="hint">No options defined for this category yet — add them in Sub Categories.</div>}
-                                {subs.map(s => (
-                                                <label key={s.id} style={{ display: 'block' }}>
-                                                                  <input
-                                                                                        type="checkbox"
-                                                                                        checked={(linkData.selected.subcategoryIds || []).includes(s.id)}
-                                                                                        onChange={() => linkData.onToggle('sub', s.id)}
-                                                                                      /> {formatVariant(s)}
-                                                </label>
-                                              ))}
-                              </div>
-                            )
-      })}
         </div>
       
     

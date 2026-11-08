@@ -71,5 +71,5 @@ to pass-protect) and is not copy-managed: it is one folder for all.
 
 Deliberately the AutoFly site style: navy `#161d44` header, blue
 `#2563eb` buttons, `#f6f7fb` background, white shadow cards — the
-same look as autofly.us.com, so a visitor feels no style change
+same look as yently.com, so a visitor feels no style change
 moving from the main site to a restaurant page.

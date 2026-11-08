@@ -1,7 +1,6 @@
 # Bodyshop — one page for every bodyshop
 
-A shared bodyshop manager: every shop gets its own link
-(`autofly.us.com/bodyshop?b=<slug>`) and its own jobs, estimates,
+A shared bodyshop manager: every shop gets its own private link and its own jobs, estimates,
 customers, and loan cars, but they all use this same page. There is
 no `data.json` here — the shop, its jobs, estimates, customers, and
 loan cars live in the database. This replaces the old static

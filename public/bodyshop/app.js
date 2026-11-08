@@ -1,5 +1,5 @@
 /* Bodyshop page app — ONE folder for every bodyshop.
-   The shop comes from the link (?b=<slug>), and its info, jobs,
+   The shop comes from its own private link, and its info, jobs,
    estimates, customers, and loan cars live in the database — there is
    no data.json file here.
    Visitors see the public Request Estimate form: anyone with the link
@@ -53,6 +53,9 @@
   var jobsTimer = null;
   var jobsSearch = '';
   var jobsStatus = 'All';
+  var estSearch = ''; // estimates search text, kept while typing
+  var custSearch = ''; // customers search text, kept while typing
+  var loanSearch = ''; // loan cars search text, kept while typing
   var jobsErr = ''; // last jobs error, shown inline above the jobs table
   var editCustomerId = null; // customer being edited, null = adding
   var delJobId = null; // job id awaiting an in-page delete confirmation
@@ -478,17 +481,18 @@
   }
 
   /* ---------- Estimates (employee password) ---------- */
-  function renderEstimates() {
-    var el = $('view-estimates');
-    if (!shop) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
-    if (passLocked && !empUnlocked) { empGate(el, 'Estimates', renderEstimates); return; }
-    if (!shopData) {
-      el.innerHTML = '<h2>Estimates — ' + esc(shop.name) + '</h2><p class="info">Loading…</p>';
-      loadData().then(function () { if (currentView === 'estimates') renderEstimates(); })
-        .catch(function (e) { el.innerHTML = '<h2>Estimates</h2><p class="error">Error: ' + esc(e.message) + '</p>'; });
-      return;
-    }
-    var rows = (shopData.estimates || []).map(function (e) {
+  function estMatches(e, q) {
+    if (!q) return true;
+    var hay = [e.number, e.customer, e.vehicle, e.status, e.note].map(function (x) { return String(x == null ? '' : x).toLowerCase(); }).join(' ');
+    return hay.indexOf(q) !== -1;
+  }
+  /* The estimates table alone, re-rendered as the visitor types in the
+     search box, so the search input never loses focus. */
+  function renderEstimatesRows() {
+    var tb = $('est-rows');
+    if (!tb) return;
+    var q = (estSearch || '').toLowerCase();
+    var rows = (shopData.estimates || []).filter(function (e) { return estMatches(e, q); }).map(function (e) {
       var total = (Number(e.parts) || 0) + (Number(e.labour) || 0);
       var actions = e.status === 'Pending'
         ? '<button class="small" data-accept="' + e.id + '">Accept</button> <button class="small secondary" data-decline="' + e.id + '">Decline</button> ' : '';
@@ -499,20 +503,8 @@
           ? '<span><b>Delete "' + esc(e.number) + '"?</b> <button class="small danger" data-del-est-yes="' + e.id + '">Yes, delete</button> <button class="small secondary" data-del-est-no="' + e.id + '">Keep it</button></span>'
           : '<button class="small danger" data-del-est="' + e.id + '">Delete</button>') + '</td></tr>';
     }).join('');
-    el.innerHTML = '<h2>Estimates — ' + esc(shop.name) + '</h2>' +
-      '<div class="note">Accepting a pending estimate marks it Accepted and raises a job for it on the Jobs tab. Declining closes it without a job. Staff can also add an estimate below — a customer asking in person, or one that came in by phone.</div>' +
-      (estStatus ? '<p class="info" id="est-status">' + esc(estStatus) + '</p>' : '') +
-      '<div class="table-wrap"><table class="data"><thead><tr><th>Estimate no.</th><th>Customer</th><th>Vehicle</th><th>Parts</th><th>Labour</th><th>Total</th><th>Status</th><th>Note</th><th></th></tr></thead>' +
-      '<tbody>' + (rows || '<tr><td colspan="9">No estimates yet.</td></tr>') + '</tbody></table></div>' +
-      '<div class="card"><h3>Add an estimate</h3>' +
-      '<label>Customer</label><input id="est-customer" type="text">' +
-      '<label>Vehicle</label><input id="est-vehicle" type="text">' +
-      '<label>Parts ($)</label><input id="est-parts" type="number" min="0" step="0.01" inputmode="decimal">' +
-      '<label>Labour ($)</label><input id="est-labour" type="number" min="0" step="0.01" inputmode="decimal">' +
-      '<label>Note</label><input id="est-note" type="text">' +
-      '<div class="row"><button id="est-add">Add estimate</button></div>' +
-      '<p class="error" id="est-err" hidden></p></div>';
-    el.querySelectorAll('[data-accept]').forEach(function (b) {
+    tb.innerHTML = rows || '<tr><td colspan="9">' + (estSearch ? 'No estimates match your search.' : 'No estimates yet.') + '</td></tr>';
+    tb.querySelectorAll('[data-accept]').forEach(function (b) {
       b.addEventListener('click', function () {
         var id = Number(b.getAttribute('data-accept'));
         b.disabled = true;
@@ -530,7 +522,7 @@
           .catch(function (e) { estStatus = 'Error: ' + e.message; renderEstimates(); });
       });
     });
-    el.querySelectorAll('[data-decline]').forEach(function (b) {
+    tb.querySelectorAll('[data-decline]').forEach(function (b) {
       b.addEventListener('click', function () {
         var id = Number(b.getAttribute('data-decline'));
         b.disabled = true;
@@ -540,16 +532,16 @@
           .catch(function (e) { estStatus = 'Error: ' + e.message; renderEstimates(); });
       });
     });
-    el.querySelectorAll('[data-del-est]').forEach(function (b) {
+    tb.querySelectorAll('[data-del-est]').forEach(function (b) {
       b.addEventListener('click', function () {
         delEstId = Number(b.getAttribute('data-del-est'));
-        renderEstimates();
+        renderEstimatesRows();
       });
     });
-    el.querySelectorAll('[data-del-est-no]').forEach(function (b) {
-      b.addEventListener('click', function () { delEstId = null; renderEstimates(); });
+    tb.querySelectorAll('[data-del-est-no]').forEach(function (b) {
+      b.addEventListener('click', function () { delEstId = null; renderEstimatesRows(); });
     });
-    el.querySelectorAll('[data-del-est-yes]').forEach(function (b) {
+    tb.querySelectorAll('[data-del-est-yes]').forEach(function (b) {
       b.addEventListener('click', function () {
         var id = Number(b.getAttribute('data-del-est-yes'));
         b.disabled = true;
@@ -559,6 +551,33 @@
           .catch(function (e) { delEstId = null; estStatus = 'Error: ' + e.message; renderEstimates(); });
       });
     });
+  }
+  function renderEstimates() {
+    var el = $('view-estimates');
+    if (!shop) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
+    if (passLocked && !empUnlocked) { empGate(el, 'Estimates', renderEstimates); return; }
+    if (!shopData) {
+      el.innerHTML = '<h2>Estimates — ' + esc(shop.name) + '</h2><p class="info">Loading…</p>';
+      loadData().then(function () { if (currentView === 'estimates') renderEstimates(); })
+        .catch(function (e) { el.innerHTML = '<h2>Estimates</h2><p class="error">Error: ' + esc(e.message) + '</p>'; });
+      return;
+    }
+    el.innerHTML = '<h2>Estimates — ' + esc(shop.name) + '</h2>' +
+      '<div class="note">Accepting a pending estimate marks it Accepted and raises a job for it on the Jobs tab. Declining closes it without a job. Staff can also add an estimate below — a customer asking in person, or one that came in by phone.</div>' +
+      (estStatus ? '<p class="info" id="est-status">' + esc(estStatus) + '</p>' : '') +
+      '<label>Search estimates</label><input id="est-search" type="text" value="' + esc(estSearch) + '" placeholder="Estimate no., customer, or vehicle…">' +
+      '<div class="table-wrap"><table class="data"><thead><tr><th>Estimate no.</th><th>Customer</th><th>Vehicle</th><th>Parts</th><th>Labour</th><th>Total</th><th>Status</th><th>Note</th><th></th></tr></thead>' +
+      '<tbody id="est-rows"></tbody></table></div>' +
+      '<div class="card"><h3>Add an estimate</h3>' +
+      '<label>Customer</label><input id="est-customer" type="text">' +
+      '<label>Vehicle</label><input id="est-vehicle" type="text">' +
+      '<label>Parts ($)</label><input id="est-parts" type="number" min="0" step="0.01" inputmode="decimal">' +
+      '<label>Labour ($)</label><input id="est-labour" type="number" min="0" step="0.01" inputmode="decimal">' +
+      '<label>Note</label><input id="est-note" type="text">' +
+      '<div class="row"><button id="est-add">Add estimate</button></div>' +
+      '<p class="error" id="est-err" hidden></p></div>';
+    renderEstimatesRows();
+    $('est-search').addEventListener('input', function (e) { estSearch = e.target.value; renderEstimatesRows(); });
     $('est-add').addEventListener('click', function () {
       var err = $('est-err');
       var customer = $('est-customer').value.trim();
@@ -581,18 +600,18 @@
   }
 
   /* ---------- Customers (employee password) ---------- */
-  function renderCustomers() {
-    var el = $('view-customers');
-    if (!shop) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
-    if (passLocked && !empUnlocked) { empGate(el, 'Customers', renderCustomers); return; }
-    if (!shopData) {
-      el.innerHTML = '<h2>Customers — ' + esc(shop.name) + '</h2><p class="info">Loading…</p>';
-      loadData().then(function () { if (currentView === 'customers') renderCustomers(); })
-        .catch(function (e) { el.innerHTML = '<h2>Customers</h2><p class="error">Error: ' + esc(e.message) + '</p>'; });
-      return;
-    }
-    var editing = (shopData.customers || []).filter(function (c) { return c.id === editCustomerId; })[0];
-    var rows = (shopData.customers || []).map(function (c, i) {
+  function custMatches(c, q) {
+    if (!q) return true;
+    var hay = [c.name, c.phone, c.email, c.vehicle, c.insurer].map(function (x) { return String(x == null ? '' : x).toLowerCase(); }).join(' ');
+    return hay.indexOf(q) !== -1;
+  }
+  /* The customers table alone, re-rendered as the visitor types in the
+     search box, so the search input never loses focus. */
+  function renderCustomersRows() {
+    var tb = $('cust-rows');
+    if (!tb) return;
+    var q = (custSearch || '').toLowerCase();
+    var rows = (shopData.customers || []).filter(function (c) { return custMatches(c, q); }).map(function (c, i) {
       return '<tr><td>' + (i + 1) + '</td><td>' + esc(c.name) + '</td><td>' + esc(c.phone) + '</td>' +
         '<td>' + esc(c.email) + '</td><td>' + esc(c.vehicle) + '</td><td>' + esc(c.insurer) + '</td>' +
         '<td><button class="small secondary" data-edit-cust="' + c.id + '">Edit</button></td>' +
@@ -600,34 +619,23 @@
           ? '<span><b>Delete "' + esc(c.name) + '"?</b> <button class="small danger" data-del-cust-yes="' + c.id + '">Yes, delete</button> <button class="small secondary" data-del-cust-no="' + c.id + '">Keep it</button></span>'
           : '<button class="small danger" data-del-cust="' + c.id + '">Delete</button>') + '</td></tr>';
     }).join('');
-    el.innerHTML = '<h2>Customers — ' + esc(shop.name) + '</h2>' +
-      '<div class="table-wrap"><table class="data"><thead><tr><th>No.</th><th>Name</th><th>Phone</th><th>Email</th><th>Vehicle</th><th>Insurer</th><th></th><th></th></tr></thead>' +
-      '<tbody>' + (rows || '<tr><td colspan="8">No customers yet.</td></tr>') + '</tbody></table></div>' +
-      '<div class="card"><h3>' + (editing ? 'Edit customer' : 'Add a customer') + '</h3>' +
-      '<label>Name</label><input id="cust-name" type="text" value="' + esc(editing ? editing.name : '') + '">' +
-      '<label>Phone</label><input id="cust-phone" type="tel" value="' + esc(editing ? editing.phone : '') + '">' +
-      '<label>Email</label><input id="cust-email" type="email" value="' + esc(editing ? editing.email : '') + '">' +
-      '<label>Vehicle</label><input id="cust-vehicle" type="text" value="' + esc(editing ? editing.vehicle : '') + '">' +
-      '<label>Insurer</label><input id="cust-insurer" type="text" value="' + esc(editing ? editing.insurer : '') + '">' +
-      '<div class="row"><button id="cust-save">' + (editing ? 'Save changes' : 'Add customer') + '</button>' +
-      (editing ? '<button id="cust-cancel" class="secondary">Cancel</button>' : '') + '</div>' +
-      '<p class="error" id="cust-err" hidden></p></div>';
-    el.querySelectorAll('[data-edit-cust]').forEach(function (b) {
+    tb.innerHTML = rows || '<tr><td colspan="8">' + (custSearch ? 'No customers match your search.' : 'No customers yet.') + '</td></tr>';
+    tb.querySelectorAll('[data-edit-cust]').forEach(function (b) {
       b.addEventListener('click', function () {
         editCustomerId = Number(b.getAttribute('data-edit-cust'));
         renderCustomers();
       });
     });
-    el.querySelectorAll('[data-del-cust]').forEach(function (b) {
+    tb.querySelectorAll('[data-del-cust]').forEach(function (b) {
       b.addEventListener('click', function () {
         delCustId = Number(b.getAttribute('data-del-cust'));
-        renderCustomers();
+        renderCustomersRows();
       });
     });
-    el.querySelectorAll('[data-del-cust-no]').forEach(function (b) {
-      b.addEventListener('click', function () { delCustId = null; renderCustomers(); });
+    tb.querySelectorAll('[data-del-cust-no]').forEach(function (b) {
+      b.addEventListener('click', function () { delCustId = null; renderCustomersRows(); });
     });
-    el.querySelectorAll('[data-del-cust-yes]').forEach(function (b) {
+    tb.querySelectorAll('[data-del-cust-yes]').forEach(function (b) {
       b.addEventListener('click', function () {
         var id = Number(b.getAttribute('data-del-cust-yes'));
         b.disabled = true;
@@ -646,6 +654,33 @@
           });
       });
     });
+  }
+  function renderCustomers() {
+    var el = $('view-customers');
+    if (!shop) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
+    if (passLocked && !empUnlocked) { empGate(el, 'Customers', renderCustomers); return; }
+    if (!shopData) {
+      el.innerHTML = '<h2>Customers — ' + esc(shop.name) + '</h2><p class="info">Loading…</p>';
+      loadData().then(function () { if (currentView === 'customers') renderCustomers(); })
+        .catch(function (e) { el.innerHTML = '<h2>Customers</h2><p class="error">Error: ' + esc(e.message) + '</p>'; });
+      return;
+    }
+    var editing = (shopData.customers || []).filter(function (c) { return c.id === editCustomerId; })[0];
+    el.innerHTML = '<h2>Customers — ' + esc(shop.name) + '</h2>' +
+      '<label>Search customers</label><input id="cust-search" type="text" value="' + esc(custSearch) + '" placeholder="Name, phone, email, or vehicle…">' +
+      '<div class="table-wrap"><table class="data"><thead><tr><th>No.</th><th>Name</th><th>Phone</th><th>Email</th><th>Vehicle</th><th>Insurer</th><th></th><th></th></tr></thead>' +
+      '<tbody id="cust-rows"></tbody></table></div>' +
+      '<div class="card"><h3>' + (editing ? 'Edit customer' : 'Add a customer') + '</h3>' +
+      '<label>Name</label><input id="cust-name" type="text" value="' + esc(editing ? editing.name : '') + '">' +
+      '<label>Phone</label><input id="cust-phone" type="tel" value="' + esc(editing ? editing.phone : '') + '">' +
+      '<label>Email</label><input id="cust-email" type="email" value="' + esc(editing ? editing.email : '') + '">' +
+      '<label>Vehicle</label><input id="cust-vehicle" type="text" value="' + esc(editing ? editing.vehicle : '') + '">' +
+      '<label>Insurer</label><input id="cust-insurer" type="text" value="' + esc(editing ? editing.insurer : '') + '">' +
+      '<div class="row"><button id="cust-save">' + (editing ? 'Save changes' : 'Add customer') + '</button>' +
+      (editing ? '<button id="cust-cancel" class="secondary">Cancel</button>' : '') + '</div>' +
+      '<p class="error" id="cust-err" hidden></p></div>';
+    renderCustomersRows();
+    $('cust-search').addEventListener('input', function (e) { custSearch = e.target.value; renderCustomersRows(); });
     $('cust-save').addEventListener('click', function () {
       var err = $('cust-err');
       var name = $('cust-name').value.trim();
@@ -672,17 +707,18 @@
       return '<option' + (s === selected ? ' selected' : '') + '>' + s + '</option>';
     }).join('');
   }
-  function renderLoanCars() {
-    var el = $('view-loancars');
-    if (!shop) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
-    if (passLocked && !empUnlocked) { empGate(el, 'Loan Cars', renderLoanCars); return; }
-    if (!shopData) {
-      el.innerHTML = '<h2>Loan Cars — ' + esc(shop.name) + '</h2><p class="info">Loading…</p>';
-      loadData().then(function () { if (currentView === 'loancars') renderLoanCars(); })
-        .catch(function (e) { el.innerHTML = '<h2>Loan Cars</h2><p class="error">Error: ' + esc(e.message) + '</p>'; });
-      return;
-    }
-    var rows = (shopData.loancars || []).map(function (c) {
+  function loanMatches(c, q) {
+    if (!q) return true;
+    var hay = [c.number, c.vehicle, c.status, c.jobNumber].map(function (x) { return String(x == null ? '' : x).toLowerCase(); }).join(' ');
+    return hay.indexOf(q) !== -1;
+  }
+  /* The loan cars table alone, re-rendered as the visitor types in the
+     search box, so the search input never loses focus. */
+  function renderLoanCarsRows() {
+    var tb = $('loan-rows');
+    if (!tb) return;
+    var q = (loanSearch || '').toLowerCase();
+    var rows = (shopData.loancars || []).filter(function (c) { return loanMatches(c, q); }).map(function (c) {
       return '<tr><td>' + esc(c.number) + '</td><td>' + esc(c.vehicle) + '</td>' +
         '<td><select data-loan-status="' + c.id + '">' + loanStatusOptions(c.status) + '</select></td>' +
         '<td><input type="text" data-loan-job="' + c.id + '" value="' + esc(c.jobNumber) + '" placeholder="JOB-201"></td>' +
@@ -691,20 +727,13 @@
           ? '<span><b>Delete "' + esc(c.number) + '"?</b> <button class="small danger" data-del-car-yes="' + c.id + '">Yes, delete</button> <button class="small secondary" data-del-car-no="' + c.id + '">Keep it</button></span>'
           : '<button class="small danger" data-del-car="' + c.id + '">Delete</button>') + '</td></tr>';
     }).join('');
-    el.innerHTML = '<h2>Loan Cars — ' + esc(shop.name) + '</h2>' +
-      '<div class="note">Cars lent to customers while their own car is in the shop. Change the status and job number in the row, then tap Update — setting a car back to Available clears its job.</div>' +
-      '<div class="table-wrap"><table class="data"><thead><tr><th>Car number</th><th>Vehicle</th><th>Status</th><th>Job</th><th></th></tr></thead>' +
-      '<tbody>' + (rows || '<tr><td colspan="5">No loan cars yet.</td></tr>') + '</tbody></table></div>' +
-      '<div class="card"><h3>Add a loan car</h3>' +
-      '<label>Car number</label><input id="loan-new-number" type="text">' +
-      '<label>Vehicle</label><input id="loan-new-vehicle" type="text">' +
-      '<div class="row"><button id="loan-add">Add loan car</button></div>' +
-      '<p class="error" id="car-err" hidden></p></div>';
-    el.querySelectorAll('[data-loan-update]').forEach(function (b) {
+    tb.innerHTML = rows || '<tr><td colspan="5">' + (loanSearch ? 'No loan cars match your search.' : 'No loan cars yet.') + '</td></tr>';
+    var view = $('view-loancars');
+    tb.querySelectorAll('[data-loan-update]').forEach(function (b) {
       b.addEventListener('click', function () {
         var id = Number(b.getAttribute('data-loan-update'));
-        var sel = el.querySelector('[data-loan-status="' + id + '"]');
-        var inp = el.querySelector('[data-loan-job="' + id + '"]');
+        var sel = view.querySelector('[data-loan-status="' + id + '"]');
+        var inp = view.querySelector('[data-loan-job="' + id + '"]');
         var status = sel ? sel.value : 'Available';
         var jobNo = status === 'On loan' ? (inp ? inp.value.trim() : '') : '';
         b.disabled = true;
@@ -718,16 +747,16 @@
           });
       });
     });
-    el.querySelectorAll('[data-del-car]').forEach(function (b) {
+    tb.querySelectorAll('[data-del-car]').forEach(function (b) {
       b.addEventListener('click', function () {
         delCarId = Number(b.getAttribute('data-del-car'));
-        renderLoanCars();
+        renderLoanCarsRows();
       });
     });
-    el.querySelectorAll('[data-del-car-no]').forEach(function (b) {
-      b.addEventListener('click', function () { delCarId = null; renderLoanCars(); });
+    tb.querySelectorAll('[data-del-car-no]').forEach(function (b) {
+      b.addEventListener('click', function () { delCarId = null; renderLoanCarsRows(); });
     });
-    el.querySelectorAll('[data-del-car-yes]').forEach(function (b) {
+    tb.querySelectorAll('[data-del-car-yes]').forEach(function (b) {
       b.addEventListener('click', function () {
         var id = Number(b.getAttribute('data-del-car-yes'));
         b.disabled = true;
@@ -742,6 +771,29 @@
           });
       });
     });
+  }
+  function renderLoanCars() {
+    var el = $('view-loancars');
+    if (!shop) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
+    if (passLocked && !empUnlocked) { empGate(el, 'Loan Cars', renderLoanCars); return; }
+    if (!shopData) {
+      el.innerHTML = '<h2>Loan Cars — ' + esc(shop.name) + '</h2><p class="info">Loading…</p>';
+      loadData().then(function () { if (currentView === 'loancars') renderLoanCars(); })
+        .catch(function (e) { el.innerHTML = '<h2>Loan Cars</h2><p class="error">Error: ' + esc(e.message) + '</p>'; });
+      return;
+    }
+    el.innerHTML = '<h2>Loan Cars — ' + esc(shop.name) + '</h2>' +
+      '<div class="note">Cars lent to customers while their own car is in the shop. Change the status and job number in the row, then tap Update — setting a car back to Available clears its job.</div>' +
+      '<label>Search loan cars</label><input id="loan-search" type="text" value="' + esc(loanSearch) + '" placeholder="Car number, vehicle, or job…">' +
+      '<div class="table-wrap"><table class="data"><thead><tr><th>Car number</th><th>Vehicle</th><th>Status</th><th>Job</th><th></th></tr></thead>' +
+      '<tbody id="loan-rows"></tbody></table></div>' +
+      '<div class="card"><h3>Add a loan car</h3>' +
+      '<label>Car number</label><input id="loan-new-number" type="text">' +
+      '<label>Vehicle</label><input id="loan-new-vehicle" type="text">' +
+      '<div class="row"><button id="loan-add">Add loan car</button></div>' +
+      '<p class="error" id="car-err" hidden></p></div>';
+    renderLoanCarsRows();
+    $('loan-search').addEventListener('input', function (e) { loanSearch = e.target.value; renderLoanCarsRows(); });
     $('loan-add').addEventListener('click', function () {
       var err = $('car-err');
       var number = $('loan-new-number').value.trim();
@@ -886,7 +938,7 @@
   function init() {
     if (!SLUG) {
       $('site-name').textContent = 'Bodyshop';
-      $('view-request').innerHTML = '<div class="card"><h2>Shop not found</h2><p class="info">This bodyshop page needs a shop link like autofly.us.com/bodyshop?b=your-shop.</p></div>';
+      $('view-request').innerHTML = '<div class="card"><h2>Shop not found</h2><p class="info">This bodyshop page needs a shop link. Ask AutoFly for your shop link.</p></div>';
       return;
     }
     rpc('get_bodyshop_live', { p_slug: SLUG }).then(function (d) {

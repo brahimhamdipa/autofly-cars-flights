@@ -1,5 +1,5 @@
 /* Barbers style — the AutoFly site style, on purpose: same navy header,
-   blue buttons, cards, and background as autofly.us.com, so a visitor
+   blue buttons, cards, and background as yently.com, so a visitor
    moving from the main site to a barber shop page feels no style change. */
 * { box-sizing: border-box; }
 body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #f6f7fb; color: #1a1d26; }

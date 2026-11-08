@@ -36,7 +36,7 @@
   /* Bootstrap: work out this folder's own address from the URL itself, so
      the app loads its own style.css and app.js under any domain. No folder
      name is written anywhere in this page's code. The business itself
-     comes from the link (?e=<slug>), not from a file. */
+     comes from its own private link, not from a file. */
   (function () {
     var p = location.pathname;
     var last = p.split('/').pop();

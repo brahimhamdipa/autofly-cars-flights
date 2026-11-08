@@ -1,7 +1,7 @@
 # Employee — one time-tracking page for every business
 
 A shared employee time-tracking page: every business gets its own
-link (`autofly.us.com/employee?e=<slug>`) and its own staff, jobs,
+private link and its own staff, jobs,
 and time logs, but they all use this same page. There is no
 `data.json` here — the business, its staff, and its time logs live
 in the database. This folder REPLACES the old static employee
@@ -104,7 +104,7 @@ by design, the same one the main AutoFly site ships.
 
 - `index.html` — page shell + address bootstrap (loads
   `style.css` then `app.js` from its own computed base; the
-  business comes from `?e=<slug>`, never from a file)
+  business comes from its own private link, never from a file)
 - `app.js` — all behavior
 - `style.css` — all styling (AutoFly style, copied from POS and
   adapted for the employee tabs)

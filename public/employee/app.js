@@ -1,5 +1,5 @@
 /* Employee time-tracking page app — ONE folder for every business.
-   The business comes from the link (?e=<slug>), and its info, staff,
+   The business comes from its own private link, and its info, staff,
    jobs, and time logs live in the database — there is no data.json file
    here. Every business has its own staff and time logs, but they all
    use this same page. Visitors see the public staff list (Employees
@@ -52,6 +52,7 @@
   var delErr = ''; // last records delete error, shown inline above the list
   var staffEditId = null; // staff id being edited in Setup, null = adding
   var staffDelConfirmId = null; // staff id awaiting an in-page delete confirmation
+  var empSearch = ''; // public employees search text, kept while typing
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -272,17 +273,23 @@
   }
 
   /* ---------- Employees (public staff list) ---------- */
-  function renderEmployees() {
-    var el = $('view-employees');
-    if (!biz) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
-    var list = biz.staff || [];
-    var h = '<h2>Employees — ' + esc(biz.name) + '</h2>';
-    if (biz.hours) h += '<p class="info">' + esc(biz.hours) + '</p>';
+  function empMatches(s, q) {
+    if (!q) return true;
+    var hay = [s.name, s.job].map(function (x) { return String(x == null ? '' : x).toLowerCase(); }).join(' ');
+    return hay.indexOf(q) !== -1;
+  }
+  /* The staff list alone, re-rendered as the visitor types in the
+     search box, so the search input never loses focus. */
+  function renderEmpList() {
+    var el = $('emp-list');
+    if (!el) return;
+    var q = (empSearch || '').toLowerCase();
+    var list = (biz.staff || []).filter(function (s) { return empMatches(s, q); });
     if (!list.length) {
-      h += '<div class="card"><p class="info">No employees yet — the owner adds staff in Setup.</p></div>';
-      el.innerHTML = h;
+      el.innerHTML = '<div class="card"><p class="info">' + (empSearch ? 'No employees match your search.' : 'No employees yet — the owner adds staff in Setup.') + '</p></div>';
       return;
     }
+    var h = '';
     list.forEach(function (s) {
       h += '<div class="card"><span class="code">' + esc(s.code || '') + '</span>' +
         '<h3>' + esc(s.name) + '</h3>' +
@@ -297,6 +304,21 @@
         show('log');
       });
     });
+  }
+  function renderEmployees() {
+    var el = $('view-employees');
+    if (!biz) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
+    var h = '<h2>Employees — ' + esc(biz.name) + '</h2>';
+    if (biz.hours) h += '<p class="info">' + esc(biz.hours) + '</p>';
+    h += '<input id="emp-search" type="text" placeholder="Search employees…" value="' + esc(empSearch) + '">';
+    h += '<div id="emp-list"></div>';
+    el.innerHTML = h;
+    var search = $('emp-search');
+    if (search) search.addEventListener('input', function () {
+      empSearch = search.value;
+      renderEmpList();
+    });
+    renderEmpList();
   }
 
   /* ---------- Employee password gate (Log Time + Records) ---------- */
@@ -726,7 +748,7 @@
   function notFound() {
     $('site-name').textContent = 'Employee';
     $('site-footer').textContent = 'Powered by AutoFly';
-    $('view-employees').innerHTML = '<div class="card"><h2>Business not found</h2><p class="info">This page needs a business link like ?e=your-business. Ask AutoFly to set it up.</p></div>';
+    $('view-employees').innerHTML = '<div class="card"><h2>Business not found</h2><p class="info">This page needs a business link. Ask AutoFly to set it up.</p></div>';
   }
   if (!SLUG) {
     notFound();

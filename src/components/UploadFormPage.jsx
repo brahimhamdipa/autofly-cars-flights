@@ -25,6 +25,11 @@ import { shrinkImage } from '../lib/storeUpload'
 // - A message the customer writes rolls across the bottom of the
 //   fullscreen like the urgent messages on TV (big, red, impossible
 //   to miss). Empty message: nothing shows, just the pictures.
+// - TV remote: in the fullscreen, Left/Right flip pictures, Up/Down
+//   moves between the buttons (Prev / Next / Close / Want this for
+//   your business?), OK presses the highlighted button, Esc closes.
+//   Buttons and fields also show a thick gold outline when focused,
+//   so the remote's position is visible on a TV.
 const MAX_PICS = 7
 
 // Demo TV gallery: the slug 'demo-tv-gallery' opens the same
@@ -105,13 +110,30 @@ export default function UploadFormPage({ slug, goBack, go }) {
   useEffect(() => {
     if (viewIndex === null) return
     const onKey = (e) => {
-      // TV remotes (and keyboards) drive the gallery with keys. Keep
-      // the arrows on the pictures only: without preventDefault the TV
-      // would also move its focus between the buttons on every press.
-      // Volume keys never reach a website at all — the TV keeps those.
+      // TV remotes (and keyboards) drive the gallery with keys.
+      // Left/Right flip pictures. Up/Down moves the focus between
+      // the control buttons (Prev / Next / Close / Want this for your
+      // business?) so the remote can press one — OK (Enter) presses
+      // the focused button, or shows/hides the controls when none is
+      // focused. Volume keys never reach a website at all — the TV
+      // keeps those.
       if (e.key === 'ArrowLeft') { e.preventDefault(); setViewIndex((viewIndex - 1 + pics.length) % pics.length); pokeControls() }
       if (e.key === 'ArrowRight') { e.preventDefault(); setViewIndex((viewIndex + 1) % pics.length); pokeControls() }
-      if (e.key === 'Enter') { e.preventDefault(); toggleControls() }
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault()
+        pokeControls()
+        const btns = Array.from(galleryRef.current?.querySelectorAll('button') || [])
+        if (!btns.length) return
+        const cur = btns.indexOf(document.activeElement)
+        const next = e.key === 'ArrowDown' ? (cur + 1) % btns.length : (cur - 1 + btns.length) % btns.length
+        btns[next].focus()
+      }
+      if (e.key === 'Enter') {
+        // A focused control button gets the normal press (the TV's OK
+        // button clicks it). Otherwise OK shows/hides the controls.
+        if (document.activeElement?.tagName === 'BUTTON' && galleryRef.current?.contains(document.activeElement)) return
+        e.preventDefault(); toggleControls()
+      }
       if (e.key === 'Escape') closeGallery()
     }
     window.addEventListener('keydown', onKey)
@@ -258,7 +280,8 @@ export default function UploadFormPage({ slug, goBack, go }) {
   }, [demoMode, urlPic, viewIndex, pics.length])
 
   return (
-    <div>
+    <div className="upload-form-page">
+      <style>{`.upload-form-page button:focus-visible, .upload-form-page input:focus-visible { outline: 3px solid #f5a623; outline-offset: 2px; }`}</style>
       <div className="hero-card">
         {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
         <h2>📷 Picture upload</h2>
@@ -330,8 +353,8 @@ export default function UploadFormPage({ slug, goBack, go }) {
       )}
 
       {viewIndex !== null && pics.length > 0 && (
-        <div ref={galleryRef} tabIndex={-1} style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', outline: 'none' }} onClick={closeGallery}>
-          <style>{`@keyframes pos-ticker-scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } } .pos-ticker { animation: pos-ticker-scroll 36s linear infinite; }`}</style>
+        <div ref={galleryRef} tabIndex={-1} className="gallery-remote" style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', outline: 'none' }} onClick={closeGallery}>
+          <style>{`@keyframes pos-ticker-scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } } .pos-ticker { animation: pos-ticker-scroll 36s linear infinite; } .gallery-remote button:focus { outline: 3px solid #f5a623; outline-offset: 3px; }`}</style>
           <img src={pics[viewIndex].url} alt={pics[viewIndex].name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onClick={e => { e.stopPropagation(); toggleControls() }} />
           {message.trim() && (
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: '#dc2626', color: '#fff', overflow: 'hidden', padding: '10px 0', zIndex: 2 }}>

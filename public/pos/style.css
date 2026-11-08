@@ -8,7 +8,11 @@ body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, san
 .brand img { width: 56px; height: 56px; object-fit: cover; border-radius: 12px; }
 .brand h1 { margin: 0; font-size: 28px; }
 .brand p { margin: 4px 0 0; color: #d7e0f5; font-size: 15px; }
-#tabs { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; max-width: 960px; margin: 14px auto 0; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 3px; width: fit-content; }
+#tabs { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; max-width: 960px; margin: 14px auto 0; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 3px; width: 100%; }
+/* Sell is the register — the tab that matters most — so it sits in the
+   middle of the menu bar: auto margins centre it, Shop stays left,
+   Receipts and Setup stay right. */
+#tabs button[data-view="sell"] { margin-left: auto; margin-right: auto; }
 #tabs button { border: 0; background: transparent; color: #d7e0f5; padding: 6px 13px; border-radius: 999px; cursor: pointer; font-size: 14px; font-weight: 600; }
 #tabs button.active { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.5); }
 .badge { display: inline-block; background: #fff; color: #1d4ed8; border-radius: 999px; padding: 0 7px; margin-left: 4px; font-weight: 700; font-size: 13px; }

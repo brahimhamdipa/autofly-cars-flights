@@ -1,14 +1,20 @@
 import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
-import { RestaurantsTopBar } from './RestaurantsMenu'
+import { usePosCart, POS_PLAN_PRICE } from '../lib/PosCartContext'
+import { PosTopBar } from './PosMenu'
 
 // Sales page for the point of sale (reached from More ▾ → Restaurants
 // → POS). One product only: a store's own register page with live
-// stock and receipts, for $20/month. No card payment is taken here —
+// stock and receipts, for $29/month. No card payment is taken here —
 // the request form emails the owner, who then creates the store's
-// link and login by hand. Nothing on this page promises instant
-// signup. Connecting carts to the bank comes later.
+// link and login by hand, and the Add to cart card puts a pos_order
+// row in front of the owner the same way (separate POS cart,
+// PosCartContext + pos_order table, same pattern as the restaurant
+// cart). Nothing on this page promises instant signup. Connecting
+// carts to the bank comes later.
 export default function PosPage({ go }) {
+  const { count, addPlan } = usePosCart()
+  const inCart = count > 0
   const [form, setForm] = useState({ name: '', store: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -35,10 +41,10 @@ export default function PosPage({ go }) {
 
   return (
     <div>
-      <RestaurantsTopBar go={go} />
+      <PosTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>🧾 Your store's point of sale</h2>
-        <p style={{ fontSize: 18, color: '#f5c542' }}>Your own register for $20/month. No apps, no hardware, no commission.</p>
+        <p style={{ fontSize: 18, color: '#f5c542' }}>Your own register for $29/month. No apps, no hardware, no commission.</p>
         <p>Ring up sales from any phone. Stock drops by itself, receipts are kept, and the till works on the phones you already have.</p>
       </div>
 
@@ -65,8 +71,20 @@ export default function PosPage({ go }) {
 
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
-        <p><b>$20/month.</b> That's it — your register, your stock, and your receipts. No setup fee, no commission on your sales. First month free, cancel anytime.</p>
+        <p><b>$29/month.</b> That's it — your register, your stock, and your receipts. No setup fee, no commission on your sales. First month free, cancel anytime.</p>
         <p className="hint">Send your request below and AutoFly will be in touch to set up your point of sale.</p>
+      </div>
+
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>Point of sale — ${POS_PLAN_PRICE}/month</h3>
+        {inCart ? (
+          <div>
+            <p>✓ In your cart.</p>
+            <button onClick={() => go && go('pos-cart')}>Go to My Cart</button>
+          </div>
+        ) : (
+          <button onClick={addPlan}>Add to cart — ${POS_PLAN_PRICE}/month</button>
+        )}
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>

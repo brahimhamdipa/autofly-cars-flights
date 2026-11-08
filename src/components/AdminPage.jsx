@@ -57,6 +57,26 @@ const MENUS = [
       { label: 'POS Passes', table: 'pos_stores' },
       { label: 'POS Approval', table: 'pos_approvals' },
       { label: 'POS Sales', table: 'pos_sales' },
+      { label: 'POS Orders', table: 'pos_orders' },
+    ] },
+    { label: 'Dealer', children: [
+      { label: 'Dealer Passes', table: 'dealer_shops' },
+      { label: 'Dealer Approval', table: 'dealer_approvals' },
+      { label: 'Dealer Test Drives', table: 'dealer_testdrives' },
+      { label: 'Dealer Trade-ins', table: 'dealer_tradeins' },
+      { label: 'Dealer Orders', table: 'dealer_orders' },
+    ] },
+    { label: 'Employee', children: [
+      { label: 'Employee Passes', table: 'employee_shops' },
+      { label: 'Employee Approval', table: 'employee_approvals' },
+      { label: 'Employee Records', table: 'employee_timelogs' },
+      { label: 'Employee Orders', table: 'employee_orders' },
+    ] },
+    { label: 'Bodyshop', children: [
+      { label: 'Bodyshop Passes', table: 'bodyshop_shops' },
+      { label: 'Bodyshop Approval', table: 'bodyshop_approvals' },
+      { label: 'Bodyshop Jobs', table: 'bodyshop_jobs' },
+      { label: 'Bodyshop Orders', table: 'bodyshop_orders' },
     ] },
     { label: 'Barbers', children: [
       { label: 'Barber Passes', table: 'barbershop_shops' },

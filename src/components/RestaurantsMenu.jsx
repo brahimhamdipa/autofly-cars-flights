@@ -3,10 +3,10 @@ import { useRestaurantCart } from '../lib/RestaurantCartContext'
 
 // Shared submenu for the Restaurants area — same look and behavior
 // as the Shopping / Cars / Flights / Barbers menus (white circular
-// button, plain list). Three links: My Cart (with the live
-// restaurant-cart count), Restaurants, then POS. Mirrors BarbersMenu
-// exactly, reading the separate restaurant cart instead of the
-// barber cart.
+// button, plain list). Six links: My Cart (with the live
+// restaurant-cart count), Restaurants, POS, Dealer, Employee, then
+// Bodyshop. Mirrors BarbersMenu exactly, reading the separate
+// restaurant cart instead of the barber cart.
 export default function RestaurantsMenu({ go }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -31,6 +31,9 @@ export default function RestaurantsMenu({ go }) {
           <button onClick={() => pick('restaurant-cart')}>My Cart {count > 0 && <span className="menu-count">{count}</span>}</button>
           <button onClick={() => pick('restaurants')}>Restaurants</button>
           <button onClick={() => pick('pos')}>POS</button>
+          <button onClick={() => pick('dealer')}>Dealer</button>
+          <button onClick={() => pick('employee')}>Employee</button>
+          <button onClick={() => pick('bodyshop')}>Bodyshop</button>
         </div>
       )}
     </div>

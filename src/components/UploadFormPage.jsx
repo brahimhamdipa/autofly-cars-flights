@@ -26,17 +26,26 @@ import { shrinkImage } from '../lib/storeUpload'
 //   fullscreen like the urgent messages on TV (big, red, impossible
 //   to miss). Empty message: nothing shows, just the pictures.
 // - TV remote: in the fullscreen, Left/Right flip pictures, Up/Down
-//   moves between the buttons (Prev / Next / Close / Want this for
-//   your business?), OK presses the highlighted button, Esc closes.
-//   Buttons and fields also show a thick gold outline when focused,
-//   so the remote's position is visible on a TV.
+//   moves between the buttons (menu / Prev / Next / One picture or
+//   Slideshow / Close / Want this for your business?), OK presses the
+//   highlighted button, Esc closes the open menu first, then the
+//   gallery. Buttons and fields also show a thick gold outline when
+//   focused, so the remote's position is visible on a TV.
+// - The controls hide on their own after a few seconds so the
+//   picture is clean. They come back on a tap or a key press — never
+//   on an automatic picture change.
 const MAX_PICS = 7
 
 // Demo TV gallery: the slug 'demo-tv-gallery' opens the same
 // fullscreen gallery with NO login (demo/demo), view-only, and the
-// gallery opens by itself as soon as the pictures load. ?pic=N shows
-// that one picture and holds it (no auto-advance); otherwise the
-// pictures advance every 10 seconds. The demo form row (f =
+// gallery opens by itself as soon as the pictures load. Two display
+// types on the same link: Slideshow plays the pictures one after the
+// other (every 10 seconds); One picture holds a single picture on
+// the TV — the visitor picks it with Prev/Next and the TV remembers
+// it, so seven TVs on the same link can each hold a different
+// picture. ?pic=N opens One picture on that picture. The demo
+// gallery also carries the Business Systems ☰ submenu (top left),
+// like the other Business Systems pages. The demo form row (f =
 // 'demo-tv-gallery', u/p 'demo') is seeded in the database — this
 // page only opens it, it never creates it.
 export default function UploadFormPage({ slug, goBack, go }) {
@@ -66,6 +75,19 @@ export default function UploadFormPage({ slug, goBack, go }) {
   const [status, setStatus] = useState('')
   const [viewIndex, setViewIndex] = useState(null)
   const [controlsVisible, setControlsVisible] = useState(true)
+  // Two display types, one link. 'slideshow' plays the pictures one
+  // after the other; 'single' holds one picture on this TV. Each TV
+  // remembers its own mode and picture in this browser, so seven TVs
+  // opened on the same link can each hold a different picture.
+  // ?pic=N opens single mode on that picture. The customer pays $2
+  // for both types together, not per type.
+  const modeKey = 'tv-gallery-mode-' + slug
+  const picKey = 'tv-gallery-pic-' + slug
+  const storedMode = (() => { try { return localStorage.getItem(modeKey) } catch { return null } })()
+  const [galleryMode, setGalleryMode] = useState(urlPic ? 'single' : (storedMode === 'single' || storedMode === 'slideshow' ? storedMode : 'slideshow'))
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuAddonsOpen, setMenuAddonsOpen] = useState(false)
+  const menuRef = useRef(null)
   const fileRef = useRef(null)
   const replaceRef = useRef(null)
   const galleryRef = useRef(null)
@@ -101,7 +123,6 @@ export default function UploadFormPage({ slug, goBack, go }) {
   }
   useEffect(() => {
     if (viewIndex === null) return
-    pokeControls()
     // Give the gallery itself the focus, so a TV remote's keys land
     // here instead of on whichever button was last touched — but
     // only when the remote is NOT already sitting on a control
@@ -111,8 +132,14 @@ export default function UploadFormPage({ slug, goBack, go }) {
     if (!(ae && ae.tagName === 'BUTTON' && galleryRef.current?.contains(ae))) {
       galleryRef.current?.focus()
     }
-    return () => { if (hideTimer.current) clearTimeout(hideTimer.current) }
-  }, [viewIndex])
+    // In single mode this TV holds its picture: remember it, so the
+    // TV comes back to the same picture after a reload or a power cut.
+    if (galleryMode === 'single') { try { localStorage.setItem(picKey, String(viewIndex)) } catch {} }
+    // NOTE: the controls are deliberately NOT shown here. They
+    // appear when the gallery opens and on any tap or key press —
+    // an automatic picture change must never bring them back, or
+    // they flash on the screen every 10 seconds.
+  }, [viewIndex, galleryMode, picKey])
   useEffect(() => {
     if (viewIndex === null) return
     const onKey = (e) => {
@@ -140,11 +167,11 @@ export default function UploadFormPage({ slug, goBack, go }) {
         if (document.activeElement?.tagName === 'BUTTON' && galleryRef.current?.contains(document.activeElement)) return
         e.preventDefault(); toggleControls()
       }
-      if (e.key === 'Escape') closeGallery()
+      if (e.key === 'Escape') { if (menuOpen) { setMenuOpen(false); return } closeGallery() }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [viewIndex, pics.length, controlsVisible])
+  }, [viewIndex, pics.length, controlsVisible, menuOpen])
 
   const closeGallery = () => {
     setViewIndex(null)
@@ -258,32 +285,62 @@ export default function UploadFormPage({ slug, goBack, go }) {
 
   const openGallery = (i) => {
     setViewIndex(i)
+    // The controls show when the gallery opens, then hide on their
+    // own after a few seconds.
+    pokeControls()
     // Fullscreen from the same tap (a user gesture), so the browser
     // allows it; if it refuses, the overlay below is fullscreen anyway.
     setTimeout(() => { galleryRef.current?.requestFullscreen?.().catch(() => {}) }, 0)
   }
 
+  // The picture the gallery opens on: ?pic=N wins, then (in single
+  // mode) the picture this TV held last time, otherwise the first one.
+  const openingPic = () => {
+    if (urlPic && urlPic <= pics.length) return urlPic - 1
+    if (galleryMode !== 'single') return 0
+    try { const n = Number(localStorage.getItem(picKey)); if (Number.isInteger(n) && n >= 0 && n < pics.length) return n } catch {}
+    return 0
+  }
+
+  // Switch display type. The choice is remembered in this browser,
+  // so a TV set to one picture stays on one picture.
+  const setMode = (m) => {
+    setGalleryMode(m)
+    try { localStorage.setItem(modeKey, m) } catch {}
+    if (m === 'single') { try { localStorage.setItem(picKey, String(viewIndex ?? 0)) } catch {} }
+    pokeControls()
+  }
+
+  // The gallery submenu closes when the visitor taps anywhere else.
+  useEffect(() => {
+    if (!menuOpen) return
+    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false) }
+    window.addEventListener('pointerdown', onDown)
+    return () => window.removeEventListener('pointerdown', onDown)
+  }, [menuOpen])
+
   // Demo mode: open the gallery by itself as soon as the pictures
-  // load — ?pic=N picks that picture, otherwise the first one.
+  // load — ?pic=N picks that picture, otherwise the first one, or
+  // (in single mode) the picture this TV held last time.
   // Only once per visit: closing the gallery stays closed until the
   // visitor taps "View the gallery" again.
   useEffect(() => {
     if (!demoMode || pics.length === 0 || viewIndex !== null || demoOpened.current) return
     demoOpened.current = true
-    openGallery(urlPic && urlPic <= pics.length ? urlPic - 1 : 0)
-  }, [demoMode, pics.length, viewIndex, urlPic])
+    openGallery(openingPic())
+  }, [demoMode, pics.length, viewIndex, urlPic, galleryMode])
 
-  // Demo mode: advance one picture every 10 seconds, unless ?pic=N
-  // pinned one picture (then it holds). The 10-second clock restarts
-  // on every picture change, manual or automatic.
+  // Demo mode, slideshow only: advance one picture every 10 seconds.
+  // Single mode holds its picture and never advances. The advance
+  // never shows the controls — they stay hidden until the visitor
+  // taps or presses a key, so the picture stays clean.
   useEffect(() => {
-    if (!demoMode || urlPic || viewIndex === null || pics.length < 2) return
+    if (!demoMode || galleryMode !== 'slideshow' || viewIndex === null || pics.length < 2) return
     const t = setInterval(() => {
       setViewIndex(v => (v === null ? v : (v + 1) % pics.length))
-      pokeControls()
     }, 10000)
     return () => clearInterval(t)
-  }, [demoMode, urlPic, viewIndex, pics.length])
+  }, [demoMode, galleryMode, viewIndex, pics.length])
 
   return (
     <div className="upload-form-page">
@@ -292,7 +349,7 @@ export default function UploadFormPage({ slug, goBack, go }) {
         {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
         <h2>📷 Picture upload</h2>
         {demoMode
-          ? <p>This is the demo TV gallery — pictures play fullscreen, one after the other.</p>
+          ? <p>This is the demo TV gallery — pictures play fullscreen, one after the other, or hold one picture per TV. Same link, both ways.</p>
           : folder
             ? <p>Upload pictures to your folder, or view them fullscreen.</p>
             : <p>Log in with the username and password AutoFly gave you for this form.</p>}
@@ -348,7 +405,7 @@ export default function UploadFormPage({ slug, goBack, go }) {
           {folder ? (
             <>
               <p>The demo gallery is playing fullscreen — close it any time with Esc, or tap below to open it again.</p>
-              <button type="button" onClick={() => openGallery(urlPic && urlPic <= pics.length ? urlPic - 1 : 0)} disabled={pics.length === 0}>View the gallery</button>
+              <button type="button" onClick={() => openGallery(openingPic())} disabled={pics.length === 0}>View the gallery</button>
               {pics.length === 0 && !loading && <p className="hint">No pictures in the demo gallery yet.</p>}
             </>
           ) : (
@@ -362,6 +419,31 @@ export default function UploadFormPage({ slug, goBack, go }) {
         <div ref={galleryRef} tabIndex={-1} className="gallery-remote" style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', outline: 'none' }} onClick={closeGallery}>
           <style>{`@keyframes pos-ticker-scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } } .pos-ticker { animation: pos-ticker-scroll 36s linear infinite; } .gallery-remote button:focus { outline: 3px solid #f5a623; outline-offset: 3px; }`}</style>
           <img src={pics[viewIndex].url} alt={pics[viewIndex].name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onClick={e => { e.stopPropagation(); toggleControls() }} />
+          {demoMode && (
+            <div ref={menuRef} style={{ position: 'absolute', top: 12, left: 12, zIndex: 5 }} onClick={e => e.stopPropagation()}>
+              <div className="car-submenu-wrap" style={{ marginBottom: 0 }}>
+                <button type="button" className="car-submenu-btn" aria-label="Business Systems menu" onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); pokeControls() }}>
+                  <span className="burger" aria-hidden="true"><span /><span /><span /></span>
+                </button>
+                {menuOpen && (
+                  <div className="car-submenu">
+                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('business-cart') }}>My Cart</button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('restaurants') }}>Restaurant</button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('pos') }}>POS</button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('barbers') }}>Barber</button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('dealer') }}>Dealer</button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('employee') }}>Employee</button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('bodyshop') }}>Bodyshop</button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('simple-barbershop') }}>Sample Website</button>
+                    <button type="button" onClick={e => { e.stopPropagation(); setMenuAddonsOpen(o => !o) }}>Add-ons {menuAddonsOpen ? '▾' : '▸'}</button>
+                    {menuAddonsOpen && (
+                      <a href="/demo-tv-gallery" style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', textDecoration: 'none', borderTop: '1px solid #f1f2f5' }}>TV Gallery</a>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
           {message.trim() && (
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: '#dc2626', color: '#fff', overflow: 'hidden', padding: '10px 0', zIndex: 2 }}>
               <span className="pos-ticker" style={{ display: 'inline-block', whiteSpace: 'nowrap', fontWeight: 800, fontSize: 22 }}>{message} &nbsp;•&nbsp; {message}</span>
@@ -371,8 +453,9 @@ export default function UploadFormPage({ slug, goBack, go }) {
             <span style={{ fontSize: 12, opacity: 0.7 }}>Tap the picture to hide these buttons</span>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12 }}>
               <button type="button" onClick={e => { e.stopPropagation(); setViewIndex((viewIndex - 1 + pics.length) % pics.length); pokeControls() }}>‹ Prev</button>
-              <span>{viewIndex + 1} of {pics.length}</span>
+              <span>{viewIndex + 1} of {pics.length} · {galleryMode === 'slideshow' ? 'Slideshow' : 'One picture'}</span>
               <button type="button" onClick={e => { e.stopPropagation(); setViewIndex((viewIndex + 1) % pics.length); pokeControls() }}>Next ›</button>
+              <button type="button" onClick={e => { e.stopPropagation(); setMode(galleryMode === 'slideshow' ? 'single' : 'slideshow') }}>{galleryMode === 'slideshow' ? '▣ One picture' : '▶ Slideshow'}</button>
               <button type="button" onClick={closeGallery}>Close</button>
               {demoMode && <button type="button" onClick={e => { e.stopPropagation(); if (go) go('tv-gallery') }}>Want this for your business?</button>}
             </div>

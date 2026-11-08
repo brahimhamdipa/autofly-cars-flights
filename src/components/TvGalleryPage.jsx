@@ -7,16 +7,20 @@ import DemoInterestPopup from './DemoInterestPopup'
 
 // Sales page for the TV gallery (reached from More ▾ → Business
 // Systems → Add-ons → TV Gallery). One product only: a fullscreen
-// page for a TV that shows the customer's own pictures, one after
-// the other, with a rolling message at the bottom. Up to 7 pictures
-// — one picture per TV, so seven TVs can each show a different
-// picture. No card payment is taken here — the request form emails
-// the owner, who then creates the customer's upload form and TV
-// link by hand, and the Add to cart card puts a tv_gallery_order
-// row in front of the owner the same way (shared Business cart,
-// BusinessCartContext + tv_gallery_order table, same pattern as the
-// other Business Systems pages). Nothing on this page promises
-// instant signup. Connecting carts to the bank comes later.
+// page for a TV that shows the customer's own pictures, with a
+// rolling message at the bottom. Two display types, one price
+// ($2/month for both): Slideshow plays the pictures one after the
+// other; One picture holds a single picture on a TV — the customer
+// opens the same link on each TV and picks which picture it shows,
+// and each TV remembers its picture. Up to 7 pictures — one picture
+// per TV, so seven TVs can each show a different picture. No card
+// payment is taken here — the request form emails the owner, who then
+// creates the customer's upload form and TV link by hand, and the Add
+// to cart card puts a tv_gallery_order row in front of the owner the
+// same way (shared Business cart, BusinessCartContext +
+// tv_gallery_order table, same pattern as the other Business Systems
+// pages). Nothing on this page promises instant signup. Connecting
+// carts to the bank comes later.
 export default function TvGalleryPage({ go }) {
   const { hasPlan, addPlan } = useBusinessCart()
   const inCart = hasPlan(TV_PLAN_KEY)
@@ -50,15 +54,16 @@ export default function TvGalleryPage({ go }) {
       <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>📺 Your pictures, on the big screen</h2>
-        <p style={{ fontSize: 18, color: '#f5c542' }}>Your own TV gallery for $2/month. One picture per TV, up to seven.</p>
-        <p>Turn any TV into your display — your pictures fullscreen, one after the other, with your message rolling across the bottom.</p>
+        <p style={{ fontSize: 18, color: '#f5c542' }}>Your own TV gallery for $2/month — slideshow and one-picture display both included. One picture per TV, up to seven.</p>
+        <p>Turn any TV into your display — your pictures fullscreen, with your message rolling across the bottom.</p>
       </div>
 
       <div className="hero-card">
         <h3>What you get</h3>
         <ul>
           <li><b>A fullscreen page for your TV</b> — your pictures fill the whole screen, with your message rolling across the bottom like the urgent messages on TV.</li>
-          <li><b>Up to 7 pictures</b> — one picture per TV, so seven TVs can each show a different picture. Open the same link on each TV and pick which picture it shows.</li>
+          <li><b>Two ways to show them, both included</b> — Slideshow plays your pictures one after the other. One picture holds a single picture on a TV — open the same link on each TV and pick which picture it shows, and each TV remembers its picture.</li>
+          <li><b>Up to 7 pictures</b> — one picture per TV, so seven TVs can each show a different picture.</li>
           <li><b>Change it anytime</b> — upload, replace, or delete pictures from your own upload page, and the TVs follow. No one has to touch the TV.</li>
           <li><b>Works in any TV browser</b> — no app to install, no stick to plug in. If the TV opens a website, it shows your gallery. Arrow keys on the remote move between pictures.</li>
           <li><b>Your own private link</b> — you'll get your own private link by email. Only people you share it with can open your gallery.</li>
@@ -70,13 +75,13 @@ export default function TvGalleryPage({ go }) {
         <ol className="steps">
           <li><b>Tell AutoFly you want it</b> — fill in the form below, or simply Add to cart.</li>
           <li><b>You get your link and login</b> — your own upload page, plus the TV link for your screens.</li>
-          <li><b>Upload up to 7 pictures, open the TV link on each TV, and it plays.</b></li>
+          <li><b>Upload up to 7 pictures, open the TV link on each TV, and pick slideshow or one picture per TV.</b></li>
         </ol>
       </div>
 
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
-        <p><b>$2/month.</b> That's it — your TV gallery, your pictures, and your message. No setup fee. First month free, cancel anytime.</p>
+        <p><b>$2/month.</b> That's it — your TV gallery, your pictures, and your message, with the slideshow and the one-picture display both included. No setup fee, no extra charge per TV or per display type. First month free, cancel anytime.</p>
         <p className="hint">Send your request below and AutoFly will be in touch to set up your TV gallery.</p>
       </div>
 

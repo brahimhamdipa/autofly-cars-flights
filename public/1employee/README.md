@@ -2,7 +2,7 @@
 
 An employee time page for AutoFly, built in the same pattern as the
 restaurant (dine), houses, barbershop, and doctor templates: one
-self-contained folder, live at `autofly.us.com/<folder>`.
+self-contained folder, live at `yently.com/<folder>`.
 
 ## Files
 
@@ -19,7 +19,7 @@ self-contained folder, live at `autofly.us.com/<folder>`.
 ## Copying it (making a new team page)
 
 Copy the whole folder under a new name (for example `employee2`), and
-`autofly.us.com/employee2` opens that copy. Nothing else needs changing
+`yently.com/employee2` opens that copy. Nothing else needs changing
 for the address to work — but the *business name shown* comes from that
 copy's `data.json`, so open the new page's Setup tab and change it there.
 

@@ -60,7 +60,7 @@ export default function DealerPage({ go }) {
           <li><b>Test drives booked online</b> — customers pick a car, a date and a time, and leave their name and phone. You see every booking in Bookings.</li>
           <li><b>Sell-your-car requests</b> — customers offer you their car, and you see the details in Bookings.</li>
           <li><b>A finance calculator</b> — customers estimate their monthly payment on any car, right on your page.</li>
-          <li><b>Two passwords, like the restaurant and POS pages</b> — your own login for Setup, and one shared employee password for Bookings.</li>
+          <li><b>Two passwords</b> — your own login for Setup, where you change your page, and one shared password you give your staff for Bookings.</li>
           <li><b>Your vehicles, your control</b> — add, edit, and delete vehicles yourself in Setup; they go live right away. Change the dealership details and send them for approval.</li>
           <li><b>No commission, ever</b> — you keep everything you sell. No hardware to buy, no app for customers to install.</li>
         </ul>

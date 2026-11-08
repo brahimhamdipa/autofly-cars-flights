@@ -60,7 +60,7 @@ export default function EmployeePage({ go }) {
           <li><b>Your employees list with jobs</b> — who works here, and what they work on.</li>
           <li><b>Time logging with a receipt for every log</b> — a code, name, date, clock in and out, and hours, for every log.</li>
           <li><b>Shared records the whole team sees</b> — every log in one place, no refresh.</li>
-          <li><b>Two passwords, like the restaurant, POS and dealer pages</b> — your own login for Setup, and one shared employee password for Log Time and Records.</li>
+          <li><b>Two passwords</b> — your own login for Setup, where you change your page, and one shared password you give your staff for Log Time and Records.</li>
           <li><b>Your team, your control</b> — add, edit and delete employees yourself in Setup; they go live right away. Change the business details and send them for approval.</li>
           <li><b>No commission, ever</b> — you keep everything you earn. No hardware to buy, no app for your employees to install.</li>
         </ul>

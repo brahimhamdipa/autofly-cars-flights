@@ -57,7 +57,7 @@ export default function PosPage({ go }) {
           <li><b>Your own register page</b> — your store's name, items, prices, and tax. You'll get your own private link by email.</li>
           <li><b>Stock that updates itself</b> — every sale lowers the stock on every phone at once. Out-of-stock items can't be rung up until you restock them.</li>
           <li><b>Receipts, kept</b> — every sale is saved with its reference, items, and totals. Void a sale and the stock goes back.</li>
-          <li><b>Two passwords, like the restaurant pages</b> — your own login for Setup, and one shared cashier password for the register and the receipts.</li>
+          <li><b>Two passwords</b> — your own login for Setup, where you change your page, and one shared password you give your cashiers for Sell and Receipts.</li>
           <li><b>Your items, your control</b> — add, edit, and delete items yourself in Setup; they go live right away. Change the store details and send them for approval.</li>
           <li><b>No commission, ever</b> — you keep everything you sell. No hardware to buy, no app for staff to install.</li>
         </ul>

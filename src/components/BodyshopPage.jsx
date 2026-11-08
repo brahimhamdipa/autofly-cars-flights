@@ -61,7 +61,7 @@ export default function BodyshopPage({ go }) {
           <li><b>Estimate → job in one tap</b> — accepting an estimate raises the job, with totals from parts + labour.</li>
           <li><b>Jobs with status and search</b> — follow every job from booked to done, and find any job in seconds.</li>
           <li><b>Customers and loan cars in one place</b> — every customer and every loan car, kept together with their jobs.</li>
-          <li><b>Two passwords, like the other pages</b> — your own login for Setup, and one shared employee password for the working tabs.</li>
+          <li><b>Two passwords</b> — your own login for Setup, where you change your page, and one shared password you give your staff for Jobs, Estimates, Customers and Loan Cars.</li>
           <li><b>Your shop, your control</b> — change the shop details in Setup and send them for approval.</li>
           <li><b>No commission, ever</b> — you keep everything you earn. No hardware to buy, no app for customers to install.</li>
         </ul>

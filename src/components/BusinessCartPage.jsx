@@ -55,7 +55,7 @@ export default function BusinessCartPage({ go }) {
       <BusinessTopBar go={go} />
       <div className="hero-card">
         <h2>🛒 My Cart</h2>
-        <p>Your Business Systems order. Place it below and AutoFly will be in touch to set up your pages.</p>
+        <p>Your Business Systems order. Place it below and Yently will be in touch to set up your pages.</p>
         <p className="hint">Bundle &amp; save: 2 systems 10% off, 3 systems 15% off, 4+ systems 20% off — applied automatically, no code needed.</p>
       </div>
 
@@ -76,7 +76,7 @@ export default function BusinessCartPage({ go }) {
           {orderBundle && orderBundle.rate > 0 && (
             <p><b>Monthly total after bundle discount: ${orderBundle.total.toFixed(2)}/month</b> — you're saving ${orderBundle.savings.toFixed(2)}/month.</p>
           )}
-          <p>AutoFly will be in touch to set up your pages.</p>
+          <p>Yently will be in touch to set up your pages.</p>
           <button onClick={() => go && go('restaurants')}>Back to Business Systems</button>
         </div>
       )}

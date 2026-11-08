@@ -41,7 +41,7 @@ export default function TvGalleryPage({ go }) {
         subject: `TV Gallery request — ${form.name}`,
         emailExtras: { business_name: form.business.trim() },
       })
-      setStatus('✓ Sent! Thanks — AutoFly will be in touch to set up your TV gallery.')
+      setStatus('✓ Sent! Thanks — Yently will be in touch to set up your TV gallery.')
       setForm({ name: '', business: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -73,7 +73,7 @@ export default function TvGalleryPage({ go }) {
       <div className="hero-card">
         <h3>How it works</h3>
         <ol className="steps">
-          <li><b>Tell AutoFly you want it</b> — fill in the form below, or simply Add to cart.</li>
+          <li><b>Tell Yently you want it</b> — fill in the form below, or simply Add to cart.</li>
           <li><b>You get your link and login</b> — your own upload page, plus the TV link for your screens.</li>
           <li><b>Upload up to 7 pictures, open the TV link on each TV, and pick slideshow or one picture per TV.</b></li>
         </ol>
@@ -82,7 +82,7 @@ export default function TvGalleryPage({ go }) {
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
         <p><b>$2/month.</b> That's it — your TV gallery, your pictures, and your message, with the slideshow and the one-picture display both included. No setup fee, no extra charge per TV or per display type. First month free, cancel anytime.</p>
-        <p className="hint">Send your request below and AutoFly will be in touch to set up your TV gallery.</p>
+        <p className="hint">Send your request below and Yently will be in touch to set up your TV gallery.</p>
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>

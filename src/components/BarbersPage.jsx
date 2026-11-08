@@ -33,7 +33,7 @@ export default function BarbersPage({ go }) {
         subject: `Barbershop booking request — ${form.name}`,
         emailExtras: { barbershop_name: form.shop.trim() },
       })
-      setStatus('✓ Sent! Thanks — AutoFly will be in touch to set up your booking page.')
+      setStatus('✓ Sent! Thanks — Yently will be in touch to set up your booking page.')
       setForm({ name: '', shop: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -57,7 +57,7 @@ export default function BarbersPage({ go }) {
           <li><b>Bookings from any phone</b> — customers pick a service, a date and a time, and book in under a minute. No login, no app.</li>
           <li><b>Serving Now, live and private</b> — a public queue page showing initials only (B.H., not full names), who is being served, the running time, and how many people are in line. No phone numbers, no emails, nothing private.</li>
           <li><b>Bookings with a Stopwatch</b> — your team sees every booking with full details, marks them done or cancels them, and runs a stopwatch on each cut that shows live on Serving Now.</li>
-          <li><b>Easy to change</b> — new service, new price, new hours? Change them in Setup and AutoFly approves them live. Nothing to install, nothing to maintain yourself.</li>
+          <li><b>Easy to change</b> — new service, new price, new hours? Change them in Setup and Yently approves them live. Nothing to install, nothing to maintain yourself.</li>
         </ul>
       </div>
 
@@ -65,7 +65,7 @@ export default function BarbersPage({ go }) {
         <h3>How it works</h3>
         <ul>
           <li><b>Step 1 — Send a request</b> below with your shop's name.</li>
-          <li><b>Step 2 — AutoFly sets you up</b> with your booking page and your logins: one for you (Setup), one shared password for your team (Bookings).</li>
+          <li><b>Step 2 — Yently sets you up</b> with your booking page and your logins: one for you (Setup), one shared password for your team (Bookings).</li>
           <li><b>Step 3 — Share your link.</b> Customers book, your team runs the queue, and Serving Now keeps everyone in the loop.</li>
         </ul>
       </div>
@@ -97,7 +97,7 @@ export default function BarbersPage({ go }) {
 
       <div className="hero-card">
         <h3>Request your booking page</h3>
-        <p>Send a request and AutoFly will be in touch to set up your shop.</p>
+        <p>Send a request and Yently will be in touch to set up your shop.</p>
         <form onSubmit={handleSubmit}>
           <label>Your name</label>
           <input required value={form.name} onChange={set('name')} />

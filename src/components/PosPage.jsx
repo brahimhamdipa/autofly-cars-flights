@@ -34,7 +34,7 @@ export default function PosPage({ go }) {
         subject: `POS request — ${form.name}`,
         emailExtras: { pos_store_name: form.store.trim() },
       })
-      setStatus('✓ Sent! Thanks — AutoFly will be in touch to set up your point of sale.')
+      setStatus('✓ Sent! Thanks — Yently will be in touch to set up your point of sale.')
       setForm({ name: '', store: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -66,7 +66,7 @@ export default function PosPage({ go }) {
       <div className="hero-card">
         <h3>How it works</h3>
         <ol className="steps">
-          <li><b>Tell AutoFly you want it</b> — fill in the form below.</li>
+          <li><b>Tell Yently you want it</b> — fill in the form below.</li>
           <li><b>You get your link and login</b> — your store's own username and password, plus the cashier password for your staff.</li>
           <li><b>Add your items in Setup, and start selling.</b></li>
         </ol>
@@ -75,7 +75,7 @@ export default function PosPage({ go }) {
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
         <p><b>$29/month.</b> That's it — your register, your stock, and your receipts. No setup fee, no commission on your sales. First month free, cancel anytime.</p>
-        <p className="hint">Send your request below and AutoFly will be in touch to set up your point of sale.</p>
+        <p className="hint">Send your request below and Yently will be in touch to set up your point of sale.</p>
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>

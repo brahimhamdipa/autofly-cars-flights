@@ -99,7 +99,7 @@ export default function EmployeeChatView({ creds, employee, goBack }) {
         <h2>💬 Employee chat</h2>
         <p>
           Conversations assigned to <b>{employee.firstName}{employee.lastName ? ` ${employee.lastName}` : ''}</b>
-          {employee.jobTitle ? ` (${employee.jobTitle})` : ''} — reply here; visitors see your replies as AutoFly.
+          {employee.jobTitle ? ` (${employee.jobTitle})` : ''} — reply here; visitors see your replies as Yently.
           A conversation stays here even after the visitor closes it.
           New chats appear in the list on their own — no need to reload the page.
         </p>

@@ -6,7 +6,7 @@ export default function ClothesPage() {
       <div className="hero-card">
         <span className="tag">Coming Soon</span>
         <h2>Clothes for the whole family</h2>
-        <p>We're getting ready to bring clothing to AutoFly — same simple way as everything else here: pick what you like, send one request, we handle the rest.</p>
+        <p>We're getting ready to bring clothing to Yently — same simple way as everything else here: pick what you like, send one request, we handle the rest.</p>
       </div>
       <div className="form-card wide">
         <h3>What's coming</h3>

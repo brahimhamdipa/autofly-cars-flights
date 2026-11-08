@@ -33,7 +33,7 @@ export default function SimpleBarbershopPage({ go }) {
         subject: `Sample website request — ${form.name}`,
         emailExtras: { website_name: form.shop.trim() },
       })
-      setStatus('✓ Sent! Thanks — AutoFly will be in touch to set up your sample website.')
+      setStatus('✓ Sent! Thanks — Yently will be in touch to set up your sample website.')
       setForm({ name: '', shop: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -55,14 +55,14 @@ export default function SimpleBarbershopPage({ go }) {
         <ul>
           <li><b>Your own website</b> — your name, logo and pictures at the top, your services or content and prices in the middle, your address and hours.</li>
           <li><b>An email on every inquiry</b> — every message lands in your inbox right away, with the customer's name, phone and what they asked about.</li>
-          <li><b>Easy to change</b> — new service, new price, new hours? Tell AutoFly and the page is updated. No software to install, nothing to maintain yourself.</li>
+          <li><b>Easy to change</b> — new service, new price, new hours? Tell Yently and the page is updated. No software to install, nothing to maintain yourself.</li>
         </ul>
       </div>
 
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
         <p><b>${SAMPLE_PLAN_PRICE}/month.</b> That's it — your sample website, for less than one haircut. No setup fee, no commission.</p>
-        <p className="hint">Place your order below and AutoFly will be in touch to build your page with your own logo, services, prices and pictures.</p>
+        <p className="hint">Place your order below and Yently will be in touch to build your page with your own logo, services, prices and pictures.</p>
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>
@@ -79,7 +79,7 @@ export default function SimpleBarbershopPage({ go }) {
 
       <div className="hero-card">
         <h3>Or send a request</h3>
-        <p>Prefer to talk first? Send a request and AutoFly will be in touch about your sample website.</p>
+        <p>Prefer to talk first? Send a request and Yently will be in touch about your sample website.</p>
         <form onSubmit={handleSubmit}>
           <label>Your name</label>
           <input required value={form.name} onChange={set('name')} />

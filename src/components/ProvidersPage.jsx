@@ -72,7 +72,7 @@ export default function ProvidersPage({ go, onShop, onView }) {
 
       <div className="hero-card">
         <h2>🏬 Our Physical Stores</h2>
-        <p>AutoFly stores around the world — visit one near you. Search by store name, country, city or zip code.</p>
+        <p>Yently stores around the world — visit one near you. Search by store name, country, city or zip code.</p>
         <div className="filters">
           <input placeholder="Search stores (e.g. Paris, Morocco, 10007)" value={query} onChange={e => setQuery(e.target.value)} />
         </div>

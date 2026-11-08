@@ -39,7 +39,7 @@ export default function LiveChatPage({ go }) {
         subject: `Live Chat request — ${form.name}`,
         emailExtras: { business_name: form.business.trim() },
       })
-      setStatus('✓ Sent! Thanks — AutoFly will be in touch to set up live chat for your website.')
+      setStatus('✓ Sent! Thanks — Yently will be in touch to set up live chat for your website.')
       setForm({ name: '', business: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -62,7 +62,7 @@ export default function LiveChatPage({ go }) {
           <li><b>A chat bubble on your own website</b> — visitors tap it and message you, without creating an account.</li>
           <li><b>Every message reaches you by email</b> — nothing to install, nothing to watch all day.</li>
           <li><b>Your business name on it</b> — the chat opens with your name and greeting, so visitors know they're talking to you.</li>
-          <li><b>Works on any website AutoFly builds for you</b> — restaurant, shop, barber, dealer, clinic, any of the Business Systems pages.</li>
+          <li><b>Works on any website Yently builds for you</b> — restaurant, shop, barber, dealer, clinic, any of the Business Systems pages.</li>
           <li><b>One chat per business</b> — the chat on your page talks only to you, never to another business.</li>
         </ul>
       </div>
@@ -70,8 +70,8 @@ export default function LiveChatPage({ go }) {
       <div className="hero-card">
         <h3>How it works</h3>
         <ol className="steps">
-          <li><b>Tell AutoFly you want it</b> — fill in the form below, or simply Add to cart.</li>
-          <li><b>AutoFly adds the chat bubble to your website</b> and sets up your owner login by hand.</li>
+          <li><b>Tell Yently you want it</b> — fill in the form below, or simply Add to cart.</li>
+          <li><b>Yently adds the chat bubble to your website</b> and sets up your owner login by hand.</li>
           <li><b>Visitors tap the bubble and message you</b> — every message reaches you by email.</li>
         </ol>
       </div>
@@ -79,7 +79,7 @@ export default function LiveChatPage({ go }) {
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
         <p><b>$3/month.</b> That's it — the chat bubble on your website, your business name on it, and every message to your email. No setup fee. First month free, cancel anytime.</p>
-        <p className="hint">Send your request below and AutoFly will be in touch to set up live chat for your website.</p>
+        <p className="hint">Send your request below and Yently will be in touch to set up live chat for your website.</p>
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>

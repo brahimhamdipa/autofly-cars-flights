@@ -133,13 +133,13 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
     if (error) {
       if (error.message.includes('Invalid form login')) {
         setAuthed(null)
-        setLoginError('This form is no longer available — please contact AutoFly.')
+        setLoginError('This form is no longer available — please contact Yently.')
       } else {
         setStatus('Error: ' + error.message)
       }
       return
     }
-    setStatus(`✓ Item sent for approval (id ${data.item_id}). It will appear on the store once AutoFly approves it. Submit another one below, or close this page when you are done.`)
+    setStatus(`✓ Item sent for approval (id ${data.item_id}). It will appear on the store once Yently approves it. Submit another one below, or close this page when you are done.`)
     setItem(blankItem())
     try {
       await supabase.functions.invoke('send-notification', {
@@ -212,14 +212,14 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
     if (error) {
       if (error.message.includes('Invalid form login')) {
         setAuthed(null)
-        setLoginError('This form is no longer available — please contact AutoFly.')
+        setLoginError('This form is no longer available — please contact Yently.')
       } else {
         setBatchStatus('Error: ' + error.message)
       }
       return
     }
     setBatchItems([])
-    setBatchStatus(`✓ Sent ${data.items} item${data.items === 1 ? '' : 's'} for approval (batch #${data.batch_id}). They will appear on the store once AutoFly approves them.`)
+    setBatchStatus(`✓ Sent ${data.items} item${data.items === 1 ? '' : 's'} for approval (batch #${data.batch_id}). They will appear on the store once Yently approves them.`)
     try {
       await supabase.functions.invoke('send-notification', {
         body: {
@@ -259,8 +259,8 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
         {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
         <h2>📝 Provider form</h2>
         {authed
-          ? <p>Add items for <b>{authed.providerName}</b> — each submit sends one item for approval; it appears on the store once AutoFly approves it.</p>
-          : <p>Log in with the username and password AutoFly gave you for this form.</p>}
+          ? <p>Add items for <b>{authed.providerName}</b> — each submit sends one item for approval; it appears on the store once Yently approves it.</p>
+          : <p>Log in with the username and password Yently gave you for this form.</p>}
       </div>
 
       {!authed && (

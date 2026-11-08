@@ -36,7 +36,7 @@ export default function DealerPage({ go }) {
         subject: `Dealer request — ${form.name}`,
         emailExtras: { dealer_name: form.dealership.trim() },
       })
-      setStatus('✓ Sent! Thanks — AutoFly will be in touch to set up your dealership page.')
+      setStatus('✓ Sent! Thanks — Yently will be in touch to set up your dealership page.')
       setForm({ name: '', dealership: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -69,7 +69,7 @@ export default function DealerPage({ go }) {
       <div className="hero-card">
         <h3>How it works</h3>
         <ol className="steps">
-          <li><b>Tell AutoFly you want it</b> — fill in the form below, or simply Add to cart.</li>
+          <li><b>Tell Yently you want it</b> — fill in the form below, or simply Add to cart.</li>
           <li><b>You get your link and login</b> — your dealership's own username and password, plus the employee password for your staff.</li>
           <li><b>Add your vehicles in Setup, and start selling.</b></li>
         </ol>
@@ -78,7 +78,7 @@ export default function DealerPage({ go }) {
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
         <p><b>$20/month.</b> That's it — your dealer page, your test drives, and your trade-ins. No setup fee, no commission on your sales. First month free, cancel anytime.</p>
-        <p className="hint">Send your request below and AutoFly will be in touch to set up your dealership.</p>
+        <p className="hint">Send your request below and Yently will be in touch to set up your dealership.</p>
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>

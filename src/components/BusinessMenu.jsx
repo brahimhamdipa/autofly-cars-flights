@@ -3,13 +3,14 @@ import { useBusinessCart } from '../lib/BusinessCartContext'
 
 // Shared submenu for ALL Business Systems pages — same look and
 // behavior as the Shopping / Cars / Flights menus (white circular
-// button, plain list). Nine links: My Cart (with the live
-// business-cart count), Restaurant, POS, Barber, Dealer, Employee,
-// Bodyshop, then Sample Website, and an Add-ons branch that opens
+// button, plain list). Ten links: My Cart (with the live
+// business-cart count), Business Systems (the hub page), Restaurant,
+// POS, Barber, Dealer, Employee, Bodyshop, then Sample Website, and
+// an Add-ons branch that opens
 // in place (like the Admin menu branches) with the TV Gallery and
 // Live Chat links. One cart and one submenu for the whole area,
 // because every page here sells the same kind of product: a website
-// page AutoFly builds for a business.
+// page Yently builds for a business.
 export default function BusinessMenu({ go }) {
   const [open, setOpen] = useState(false)
   const [addonsOpen, setAddonsOpen] = useState(false)
@@ -33,6 +34,7 @@ export default function BusinessMenu({ go }) {
       {open && (
         <div className="car-submenu">
           <button onClick={() => pick('business-cart')}>My Cart {count > 0 && <span className="menu-count">{count}</span>}</button>
+          <button onClick={() => pick('business-hub')}>Business Systems</button>
           <button onClick={() => pick('restaurants')}>Restaurant</button>
           <button onClick={() => pick('pos')}>POS</button>
           <button onClick={() => pick('barbers')}>Barber</button>

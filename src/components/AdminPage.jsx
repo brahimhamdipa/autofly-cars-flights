@@ -257,7 +257,7 @@ export default function AdminPage() {
     return (
       <div>
         <div className="hero-card">
-          <h2>🔐 AutoFly Admin</h2>
+          <h2>🔐 Yently Admin</h2>
           <p>This area is private. Log in with your admin email and password to manage products, stock, pictures, orders and reports.</p>
         </div>
         <form className="form-card wide" onSubmit={submitAuth}>

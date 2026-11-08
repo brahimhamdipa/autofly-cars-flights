@@ -36,7 +36,7 @@ export default function EmployeePage({ go }) {
         subject: `Employee request — ${form.name}`,
         emailExtras: { team_name: form.team.trim() },
       })
-      setStatus('✓ Sent! Thanks — AutoFly will be in touch to set up your employee time page.')
+      setStatus('✓ Sent! Thanks — Yently will be in touch to set up your employee time page.')
       setForm({ name: '', team: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -69,7 +69,7 @@ export default function EmployeePage({ go }) {
       <div className="hero-card">
         <h3>How it works</h3>
         <ol className="steps">
-          <li><b>Tell AutoFly you want it</b> — fill in the form below, or simply Add to cart.</li>
+          <li><b>Tell Yently you want it</b> — fill in the form below, or simply Add to cart.</li>
           <li><b>You get your link and login</b> — your team's own username and password, plus the employee password for your staff.</li>
           <li><b>Add your employees in Setup, and start logging time.</b></li>
         </ol>
@@ -78,7 +78,7 @@ export default function EmployeePage({ go }) {
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
         <p><b>$20/month.</b> That's it — your employee page, your time logs, and your records. No setup fee, no commission. First month free, cancel anytime.</p>
-        <p className="hint">Send your request below and AutoFly will be in touch to set up your employee time page.</p>
+        <p className="hint">Send your request below and Yently will be in touch to set up your employee time page.</p>
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>

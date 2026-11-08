@@ -125,7 +125,7 @@ export default function ChatWidget() {
       {open && (
         <div className="chat-panel">
           <div className="chat-head">
-            <b>💬 Chat with AutoFly</b>
+            <b>💬 Chat with Yently</b>
             <button type="button" className="modal-close" onClick={close} aria-label="Close chat">✕</button>
           </div>
 
@@ -148,7 +148,7 @@ export default function ChatWidget() {
           ) : (
             <>
               <div className="chat-messages">
-                <p className="hint">You're chatting with AutoFly.</p>
+                <p className="hint">You're chatting with Yently.</p>
                 {messages.map(m => (
                   <div key={m.id} className={`chat-msg ${m.sender === 'customer' ? 'mine' : 'theirs'}`}>
                     <span>{m.body}</span>

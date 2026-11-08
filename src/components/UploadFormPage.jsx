@@ -403,7 +403,7 @@ export default function UploadFormPage({ slug, goBack, go }) {
           ? <p>This is the demo TV gallery — pictures play fullscreen, one after the other, or hold one picture per TV. Same link, both ways.</p>
           : folder
             ? <p>Upload pictures to your folder, or view them fullscreen.</p>
-            : <p>Log in with the username and password AutoFly gave you for this form.</p>}
+            : <p>Log in with the username and password Yently gave you for this form.</p>}
       </div>
 
       {!folder && !demoMode && (

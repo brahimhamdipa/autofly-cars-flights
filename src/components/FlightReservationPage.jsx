@@ -17,7 +17,7 @@ function buildPdf(travelers, trip, message) {
 
   doc.setFontSize(18)
   doc.setFont('helvetica', 'bold')
-  doc.text('AutoFly — Traveler Information', left, y)
+  doc.text('Yently — Traveler Information', left, y)
   y += 8
   doc.setFontSize(11)
   doc.setFont('helvetica', 'normal')
@@ -113,7 +113,7 @@ export default function FlightReservationPage({ go }) {
 
   const handleDownload = () => {
     if (!valid()) return
-    buildPdf(travelers, tripData(), message).save('AutoFly-Traveler-Information.pdf')
+    buildPdf(travelers, tripData(), message).save('Yently-Traveler-Information.pdf')
     setStatus('✓ PDF downloaded.')
   }
 
@@ -134,7 +134,7 @@ export default function FlightReservationPage({ go }) {
             travelers: travelers.map(t => ({ first_name: t.first, last_name: t.last, date_of_birth: t.dob })),
             ...(message.trim() ? { message: message.trim() } : {}),
           },
-          attachment: { filename: 'AutoFly-Traveler-Information.pdf', content: base64 },
+          attachment: { filename: 'Yently-Traveler-Information.pdf', content: base64 },
         },
       })
       if (error) throw error

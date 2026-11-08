@@ -34,7 +34,7 @@ export default function RestaurantsPage({ go }) {
         subject: `Restaurant request — ${form.name}`,
         emailExtras: { restaurant_name: form.restaurant.trim() },
       })
-      setStatus('✓ Sent! Thanks — AutoFly will be in touch to set up your restaurant page.')
+      setStatus('✓ Sent! Thanks — Yently will be in touch to set up your restaurant page.')
       setForm({ name: '', restaurant: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -66,7 +66,7 @@ export default function RestaurantsPage({ go }) {
       <div className="hero-card">
         <h3>How it works</h3>
         <ol className="steps">
-          <li><b>Tell AutoFly you want it</b> — fill in the form below, or simply Add to cart.</li>
+          <li><b>Tell Yently you want it</b> — fill in the form below, or simply Add to cart.</li>
           <li><b>You get your link and login</b> — your restaurant's own username and password.</li>
           <li><b>Set up your menu, send it for approval, and start taking orders.</b></li>
         </ol>
@@ -75,7 +75,7 @@ export default function RestaurantsPage({ go }) {
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
         <p><b>$20/month.</b> That's it — your page, your live kitchen, and your menu changes. No setup fee, no commission on your orders. First month free, cancel anytime.</p>
-        <p className="hint">Send your request below and AutoFly will be in touch to set up your restaurant.</p>
+        <p className="hint">Send your request below and Yently will be in touch to set up your restaurant.</p>
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>

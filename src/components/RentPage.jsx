@@ -7,7 +7,7 @@ export default function RentPage({ go }) {
       <div className="hero-card">
         <span className="tag">Coming Soon</span>
         <h2>Rent a Car</h2>
-        <p>We're getting ready to offer car rentals — the same simple AutoFly way: pick your car and dates, send one request, we handle the rest.</p>
+        <p>We're getting ready to offer car rentals — the same simple Yently way: pick your car and dates, send one request, we handle the rest.</p>
       </div>
       <div className="form-card wide">
         <h3>What's coming</h3>

@@ -37,6 +37,7 @@ import TvGalleryPage from './components/TvGalleryPage'
 import LiveChatPage from './components/LiveChatPage'
 import LiveChatDemo from './components/LiveChatDemo'
 import BusinessCartPage from './components/BusinessCartPage'
+import BusinessSystemsPage from './components/BusinessSystemsPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
 
@@ -49,7 +50,7 @@ export default function App() {
     if (path === '/admin') return 'admin'
     if (path === '/demo-live-chat') return 'demo-live-chat'
     if (path !== '' && path !== '/') return 'provider-form'
-    return 'products'
+    return 'business-hub'
   })
   const [formSlug, setFormSlug] = useState(() => {
     const path = window.location.pathname.replace(/\/$/, '')
@@ -114,8 +115,9 @@ export default function App() {
   }, [])
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
-  const BUSINESS_TABS = ['restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'demo-live-chat', 'business-cart']
-  const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'demo-live-chat', 'business-cart'].includes(tab)
+  const BUSINESS_TABS = ['business-hub', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'demo-live-chat', 'business-cart']
+  const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes'].includes(tab)
+  const inBusiness = BUSINESS_TABS.includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -124,11 +126,12 @@ export default function App() {
       <header className="header">
         <div className="header-row">
         <div className="brand">
-          <img className="brand-logo" src={logoUrl} alt="AutoFly.us.com" />
-          <span className="tagline">Cars, Flights & More — All in One Place</span>
+          <img className="brand-logo" src={logoUrl} alt="Yently" />
+          <span className="tagline">Business Systems, Shop, Cars &amp; Flights — All in One Place</span>
         </div>
         <div className="header-right">
           <nav>
+            <button className={inBusiness ? 'active' : ''} onClick={() => go('business-hub')}>Business Systems</button>
             <button className={GROCERY_TABS.includes(tab) ? 'active' : ''} onClick={() => go('products')}>Shop</button>
             <button className={inCars ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
             <button className={inFlights ? 'active' : ''} onClick={() => go('flights')}>Flights</button>
@@ -136,27 +139,26 @@ export default function App() {
               <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
               {moreOpen && (
                 <span className="dropdown-menu">
-                  <a onClick={() => go('restaurants')}>Business Systems</a>
+                  <a onClick={() => go('business-hub')}>Business Systems</a>
                   <a onClick={() => go('services')}>Services</a>
                   <a onClick={() => go('about')}>About Us</a>
                 </span>
               )}
             </span>
           </nav>
-          <div className="lang-row" aria-label="Language and region">
-            <a className="lang active" href="https://autofly.us.com">US</a>
-            <span className="lang soon" title="Coming soon">FR</span>
-            <span className="lang soon" title="Coming soon">MA</span>
-            <span className="lang soon" title="Coming soon">DE</span>
-            <span className="lang soon" title="Coming soon">ES</span>
-            <span className="lang soon" title="Coming soon">MX</span>
-            <span className="lang soon" title="Coming soon">DO</span>
-            <span className="lang soon" title="Coming soon">BE</span>
-            <span className="lang soon" title="Coming soon">IT</span>
+          <div className="lang-row" aria-label="Language">
+            <a className="lang active" href="https://autofly.us.com">En</a>
+            <span className="lang soon" title="Coming soon">Fr</span>
+            <span className="lang soon" title="Coming soon">Ar</span>
+            <span className="lang soon" title="Coming soon">Es</span>
+            <span className="lang soon" title="Coming soon">De</span>
+            <span className="lang soon" title="Coming soon">It</span>
+            <span className="lang soon" title="Coming soon">Pt</span>
+            <span className="lang soon" title="Coming soon">Nl</span>
           </div>
         </div>
         </div>
-        <div className="announce-bar">AutoFly officially opens in 2027 — cars, flights, groceries &amp; services, all in one place</div>
+        <div className="announce-bar">Yently officially opens in 2027 — business systems, cars, flights, groceries &amp; services, all in one place</div>
       </header>
       <main className="main">
         {tab === 'cars' && <CarSection go={go} />}
@@ -191,6 +193,7 @@ export default function App() {
         )}
         {BUSINESS_TABS.includes(tab) && (
           <BusinessCartProvider>
+            {tab === 'business-hub' && <BusinessSystemsPage go={go} />}
             {tab === 'restaurants' && <RestaurantsPage go={go} />}
             {tab === 'pos' && <PosPage go={go} />}
             {tab === 'barbers' && <BarbersPage go={go} />}
@@ -208,7 +211,7 @@ export default function App() {
         {tab === 'services' && <ServicesPage go={go} />}
         {tab === 'services-home' && (
           <ServicesSoonPage go={go} title="Home Services" emoji="🏠" topic="Home Services"
-            intro="Help around your home is coming to AutoFly — cleaning, repairs, and everyday household services, booked in the same place as everything else."
+            intro="Help around your home is coming to Yently — cleaning, repairs, and everyday household services, booked in the same place as everything else."
             items={['Home cleaning & deep cleaning', 'Handyman & small repairs', 'Painting & decorating', 'Gardening & yard work', 'Moving & hauling help', 'Appliance installation & fixes']} />
         )}
         {tab === 'services-contact' && <ServicesContactPage go={go} />}
@@ -217,7 +220,7 @@ export default function App() {
         {tab === 'provider-form' && <ProviderFormPage slug={formSlug} goBack={goBack} onAuthedChange={setFormAuthed} go={go} />}
       </main>
       <footer className="footer">
-        <p>AutoFly.us.com — Cars, Flights & More — All in One Place</p>
+        <p>Yently — Business Systems, Shop, Cars &amp; Flights — All in One Place</p>
       </footer>
       {!(tab === 'provider-form' && formAuthed) && tab !== 'demo-live-chat' && <ChatWidget />}
     </div>

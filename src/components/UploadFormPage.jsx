@@ -27,7 +27,24 @@ import { shrinkImage } from '../lib/storeUpload'
 //   to miss). Empty message: nothing shows, just the pictures.
 const MAX_PICS = 7
 
-export default function UploadFormPage({ slug, goBack }) {
+// Demo TV gallery: the slug 'demo-tv-gallery' opens the same
+// fullscreen gallery with NO login (demo/demo), view-only, and the
+// gallery opens by itself as soon as the pictures load. ?pic=N shows
+// that one picture and holds it (no auto-advance); otherwise the
+// pictures advance every 10 seconds. The demo form row (f =
+// 'demo-tv-gallery', u/p 'demo') is seeded in the database — this
+// page only opens it, it never creates it.
+export default function UploadFormPage({ slug, goBack, go }) {
+  const demoMode = slug === 'demo-tv-gallery'
+  // ?pic=N from the address bar (1-based), read once. A TV shows one
+  // picture: the owner opens the same link on each TV with a
+  // different ?pic= number.
+  const urlPic = (() => {
+    try {
+      const n = Number(new URLSearchParams(window.location.search).get('pic'))
+      return Number.isInteger(n) && n >= 1 ? n : null
+    } catch { return null }
+  })()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [folder, setFolder] = useState(null)
@@ -48,6 +65,24 @@ export default function UploadFormPage({ slug, goBack }) {
   const replaceRef = useRef(null)
   const galleryRef = useRef(null)
   const hideTimer = useRef(null)
+  const demoOpened = useRef(false)
+
+  // Demo mode logs itself in with the demo credentials — no login
+  // form, no password typed. If the demo form row is missing the
+  // page says so instead of showing a login.
+  useEffect(() => {
+    if (!demoMode) return
+    let cancelled = false
+    ;(async () => {
+      const { data, error } = await supabase.rpc('upload_form_open', { p_f: slug, p_u: 'demo', p_p: 'demo' })
+      if (cancelled) return
+      if (error || !data) { setStatus('The demo gallery is not ready yet — please check back soon.'); return }
+      setFolder(data.folder)
+      setMessage(data.message || '')
+      setRemovedPics(data.removed || [])
+    })()
+    return () => { cancelled = true }
+  }, [demoMode, slug])
 
   // The gallery controls hide on their own after a few seconds so the
   // picture is clean; any tap on the picture brings them back.
@@ -200,17 +235,41 @@ export default function UploadFormPage({ slug, goBack }) {
     setTimeout(() => { galleryRef.current?.requestFullscreen?.().catch(() => {}) }, 0)
   }
 
+  // Demo mode: open the gallery by itself as soon as the pictures
+  // load — ?pic=N picks that picture, otherwise the first one.
+  // Only once per visit: closing the gallery stays closed until the
+  // visitor taps "View the gallery" again.
+  useEffect(() => {
+    if (!demoMode || pics.length === 0 || viewIndex !== null || demoOpened.current) return
+    demoOpened.current = true
+    openGallery(urlPic && urlPic <= pics.length ? urlPic - 1 : 0)
+  }, [demoMode, pics.length, viewIndex, urlPic])
+
+  // Demo mode: advance one picture every 10 seconds, unless ?pic=N
+  // pinned one picture (then it holds). The 10-second clock restarts
+  // on every picture change, manual or automatic.
+  useEffect(() => {
+    if (!demoMode || urlPic || viewIndex === null || pics.length < 2) return
+    const t = setInterval(() => {
+      setViewIndex(v => (v === null ? v : (v + 1) % pics.length))
+      pokeControls()
+    }, 10000)
+    return () => clearInterval(t)
+  }, [demoMode, urlPic, viewIndex, pics.length])
+
   return (
     <div>
       <div className="hero-card">
         {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
         <h2>📷 Picture upload</h2>
-        {folder
-          ? <p>Upload pictures to your folder, or view them fullscreen.</p>
-          : <p>Log in with the username and password AutoFly gave you for this form.</p>}
+        {demoMode
+          ? <p>This is the demo TV gallery — pictures play fullscreen, one after the other.</p>
+          : folder
+            ? <p>Upload pictures to your folder, or view them fullscreen.</p>
+            : <p>Log in with the username and password AutoFly gave you for this form.</p>}
       </div>
 
-      {!folder && (
+      {!folder && !demoMode && (
         <form onSubmit={login} className="form-card">
           <input required placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />
           <input required placeholder="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
@@ -219,7 +278,7 @@ export default function UploadFormPage({ slug, goBack }) {
         </form>
       )}
 
-      {folder && (
+      {folder && !demoMode && (
         <div className="form-card">
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button type="button" onClick={() => fileRef.current?.click()} disabled={!!uploading || pics.length >= MAX_PICS}>{uploading || 'Upload'}</button>
@@ -255,6 +314,21 @@ export default function UploadFormPage({ slug, goBack }) {
         </div>
       )}
 
+      {demoMode && viewIndex === null && (
+        <div className="form-card" style={{ textAlign: 'center' }}>
+          {folder ? (
+            <>
+              <p>The demo gallery is playing fullscreen — close it any time with Esc, or tap below to open it again.</p>
+              <button type="button" onClick={() => openGallery(urlPic && urlPic <= pics.length ? urlPic - 1 : 0)} disabled={pics.length === 0}>View the gallery</button>
+              {pics.length === 0 && !loading && <p className="hint">No pictures in the demo gallery yet.</p>}
+            </>
+          ) : (
+            <p className="hint">Opening the demo gallery...</p>
+          )}
+          {status && <p className="status">{status}</p>}
+        </div>
+      )}
+
       {viewIndex !== null && pics.length > 0 && (
         <div ref={galleryRef} tabIndex={-1} style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', outline: 'none' }} onClick={closeGallery}>
           <style>{`@keyframes pos-ticker-scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } } .pos-ticker { animation: pos-ticker-scroll 36s linear infinite; }`}</style>
@@ -271,6 +345,7 @@ export default function UploadFormPage({ slug, goBack }) {
               <span>{viewIndex + 1} of {pics.length}</span>
               <button type="button" onClick={e => { e.stopPropagation(); setViewIndex((viewIndex + 1) % pics.length); pokeControls() }}>Next ›</button>
               <button type="button" onClick={closeGallery}>Close</button>
+              {demoMode && <button type="button" onClick={e => { e.stopPropagation(); if (go) go('tv-gallery') }}>Want this for your business?</button>}
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, EMPLOYEE_PLAN_KEY, EMPLOYEE_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
 import DemoInterestPopup from './DemoInterestPopup'
+import FloatingAddToCart from './FloatingAddToCart'
 
 // Sales page for the employee time page (reached from More ▾ →
 // Restaurants → Employee, and from the Employee submenu). One
@@ -55,7 +56,7 @@ export default function EmployeePage({ go }) {
       <div className="hero-card">
         <h3>What your team gets</h3>
         <ul>
-          <li><b>Your own employee page</b> — your team's name, employees, jobs and hours at a link like autofly.us.com/employee?e=your-team.</li>
+          <li><b>Your own employee page</b> — your team's name, employees, jobs and hours. You'll get your own private link by email.</li>
           <li><b>Your employees list with jobs</b> — who works here, and what they work on.</li>
           <li><b>Time logging with a receipt for every log</b> — a code, name, date, clock in and out, and hours, for every log.</li>
           <li><b>Shared records the whole team sees</b> — every log in one place, no refresh.</li>
@@ -114,6 +115,7 @@ export default function EmployeePage({ go }) {
         <button type="submit" disabled={busy}>Send request</button>
         {status && <p className="status">{status}</p>}
       </form>
+      <FloatingAddToCart planKey={EMPLOYEE_PLAN_KEY} name="Employee time page" price={EMPLOYEE_PLAN_PRICE} go={go} />
     </div>
   )
 }

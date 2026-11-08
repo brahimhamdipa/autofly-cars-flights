@@ -3,6 +3,7 @@ import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, BODYSHOP_PLAN_KEY, BODYSHOP_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
 import DemoInterestPopup from './DemoInterestPopup'
+import FloatingAddToCart from './FloatingAddToCart'
 
 // Sales page for the bodyshop management page (reached from More ▾
 // → Restaurants → Bodyshop, and from the Bodyshop submenu). One
@@ -55,7 +56,7 @@ export default function BodyshopPage({ go }) {
       <div className="hero-card">
         <h3>What your shop gets</h3>
         <ul>
-          <li><b>Your own bodyshop page</b> — your shop's name, hours and address at a link like autofly.us.com/bodyshop?b=your-shop.</li>
+          <li><b>Your own bodyshop page</b> — your shop's name, hours and address. You'll get your own private link by email.</li>
           <li><b>Estimates requested online</b> — customers describe the damage, and you see every estimate in Estimates.</li>
           <li><b>Estimate → job in one tap</b> — accepting an estimate raises the job, with totals from parts + labour.</li>
           <li><b>Jobs with status and search</b> — follow every job from booked to done, and find any job in seconds.</li>
@@ -115,6 +116,7 @@ export default function BodyshopPage({ go }) {
         <button type="submit" disabled={busy}>Send request</button>
         {status && <p className="status">{status}</p>}
       </form>
+      <FloatingAddToCart planKey={BODYSHOP_PLAN_KEY} name="Bodyshop management" price={BODYSHOP_PLAN_PRICE} go={go} />
     </div>
   )
 }

@@ -78,6 +78,9 @@ const MENUS = [
       { label: 'Bodyshop Jobs', table: 'bodyshop_jobs' },
       { label: 'Bodyshop Orders', table: 'bodyshop_orders' },
     ] },
+    { label: 'Add-ons', children: [
+      { label: 'TV Gallery Orders', table: 'tv_gallery_orders' },
+    ] },
     { label: 'Barbers', children: [
       { label: 'Barber Passes', table: 'barbershop_shops' },
       { label: 'Barber Bookings', table: 'barbershop_bookings' },

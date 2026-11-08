@@ -3,6 +3,7 @@ import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, DEALER_PLAN_KEY, DEALER_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
 import DemoInterestPopup from './DemoInterestPopup'
+import FloatingAddToCart from './FloatingAddToCart'
 
 // Sales page for the dealer website (reached from More ▾ → Restaurants
 // → Dealer, and from the Dealer submenu). One product only: a car
@@ -55,7 +56,7 @@ export default function DealerPage({ go }) {
       <div className="hero-card">
         <h3>What your dealership gets</h3>
         <ul>
-          <li><b>Your own dealer page</b> — your dealership's name, vehicles, prices, hours and address at a link like autofly.us.com/dealer?d=your-dealership.</li>
+          <li><b>Your own dealer page</b> — your dealership's name, vehicles, prices, hours and address. You'll get your own private link by email.</li>
           <li><b>Test drives booked online</b> — customers pick a car, a date and a time, and leave their name and phone. You see every booking in Bookings.</li>
           <li><b>Sell-your-car requests</b> — customers offer you their car, and you see the details in Bookings.</li>
           <li><b>A finance calculator</b> — customers estimate their monthly payment on any car, right on your page.</li>
@@ -114,6 +115,7 @@ export default function DealerPage({ go }) {
         <button type="submit" disabled={busy}>Send request</button>
         {status && <p className="status">{status}</p>}
       </form>
+      <FloatingAddToCart planKey={DEALER_PLAN_KEY} name="Dealer website" price={DEALER_PLAN_PRICE} go={go} />
     </div>
   )
 }

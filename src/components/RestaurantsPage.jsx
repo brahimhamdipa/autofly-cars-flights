@@ -3,6 +3,7 @@ import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, RESTAURANT_PLAN_KEY, RESTAURANT_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
 import DemoInterestPopup from './DemoInterestPopup'
+import FloatingAddToCart from './FloatingAddToCart'
 
 // Sales page for restaurant ordering (reached from More ▾ → Restaurants).
 // One product only: a restaurant's own ordering page with a live
@@ -53,7 +54,7 @@ export default function RestaurantsPage({ go }) {
       <div className="hero-card">
         <h3>What your restaurant gets</h3>
         <ul>
-          <li><b>Your own page</b> — your restaurant's name, menu, prices, hours and address at a link like autofly.us.com/diner?r=your-restaurant.</li>
+          <li><b>Your own page</b> — your restaurant's name, menu, prices, hours and address. You'll get your own private link by email.</li>
           <li><b>A live kitchen screen</b> — orders from your staff's phones appear in the kitchen by themselves, no refresh. Tick dishes as they're cooked, fulfil orders when they're done.</li>
           <li><b>Two passwords</b> — your own login for Setup, and one shared employee password for ordering, the kitchen, and receipts. Guests see the menu; only your staff can order.</li>
           <li><b>Your menu, your control</b> — change dishes and prices yourself, send the new menu for approval, and it's live right away.</li>
@@ -111,6 +112,7 @@ export default function RestaurantsPage({ go }) {
         <button type="submit" disabled={busy}>Send request</button>
         {status && <p className="status">{status}</p>}
       </form>
+      <FloatingAddToCart planKey={RESTAURANT_PLAN_KEY} name="Restaurant ordering page" price={RESTAURANT_PLAN_PRICE} go={go} />
     </div>
   )
 }

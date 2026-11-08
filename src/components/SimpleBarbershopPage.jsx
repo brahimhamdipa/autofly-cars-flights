@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useBusinessCart, SAMPLE_PLAN_KEY, SAMPLE_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
+import FloatingAddToCart from './FloatingAddToCart'
 import { submitAndNotify } from '../lib/notify'
 
 // Sample Websites page (reached from the Business Systems submenu,
@@ -93,6 +94,7 @@ export default function SimpleBarbershopPage({ go }) {
           <button type="submit" disabled={busy}>Send request</button>
           {status && <p className="status">{status}</p>}
         </form>
+      <FloatingAddToCart planKey={SAMPLE_PLAN_KEY} name="Sample website" price={SAMPLE_PLAN_PRICE} go={go} />
       </div>
     </div>
   )

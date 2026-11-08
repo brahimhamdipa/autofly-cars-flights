@@ -3,14 +3,15 @@ import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, BARBERSHOP_PLAN_KEY, BARBERSHOP_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
 import DemoInterestPopup from './DemoInterestPopup'
+import FloatingAddToCart from './FloatingAddToCart'
 
 // Advertising page for the live barbershop booking system (reached
 // from More ▾ → Business Systems → Barber). One system: a shop's own
-// booking page at barbers?s=<slug> — public Book, live Serving Now
+// booking page — public Book, live Serving Now
 // with initials only, employee Bookings with a Stopwatch, owner Setup
 // with draft approval. The $15/month plan is in the shared Business
 // Systems cart (add to cart below, or send a request), and the demo
-// barbershop card opens the live demo at /barbers?s=demo-barber.
+// barbershop card opens the demo-interest popup.
 // Nothing on this page promises text messages.
 export default function BarbersPage({ go }) {
   const { hasPlan, addPlan } = useBusinessCart()
@@ -71,7 +72,7 @@ export default function BarbersPage({ go }) {
 
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
-        <p><b>$15/month.</b> That's it — your booking page, live queue, and stopwatch. No setup fee, no commission on your bookings. First month free, collected manually for now.</p>
+        <p><b>$15/month.</b> That's it — your booking page, live queue, and stopwatch. No setup fee, no commission on your bookings. First month free, cancel anytime.</p>
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>
@@ -111,6 +112,7 @@ export default function BarbersPage({ go }) {
           <button type="submit" disabled={busy}>Send request</button>
           {status && <p className="status">{status}</p>}
         </form>
+      <FloatingAddToCart planKey={BARBERSHOP_PLAN_KEY} name="Barbershop booking page" price={BARBERSHOP_PLAN_PRICE} go={go} />
       </div>
     </div>
   )

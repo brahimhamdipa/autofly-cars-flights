@@ -20,6 +20,7 @@ const PLAN_HINTS = {
   'e:website': 'Your own time page + records, for your team.',
   'bs:website': 'Your own bodyshop page + estimates + jobs, for your shop.',
   'b:website': 'Your own sample website, for your business.',
+  'tv:website': 'Your own TV gallery page + up to 7 pictures, for your screens.',
 }
 
 export default function BusinessCartPage({ go }) {

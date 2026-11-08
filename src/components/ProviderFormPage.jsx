@@ -30,7 +30,7 @@ const blankItem = () => ({
 
 })
 
-export default function ProviderFormPage({ slug, goBack, onAuthedChange }) {
+export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
 
   const [categories, setCategories] = useState([])
   const [subcats, setSubcats] = useState([])
@@ -248,7 +248,7 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange }) {
     return <BarberTemplatePage domain={barberDomain} goBack={goBack} />
   }
   if (uploadForm) {
-    return <UploadFormPage slug={slug} goBack={goBack} />
+    return <UploadFormPage slug={slug} goBack={goBack} go={go} />
   }
   if (authed?.kind === 'employee') {
     return <EmployeeChatView creds={authed.creds} employee={authed.employee} goBack={goBack} />

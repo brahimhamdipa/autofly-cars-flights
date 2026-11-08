@@ -3,6 +3,7 @@ import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, POS_PLAN_KEY, POS_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
 import DemoInterestPopup from './DemoInterestPopup'
+import FloatingAddToCart from './FloatingAddToCart'
 
 // Sales page for the point of sale (reached from More ▾ → Restaurants
 // → POS). One product only: a store's own register page with live
@@ -53,7 +54,7 @@ export default function PosPage({ go }) {
       <div className="hero-card">
         <h3>What your store gets</h3>
         <ul>
-          <li><b>Your own register page</b> — your store's name, items, prices, and tax at a link like autofly.us.com/pos?s=your-store.</li>
+          <li><b>Your own register page</b> — your store's name, items, prices, and tax. You'll get your own private link by email.</li>
           <li><b>Stock that updates itself</b> — every sale lowers the stock on every phone at once. Out-of-stock items can't be rung up until you restock them.</li>
           <li><b>Receipts, kept</b> — every sale is saved with its reference, items, and totals. Void a sale and the stock goes back.</li>
           <li><b>Two passwords, like the restaurant pages</b> — your own login for Setup, and one shared cashier password for the register and the receipts.</li>
@@ -111,6 +112,7 @@ export default function PosPage({ go }) {
         <button type="submit" disabled={busy}>Send request</button>
         {status && <p className="status">{status}</p>}
       </form>
+      <FloatingAddToCart planKey={POS_PLAN_KEY} name="Point of sale page" price={POS_PLAN_PRICE} go={go} />
     </div>
   )
 }

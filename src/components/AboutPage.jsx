@@ -10,7 +10,7 @@ export default function AboutPage() {
         <p><b>Cars.</b> Browse cars for sale near you, each with real photos, mileage, and price. Found one you like? Tap "I'm interested" and we'll get right back to you. Selling? Send us your car and get an instant offer.</p>
         <p><b>Flights.</b> Tell us where you're going and who's traveling — adults, children, everyone's ages — and our US-based travel experts reply with options within 24 hours. No endless searching, no confusing fare pages.</p>
         <p><b>Shopping.</b> Browse products from local stores — groceries and more — with delivery or pickup in covered areas. Same simple idea: one place, everything you need.</p>
-        <p><b>Business Systems.</b> The tools a small business runs on: a restaurant ordering page, a point-of-sale register, a dealer website, an employee time page, or bodyshop management. We build it, host it, and keep it running — you just use it. See a live example first under Sample Websites: a barbershop booking page with a live queue and a stopwatch for every cut.</p>
+        <p><b>Business Systems.</b> The tools a small business runs on: a restaurant ordering page, a point-of-sale register, a dealer website, an employee time page, or bodyshop management. We build it, host it, and keep it running — you just use it. See a live example first under Sample Website: a barbershop booking page with a live queue and a stopwatch for every cut.</p>
         <p><b>Services.</b> Need a website or a system of your own? We build websites and systems, and help with home and business services too.</p>
         <h3>How it works</h3>
         <p>1. Pick what you need — a car, a flight, something from a store, or a system for your business.<br />

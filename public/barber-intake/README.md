@@ -10,7 +10,7 @@ builds the whole shop in one transaction.
    username, and password, and give those three to the barber.
    Passwords are stored readable, like employee passes and provider
    forms — throwaway passwords only, never the admin password.
-2. Barber opens `autofly.us.com/barber-intake` and logs in with them.
+2. Barber opens `yently.com/barber-intake` and logs in with them.
    Credentials live in memory only and are never stored in the
    browser, so a reload asks for login again.
 3. Barber fills the form (shop, location, hours Monday–Sunday +
@@ -24,7 +24,7 @@ builds the whole shop in one transaction.
    barber_location, open_time, one barber_style row per service,
    website_domain (slug = page word), website_header, website_body,
    website_footer. If any piece fails, nothing is created.
-5. The barber's page is then live at `autofly.us.com/<page word>`.
+5. The barber's page is then live at `yently.com/<page word>`.
 
 ## Notes
 

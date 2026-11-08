@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
-import { useEmployeeCart, EMPLOYEE_PLAN_PRICE } from '../lib/EmployeeCartContext'
-import { EmployeeTopBar } from './EmployeeMenu'
+import { useBusinessCart, EMPLOYEE_PLAN_KEY, EMPLOYEE_PLAN_PRICE } from '../lib/BusinessCartContext'
+import { BusinessTopBar } from './BusinessMenu'
 
 // Sales page for the employee time page (reached from More ▾ →
 // Restaurants → Employee, and from the Employee submenu). One
@@ -15,8 +15,8 @@ import { EmployeeTopBar } from './EmployeeMenu'
 // mirroring the POS, Restaurants and Dealer pages — NOT confirmed by
 // the owner, changeable on his word.
 export default function EmployeePage({ go }) {
-  const { count, addPlan } = useEmployeeCart()
-  const inCart = count > 0
+  const { hasPlan, addPlan } = useBusinessCart()
+  const inCart = hasPlan(EMPLOYEE_PLAN_KEY)
   const [form, setForm] = useState({ name: '', team: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -43,7 +43,7 @@ export default function EmployeePage({ go }) {
 
   return (
     <div>
-      <EmployeeTopBar go={go} />
+      <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>⏰ Your team, clocked in online</h2>
         <p style={{ fontSize: 18, color: '#f5c542' }}>Your own employee time page for $20/month. No apps, no hardware, no commission.</p>
@@ -83,10 +83,10 @@ export default function EmployeePage({ go }) {
         {inCart ? (
           <div>
             <p>✓ In your cart.</p>
-            <button onClick={() => go && go('employee-cart')}>Go to My Cart</button>
+            <button onClick={() => go && go('business-cart')}>Go to My Cart</button>
           </div>
         ) : (
-          <button onClick={addPlan}>Add to cart — ${EMPLOYEE_PLAN_PRICE}/month</button>
+          <button onClick={() => addPlan(EMPLOYEE_PLAN_KEY)}>Add to cart — ${EMPLOYEE_PLAN_PRICE}/month</button>
         )}
       </div>
 

@@ -1,15 +1,19 @@
 import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
-import BarbersMenu from './BarbersMenu'
+import { useBusinessCart, BARBERSHOP_PLAN_KEY, BARBERSHOP_PLAN_PRICE } from '../lib/BusinessCartContext'
+import { BusinessTopBar } from './BusinessMenu'
 
 // Advertising page for the live barbershop booking system (reached
-// from More ▾ → Barbers). One system: a shop's own booking page at
-// barbers?s=<slug> — public Book, live Serving Now with initials
-// only, employee Bookings with a Stopwatch, owner Setup with draft
-// approval. No price on this page yet and no cart here: requests
-// come in through the form below and the owner sets each shop up
-// by hand. Nothing on this page promises text messages.
+// from More ▾ → Business Systems → Barber). One system: a shop's own
+// booking page at barbers?s=<slug> — public Book, live Serving Now
+// with initials only, employee Bookings with a Stopwatch, owner Setup
+// with draft approval. The $15/month plan is in the shared Business
+// Systems cart (add to cart below, or send a request), and the demo
+// barbershop card opens the live demo at /barbers?s=demo-barber.
+// Nothing on this page promises text messages.
 export default function BarbersPage({ go }) {
+  const { hasPlan, addPlan } = useBusinessCart()
+  const inCart = hasPlan(BARBERSHOP_PLAN_KEY)
   const [form, setForm] = useState({ name: '', shop: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -36,7 +40,7 @@ export default function BarbersPage({ go }) {
 
   return (
     <div>
-      <div className="g-topbar"><BarbersMenu go={go} /></div>
+      <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>✂️ Your barbershop, taking bookings online</h2>
         <p style={{ fontSize: 18, color: '#f5c542' }}>Your booking page for $15/month. First month free. Live bookings, a live queue, and a stopwatch for every cut. No apps, no hardware.</p>
@@ -66,6 +70,24 @@ export default function BarbersPage({ go }) {
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
         <p><b>$15/month.</b> That's it — your booking page, live queue, and stopwatch. No setup fee, no commission on your bookings. First month free, collected manually for now.</p>
+      </div>
+
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>Barbershop booking — ${BARBERSHOP_PLAN_PRICE}/month</h3>
+        {inCart ? (
+          <div>
+            <p>✓ In your cart.</p>
+            <button onClick={() => go && go('business-cart')}>Go to My Cart</button>
+          </div>
+        ) : (
+          <button onClick={() => addPlan(BARBERSHOP_PLAN_KEY)}>Add to cart — ${BARBERSHOP_PLAN_PRICE}/month</button>
+        )}
+      </div>
+
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>Try the demo barbershop</h3>
+        <p>See the booking page working before you ask for one — the demo barbershop is live, with the employee password <b>demo</b>.</p>
+        <a href="/barbers?s=demo-barber" target="_blank" rel="noreferrer"><button type="button">Open the demo barbershop</button></a>
       </div>
 
       <div className="hero-card">

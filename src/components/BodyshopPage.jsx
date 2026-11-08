@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
-import { useBodyshopCart, BODYSHOP_PLAN_PRICE } from '../lib/BodyshopCartContext'
-import { BodyshopTopBar } from './BodyshopMenu'
+import { useBusinessCart, BODYSHOP_PLAN_KEY, BODYSHOP_PLAN_PRICE } from '../lib/BusinessCartContext'
+import { BusinessTopBar } from './BusinessMenu'
 
 // Sales page for the bodyshop management page (reached from More ▾
 // → Restaurants → Bodyshop, and from the Bodyshop submenu). One
@@ -15,8 +15,8 @@ import { BodyshopTopBar } from './BodyshopMenu'
 // mirroring the POS, Restaurants and Dealer pages — NOT confirmed by
 // the owner, changeable on his word.
 export default function BodyshopPage({ go }) {
-  const { count, addPlan } = useBodyshopCart()
-  const inCart = count > 0
+  const { hasPlan, addPlan } = useBusinessCart()
+  const inCart = hasPlan(BODYSHOP_PLAN_KEY)
   const [form, setForm] = useState({ name: '', shop: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -43,7 +43,7 @@ export default function BodyshopPage({ go }) {
 
   return (
     <div>
-      <BodyshopTopBar go={go} />
+      <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>🔧 Your bodyshop, organised online</h2>
         <p style={{ fontSize: 18, color: '#f5c542' }}>Your own bodyshop page for $20/month. No apps, no hardware, no commission.</p>
@@ -84,10 +84,10 @@ export default function BodyshopPage({ go }) {
         {inCart ? (
           <div>
             <p>✓ In your cart.</p>
-            <button onClick={() => go && go('bodyshop-cart')}>Go to My Cart</button>
+            <button onClick={() => go && go('business-cart')}>Go to My Cart</button>
           </div>
         ) : (
-          <button onClick={addPlan}>Add to cart — ${BODYSHOP_PLAN_PRICE}/month</button>
+          <button onClick={() => addPlan(BODYSHOP_PLAN_KEY)}>Add to cart — ${BODYSHOP_PLAN_PRICE}/month</button>
         )}
       </div>
 

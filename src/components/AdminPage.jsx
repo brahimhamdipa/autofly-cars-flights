@@ -81,6 +81,7 @@ const MENUS = [
     { label: 'Barbers', children: [
       { label: 'Barber Passes', table: 'barbershop_shops' },
       { label: 'Barber Bookings', table: 'barbershop_bookings' },
+      { label: 'Barbershop Orders', table: 'barbershop_orders' },
     ] },
     { label: 'Websites', children: [
       { label: 'Website PrePasses -Domain', table: 'website_domains' },

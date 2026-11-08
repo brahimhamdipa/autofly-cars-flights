@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
-import { useRestaurantCart, RESTAURANT_PLAN_PRICE } from '../lib/RestaurantCartContext'
-import { RestaurantsTopBar } from './RestaurantsMenu'
+import { useBusinessCart, RESTAURANT_PLAN_KEY, RESTAURANT_PLAN_PRICE } from '../lib/BusinessCartContext'
+import { BusinessTopBar } from './BusinessMenu'
 
 // Sales page for restaurant ordering (reached from More ▾ → Restaurants).
 // One product only: a restaurant's own ordering page with a live
@@ -13,8 +13,8 @@ import { RestaurantsTopBar } from './RestaurantsMenu'
 // a second way in — it emails the owner the same way the cart order
 // does. Connecting carts to the bank comes later.
 export default function RestaurantsPage({ go }) {
-  const { count, addPlan } = useRestaurantCart()
-  const inCart = count > 0
+  const { hasPlan, addPlan } = useBusinessCart()
+  const inCart = hasPlan(RESTAURANT_PLAN_KEY)
   const [form, setForm] = useState({ name: '', restaurant: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -41,7 +41,7 @@ export default function RestaurantsPage({ go }) {
 
   return (
     <div>
-      <RestaurantsTopBar go={go} />
+      <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>🍽️ Your restaurant, taking orders online</h2>
         <p style={{ fontSize: 18, color: '#f5c542' }}>Your own ordering page for $20/month. No apps, no hardware, no commission.</p>
@@ -80,10 +80,10 @@ export default function RestaurantsPage({ go }) {
         {inCart ? (
           <div>
             <p>✓ In your cart.</p>
-            <button onClick={() => go && go('restaurant-cart')}>Go to My Cart</button>
+            <button onClick={() => go && go('business-cart')}>Go to My Cart</button>
           </div>
         ) : (
-          <button onClick={addPlan}>Add to cart — ${RESTAURANT_PLAN_PRICE}/month</button>
+          <button onClick={() => addPlan(RESTAURANT_PLAN_KEY)}>Add to cart — ${RESTAURANT_PLAN_PRICE}/month</button>
         )}
       </div>
 

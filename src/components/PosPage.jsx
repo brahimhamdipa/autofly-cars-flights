@@ -1,20 +1,20 @@
 import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
-import { usePosCart, POS_PLAN_PRICE } from '../lib/PosCartContext'
-import { PosTopBar } from './PosMenu'
+import { useBusinessCart, POS_PLAN_KEY, POS_PLAN_PRICE } from '../lib/BusinessCartContext'
+import { BusinessTopBar } from './BusinessMenu'
 
 // Sales page for the point of sale (reached from More ▾ → Restaurants
 // → POS). One product only: a store's own register page with live
 // stock and receipts, for $29/month. No card payment is taken here —
 // the request form emails the owner, who then creates the store's
 // link and login by hand, and the Add to cart card puts a pos_order
-// row in front of the owner the same way (separate POS cart,
-// PosCartContext + pos_order table, same pattern as the restaurant
-// cart). Nothing on this page promises instant signup. Connecting
+// row in front of the owner the same way (shared Business cart,
+// BusinessCartContext + pos_order table, same pattern as the other
+// Business Systems pages). Nothing on this page promises instant signup. Connecting
 // carts to the bank comes later.
 export default function PosPage({ go }) {
-  const { count, addPlan } = usePosCart()
-  const inCart = count > 0
+  const { hasPlan, addPlan } = useBusinessCart()
+  const inCart = hasPlan(POS_PLAN_KEY)
   const [form, setForm] = useState({ name: '', store: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -41,7 +41,7 @@ export default function PosPage({ go }) {
 
   return (
     <div>
-      <PosTopBar go={go} />
+      <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>🧾 Your store's point of sale</h2>
         <p style={{ fontSize: 18, color: '#f5c542' }}>Your own register for $29/month. No apps, no hardware, no commission.</p>
@@ -80,10 +80,10 @@ export default function PosPage({ go }) {
         {inCart ? (
           <div>
             <p>✓ In your cart.</p>
-            <button onClick={() => go && go('pos-cart')}>Go to My Cart</button>
+            <button onClick={() => go && go('business-cart')}>Go to My Cart</button>
           </div>
         ) : (
-          <button onClick={addPlan}>Add to cart — ${POS_PLAN_PRICE}/month</button>
+          <button onClick={() => addPlan(POS_PLAN_KEY)}>Add to cart — ${POS_PLAN_PRICE}/month</button>
         )}
       </div>
 

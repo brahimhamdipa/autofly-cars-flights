@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 // Shared submenu for the whole Services area — same look and behavior as
-// the Cars / Flights / Groceries menus. "Websites and Systems" and the
+// the Cars / Flights / Groceries menus. "Custom Coding" and the
 // main menu's "Services" link open the same page.
 export default function ServicesMenu({ go }) {
   const [open, setOpen] = useState(false)
@@ -23,9 +23,8 @@ export default function ServicesMenu({ go }) {
       </button>
       {open && (
         <div className="car-submenu">
-          <button onClick={() => pick('services')}>Websites and Systems</button>
+          <button onClick={() => pick('services')}>Custom Coding</button>
           <button onClick={() => pick('services-home')}>Home Services</button>
-          <button onClick={() => pick('services-business')}>Business Services</button>
           <button onClick={() => pick('services-contact')}>Contact Us</button>
         </div>
       )}

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
-import { useDealerCart, DEALER_PLAN_PRICE } from '../lib/DealerCartContext'
-import { DealerTopBar } from './DealerMenu'
+import { useBusinessCart, DEALER_PLAN_KEY, DEALER_PLAN_PRICE } from '../lib/BusinessCartContext'
+import { BusinessTopBar } from './BusinessMenu'
 
 // Sales page for the dealer website (reached from More ▾ → Restaurants
 // → Dealer, and from the Dealer submenu). One product only: a car
@@ -15,8 +15,8 @@ import { DealerTopBar } from './DealerMenu'
 // mirroring the POS and Restaurants pages — NOT confirmed by the owner,
 // changeable on his word.
 export default function DealerPage({ go }) {
-  const { count, addPlan } = useDealerCart()
-  const inCart = count > 0
+  const { hasPlan, addPlan } = useBusinessCart()
+  const inCart = hasPlan(DEALER_PLAN_KEY)
   const [form, setForm] = useState({ name: '', dealership: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
@@ -43,7 +43,7 @@ export default function DealerPage({ go }) {
 
   return (
     <div>
-      <DealerTopBar go={go} />
+      <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>🚗 Your dealership, selling online</h2>
         <p style={{ fontSize: 18, color: '#f5c542' }}>Your own dealer page for $20/month. No apps, no hardware, no commission.</p>
@@ -83,10 +83,10 @@ export default function DealerPage({ go }) {
         {inCart ? (
           <div>
             <p>✓ In your cart.</p>
-            <button onClick={() => go && go('dealer-cart')}>Go to My Cart</button>
+            <button onClick={() => go && go('business-cart')}>Go to My Cart</button>
           </div>
         ) : (
-          <button onClick={addPlan}>Add to cart — ${DEALER_PLAN_PRICE}/month</button>
+          <button onClick={() => addPlan(DEALER_PLAN_KEY)}>Add to cart — ${DEALER_PLAN_PRICE}/month</button>
         )}
       </div>
 

@@ -1,7 +1,7 @@
 # Dealer — one page for every dealership
 
-A shared car dealership page: every dealership gets its own link
-(`autofly.us.com/dealer?d=<slug>`) and its own vehicles and bookings,
+A shared car dealership page: every dealership gets its own private link
+and its own vehicles and bookings, but they all use this same page.
 but they all use this same page. There is no `data.json` here — the
 dealership, its vehicles, and its bookings live in the database.
 

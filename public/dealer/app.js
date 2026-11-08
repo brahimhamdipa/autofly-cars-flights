@@ -1,5 +1,5 @@
 /* Dealer page app — ONE folder for every dealership.
-   The dealership comes from the link (?d=<slug>), and its info,
+   The dealership comes from its own private link, and its info,
    vehicles, and bookings live in the database — there is no data.json
    file here. Every dealership has its own vehicles and bookings, but
    they all use this same page.
@@ -112,6 +112,115 @@
       }).catch(function () {});
     } catch (e) {}
   }
+  /* ---------- Icon picture (one small square image) ---------- */
+  /* The icon lives in the draft/live data as `icon` — a public URL or ''.
+     It is uploaded to the product-images bucket, shrunk to 200px on its
+     long edge first (same rules as the shop picture uploads: JPEG 0.8,
+     PNGs stay PNG, small pictures untouched, any failure falls back to
+     the original file). Same pattern as the POS, diner, barbershop, and
+     employee pages. */
+  function shrinkIconImage(file) {
+    try {
+      return new Promise(function (resolve) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+          URL.revokeObjectURL(url);
+          var w0 = img.naturalWidth, h0 = img.naturalHeight;
+          if (!w0 || !h0 || Math.max(w0, h0) <= 200) { resolve(file); return; }
+          var scale = 200 / Math.max(w0, h0);
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.round(w0 * scale);
+          canvas.height = Math.round(h0 * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          var outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          canvas.toBlob(function (blob) {
+            if (!blob) { resolve(file); return; }
+            var name = outType === 'image/jpeg' ? file.name.replace(/\.[^.]+$/, '') + '.jpg' : file.name;
+            resolve(new File([blob], name, { type: outType }));
+          }, outType, 0.8);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+        img.src = url;
+      });
+    } catch (e) {
+      return Promise.resolve(file);
+    }
+  }
+  function uploadIconImage(file) {
+    return shrinkIconImage(file).then(function (up) {
+      var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      var path = 'store/icons/' + SLUG + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + safe;
+      return fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
+        method: 'POST',
+        headers: { 'Content-Type': up.type || 'application/octet-stream', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+        body: up
+      }).then(function (res) {
+        if (!res.ok) throw new Error('upload failed (HTTP ' + res.status + ')');
+        return SUPABASE_URL + '/storage/v1/object/public/product-images/' + path;
+      });
+    });
+  }
+  /* Show the live icon next to the business name in the header — only
+     when there is one. Created once and re-used, so repeated header
+     renders never duplicate it, and removing the icon restores the
+     header exactly as it was. */
+  function renderHeaderIcon(url) {
+    var nameEl = $('site-name');
+    if (!nameEl) return;
+    var brand = nameEl.closest ? nameEl.closest('.brand') : null;
+    if (!brand) {
+      var p = nameEl.parentNode;
+      brand = p && p.parentNode;
+      if (!brand) return;
+    }
+    var img = brand.querySelector('img.site-icon');
+    if (!url) {
+      if (img) img.remove();
+      return;
+    }
+    if (!img) {
+      img = document.createElement('img');
+      img.className = 'site-icon';
+      img.alt = '';
+      var ref = nameEl.parentNode;
+      if (ref === brand) ref = nameEl;
+      brand.insertBefore(img, ref);
+    }
+    if (img.getAttribute('src') !== url) img.setAttribute('src', url);
+  }
+  /* Wire the icon field in Setup: picking a picture uploads it at once
+     and stores the URL on the draft; Remove clears it. The draft is
+     only persisted when the owner saves it, like every other field. */
+  function wireIconField() {
+    var iconFile = $('setup-icon-file');
+    if (iconFile) iconFile.addEventListener('change', function () {
+      var f = iconFile.files && iconFile.files[0];
+      if (!f) return;
+      var out = $('setup-icon-out');
+      if (out) out.textContent = 'Uploading icon…';
+      uploadIconImage(f).then(function (url) {
+        draft.icon = url;
+        var prev = $('setup-icon-preview');
+        if (prev) { prev.src = url; prev.hidden = false; }
+        if (out) out.textContent = 'Icon uploaded — save the draft to keep it.';
+        iconFile.value = '';
+      }).catch(function (err) {
+        if (out) out.textContent = 'Could not upload the icon: ' + (err && err.message ? err.message : 'please try again.');
+        iconFile.value = '';
+      });
+    });
+    var iconRemove = $('setup-icon-remove');
+    if (iconRemove) iconRemove.addEventListener('click', function () {
+      draft.icon = '';
+      var prev = $('setup-icon-preview');
+      if (prev) { prev.src = ''; prev.hidden = true; }
+      var out = $('setup-icon-out');
+      if (out) out.textContent = 'Icon removed — save the draft to keep it removed.';
+      var file = $('setup-icon-file');
+      if (file) file.value = '';
+    });
+  }
   function vehicleById(id) {
     return (dealer.vehicles || []).filter(function (v) { return String(v.id) === String(id); })[0] || null;
   }
@@ -151,6 +260,7 @@
 
   function setHeader() {
     $('site-name').textContent = dealer ? dealer.name : 'Dealer';
+    renderHeaderIcon(dealer && dealer.icon ? dealer.icon : '');
     $('site-about').textContent = dealer
       ? [dealer.address, dealer.phone].filter(Boolean).join(' · ')
       : '';
@@ -634,6 +744,13 @@
       '<div class="card"><h3>Dealership details</h3>' +
       '<p class="info">Changes save as a draft. Upload for approval and the admin makes them live.</p>' +
       '<label>Dealership name</label><input id="d-name" type="text" value="' + esc(draft.name || '') + '">' +
+      '<label>Icon picture</label>' +
+      '<div class="icon-field">' +
+      '<img id="setup-icon-preview" class="icon-preview" src="' + esc(draft.icon || '') + '" alt=""' + (draft.icon ? '' : ' hidden') + '>' +
+      '<input id="setup-icon-file" type="file" accept="image/*">' +
+      '<button type="button" id="setup-icon-remove" class="small secondary">Remove icon</button>' +
+      '</div>' +
+      '<p class="info" id="setup-icon-out">One small picture shown next to the dealership name. It is shrunk to 200px before uploading.</p>' +
       '<label>Address</label><input id="d-address" type="text" value="' + esc(draft.address || '') + '">' +
       '<label>Phone</label><input id="d-phone" type="tel" value="' + esc(draft.phone || '') + '">' +
       '<label>Hours</label><input id="d-hours" type="text" value="' + esc(draft.hours || '') + '">' +
@@ -677,6 +794,7 @@
     if (!vehicleEditId) vehiclePics = [];
     renderVehiclePics();
     $('v-pics').addEventListener('change', onVehiclePicsChosen);
+    wireIconField();
   }
   function renderVehiclesList() {
     var el = $('vehicles-list');
@@ -746,7 +864,8 @@
       address: $('d-address').value.trim(),
       phone: $('d-phone').value.trim(),
       hours: $('d-hours').value.trim(),
-      about: $('d-about').value.trim()
+      about: $('d-about').value.trim(),
+      icon: draft.icon || ''
     };
   }
   function saveDraft(upload) {
@@ -771,12 +890,14 @@
       .catch(function (e) { err.hidden = false; err.textContent = 'Error: ' + e.message; });
   }
   /* ---------- Vehicle pictures (Setup) ---------- */
-  /* Shrink a picture in the browser before it is stored, same rules as
-     the main site's storeUpload.js: at most 1600px on the long edge,
-     JPEG quality 0.85, PNGs stay PNG, small pictures untouched, and
-     anything that fails falls back to the original file. */
-  function shrinkImage(file, maxEdge) {
+  /* Shrink a picture in the browser before it is stored. Vehicle
+     pictures are shrunk to 800px on the long edge at JPEG quality 0.8
+     — big enough to see the car, not high quality. PNGs stay PNG,
+     small pictures untouched, and anything that fails falls back to
+     the original file. */
+  function shrinkImage(file, maxEdge, quality) {
     maxEdge = maxEdge || 1600;
+    quality = quality || 0.85;
     try {
       return new Promise(function (resolve) {
         var url = URL.createObjectURL(file);
@@ -795,7 +916,7 @@
             if (!blob) { resolve(file); return; }
             var name = outType === 'image/jpeg' ? file.name.replace(/\.[^.]+$/, '') + '.jpg' : file.name;
             resolve(new File([blob], name, { type: outType }));
-          }, outType, 0.85);
+          }, outType, quality);
         };
         image.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
         image.src = url;
@@ -808,7 +929,7 @@
      and return its public URL. Anon uploads are only allowed under
      store/ — this path qualifies, and the bucket is publicly readable. */
   function uploadVehiclePicture(file) {
-    return shrinkImage(file).then(function (up) {
+    return shrinkImage(file, 800, 0.8).then(function (up) {
       var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       var path = 'store/dealer/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + safe;
       return fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
@@ -918,7 +1039,7 @@
   function init() {
     if (!SLUG) {
       $('site-name').textContent = 'Dealer';
-      $('view-vehicles').innerHTML = '<div class="card"><h2>Dealer not found</h2><p class="info">This dealer page needs a dealership link like autofly.us.com/dealer?d=your-dealership.</p></div>';
+      $('view-vehicles').innerHTML = '<div class="card"><h2>Dealer not found</h2><p class="info">This dealer page needs your own dealership link — ask AutoFly for it.</p></div>';
       return;
     }
     loadDealer().then(function (d) {

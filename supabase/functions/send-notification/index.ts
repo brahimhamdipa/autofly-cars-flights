@@ -24,7 +24,7 @@ serve(async (req) => {
     `
 
     const payload: Record<string, unknown> = {
-      from: "AutoFly <onboarding@resend.dev>",
+      from: "Yently <onboarding@resend.dev>",
       to: [recipient],
       subject: subject || `New submission: ${table}`,
       html,

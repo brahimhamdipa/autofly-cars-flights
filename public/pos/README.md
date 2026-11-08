@@ -1,9 +1,9 @@
 # POS — one page for every store
 
-A shared point of sale: every store gets its own link
-(`autofly.us.com/pos?s=<slug>`) and its own items, sales, and stock,
-but they all use this same page. There is no `data.json` here — the
-store, its items, and its sales live in the database.
+A shared point of sale: every store gets its own private link and its
+own items, sales, and stock, but they all use this same page. There
+is no `data.json` here — the store, its items, and its sales live in
+the database.
 
 ## What it does
 

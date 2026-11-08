@@ -58,6 +58,10 @@
   var voidConfirmId = null; // sale id awaiting an in-page void confirmation
   var voidErr = ''; // last void error, shown inline above the sales list
   var delConfirmId = null; // item id awaiting an in-page delete confirmation
+  var shopQuery = ''; // current Shop search text, kept across re-renders
+  var sellQuery = ''; // current Sell search/scan text, kept across re-renders
+  var refocusSellSearch = false; // put the cursor back in the Sell search box after a scan/Enter add
+  var itemPic = ''; // picture URL for the item being added/edited in Setup
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -210,6 +214,71 @@
       if (file) file.value = '';
     });
   }
+  /* ---------- Item pictures (one small picture per item) ---------- */
+  /* Same rules as the icon: shrunk to 200px on the long edge, JPEG 0.8,
+     PNGs stay PNG, small pictures untouched, failure falls back to the
+     original file. Uploaded to store/pos-items/ so the anon upload
+     policy (store/ only) allows it. The URL is stored on the item as
+     `pic` and shown on Shop and Sell next to the item. */
+  function shrinkItemPic(file) {
+    try {
+      return new Promise(function (resolve) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+          URL.revokeObjectURL(url);
+          var w0 = img.naturalWidth, h0 = img.naturalHeight;
+          if (!w0 || !h0 || Math.max(w0, h0) <= 200) { resolve(file); return; }
+          var scale = 200 / Math.max(w0, h0);
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.round(w0 * scale);
+          canvas.height = Math.round(h0 * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          var outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          canvas.toBlob(function (blob) {
+            if (!blob) { resolve(file); return; }
+            var name = outType === 'image/jpeg' ? file.name.replace(/\.[^.]+$/, '') + '.jpg' : file.name;
+            resolve(new File([blob], name, { type: outType }));
+          }, outType, 0.8);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+        img.src = url;
+      });
+    } catch (e) {
+      return Promise.resolve(file);
+    }
+  }
+  function uploadItemPic(file) {
+    return shrinkItemPic(file).then(function (up) {
+      var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      var path = 'store/pos-items/' + SLUG + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + safe;
+      return fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
+        method: 'POST',
+        headers: { 'Content-Type': up.type || 'application/octet-stream', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+        body: up
+      }).then(function (res) {
+        if (!res.ok) throw new Error('upload failed (HTTP ' + res.status + ')');
+        return SUPABASE_URL + '/storage/v1/object/public/product-images/' + path;
+      });
+    });
+  }
+  /* Small thumbnail on the right of an item — 96x72, the same size as
+     the dealer Setup thumbnails. Items without a picture show nothing. */
+  function itemPicHtml(it) {
+    return it && it.pic ? '<img class="item-thumb" src="' + esc(it.pic) + '" alt="">' : '';
+  }
+  /* Search matching: Shop filters by name/category; Sell also matches
+     the barcode, so a scanner (or a typed code) finds its item. */
+  function matchesShopQuery(it, q) {
+    if (!q) return true;
+    q = String(q).toLowerCase();
+    return (it.name || '').toLowerCase().indexOf(q) !== -1 ||
+      (it.category || '').toLowerCase().indexOf(q) !== -1;
+  }
+  function matchesSellQuery(it, q) {
+    if (!q) return true;
+    return matchesShopQuery(it, q) || String(it.barcode || '').toLowerCase().indexOf(String(q).toLowerCase()) !== -1;
+  }
   function itemById(id) {
     return (store.items || []).filter(function (p) { return String(p.id) === String(id); })[0] || null;
   }
@@ -273,31 +342,44 @@
   function renderShop() {
     var el = $('view-shop');
     if (!store) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
-    var items = store.items || [];
+    var h = '<h2>' + esc(store.name) + '</h2>';
+    if (store.address || store.phone) h += '<p class="info">' + esc([store.address, store.phone].filter(Boolean).join(' · ')) + '</p>';
+    /* The search box lives outside the results container, so typing
+       never loses the cursor — only the list below is re-rendered. */
+    h += '<input id="shop-search" type="text" placeholder="Search items…" value="' + esc(shopQuery) + '" autocomplete="off">';
+    h += '<div id="shop-results"></div>';
+    h += '<div class="card"><p class="info">Staff: open the <b>Sell</b> tab to ring up a sale. Tax ' + Math.round(taxRate() * 100) + '% is added at the till.</p></div>';
+    el.innerHTML = h;
+    $('shop-search').addEventListener('input', function () { shopQuery = this.value; renderShopResults(); });
+    renderShopResults();
+  }
+  function renderShopResults() {
+    var el = $('shop-results');
+    if (!el) return;
+    var items = (store.items || []).filter(function (it) { return matchesShopQuery(it, shopQuery); });
+    if (!items.length) {
+      el.innerHTML = (store.items || []).length
+        ? '<div class="card"><p class="info">No items match your search.</p></div>'
+        : '<div class="card"><p class="info">No items yet — the owner adds items in Setup.</p></div>';
+      return;
+    }
     var cats = [];
     items.forEach(function (it) {
       if (cats.indexOf(it.category || '') === -1) cats.push(it.category || '');
     });
-    var h = '<h2>' + esc(store.name) + '</h2>';
-    if (store.address || store.phone) h += '<p class="info">' + esc([store.address, store.phone].filter(Boolean).join(' · ')) + '</p>';
-    if (!items.length) {
-      h += '<div class="card"><p class="info">No items yet — the owner adds items in Setup.</p></div>';
-      el.innerHTML = h;
-      return;
-    }
+    var h = '';
     cats.forEach(function (c) {
       h += '<h3>' + esc(c || 'Items') + '</h3><div class="item-grid">';
       items.filter(function (it) { return (it.category || '') === c; }).forEach(function (it) {
-        h += '<div class="item-card"><h3>' + esc(it.name) + '</h3>' +
+        h += '<div class="item-card"><div class="item-top"><div class="item-text"><h3>' + esc(it.name) + '</h3>' +
           '<span class="price">' + money(it.price) + '</span>' +
           (Number(it.stock) > 0
             ? '<span class="stock">' + Number(it.stock) + ' in stock</span>'
             : '<span class="out">Out of stock</span>') +
-          '</div>';
+          '</div>' + itemPicHtml(it) + '</div></div>';
       });
       h += '</div>';
     });
-    h += '<div class="card"><p class="info">Staff: open the <b>Sell</b> tab to ring up a sale. Tax ' + Math.round(taxRate() * 100) + '% is added at the till.</p></div>';
     el.innerHTML = h;
   }
 
@@ -331,37 +413,18 @@
     var el = $('view-sell');
     if (!store) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
     if (passLocked && !empUnlocked) { empGate(el, 'Sell', renderSell); return; }
-    var items = store.items || [];
-    var cats = [];
-    items.forEach(function (it) {
-      if (cats.indexOf(it.category || '') === -1) cats.push(it.category || '');
-    });
     var h = '<h2>Sell — ' + esc(store.name) + '</h2>';
     h += '<div class="card"><div class="row"><button id="sell-scan">📷 Scan barcode</button>' +
       '<span class="info">Point the phone camera at a product barcode to add it to the sale.</span></div>' +
       '<p class="info" id="scan-note" hidden></p></div>';
     if (lastReceipt) h += receiptHtml(lastReceipt);
-    if (!items.length) {
-      h += '<div class="card"><p class="info">No items to sell yet — add items in Setup first.</p></div>';
-      el.innerHTML = h;
-      return;
-    }
-    cats.forEach(function (c) {
-      h += '<h3>' + esc(c || 'Items') + '</h3><div class="item-grid">';
-      items.filter(function (it) { return (it.category || '') === c; }).forEach(function (it) {
-        var inCart = cart[it.id] || 0;
-        h += '<div class="item-card"><h3>' + esc(it.name) + '</h3>' +
-          '<span class="price">' + money(it.price) + '</span>' +
-          (Number(it.stock) > 0
-            ? '<span class="stock">' + Number(it.stock) + ' in stock</span>'
-            : '<span class="out">Out of stock</span>') +
-          (Number(it.stock) > 0
-            ? '<button class="small" data-add="' + it.id + '">Add' + (inCart ? ' (' + inCart + ')' : '') + '</button>'
-            : '<button class="small" disabled>Out of stock</button>') +
-          '</div>';
-      });
-      h += '</div>';
-    });
+    /* Search or scan: the box filters the list while typing, and a
+       hardware barcode scanner (keyboard wedge: fast typing + Enter)
+       works here too — Enter adds the scanned item. The box lives
+       outside the results container so typing never loses the cursor. */
+    h += '<input id="sell-search" type="text" placeholder="Search or scan barcode…" value="' + esc(sellQuery) + '" autocomplete="off" inputmode="search">';
+    h += '<p class="error" id="sell-search-err" hidden></p>';
+    h += '<div id="sell-results"></div>';
     h += '<div class="card"><h3>Current sale</h3><div id="cart-lines"></div>' +
       '<div id="cart-totals"></div>' +
       '<label>Customer name (optional)</label><input id="sale-name" type="text" placeholder="Name for the receipt">' +
@@ -377,14 +440,100 @@
     if (pb) pb.addEventListener('click', printReceipt);
     var scanBtn = $('sell-scan');
     if (scanBtn) scanBtn.addEventListener('click', function () { openScanner('sell'); });
+    var sInput = $('sell-search');
+    sInput.addEventListener('input', function () { sellQuery = this.value; hideSellSearchErr(); renderSellResults(); });
+    sInput.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); sellSearchEnter(); } });
+    $('sale-clear').addEventListener('click', function () { cart = {}; lastReceipt = null; updateBadges(); renderSell(); });
+    $('sale-complete').addEventListener('click', completeSale);
+    renderSellResults();
+    renderCartLines();
+    if (refocusSellSearch) {
+      refocusSellSearch = false;
+      if (sInput.focus) sInput.focus();
+    }
+  }
+  function renderSellResults() {
+    var el = $('sell-results');
+    if (!el) return;
+    var items = (store.items || []).filter(function (it) { return matchesSellQuery(it, sellQuery); });
+    if (!items.length) {
+      el.innerHTML = (store.items || []).length
+        ? '<div class="card"><p class="info">No items match your search.</p></div>'
+        : '<div class="card"><p class="info">No items to sell yet — add items in Setup first.</p></div>';
+      return;
+    }
+    var cats = [];
+    items.forEach(function (it) {
+      if (cats.indexOf(it.category || '') === -1) cats.push(it.category || '');
+    });
+    var h = '';
+    cats.forEach(function (c) {
+      h += '<h3>' + esc(c || 'Items') + '</h3><div class="item-grid">';
+      items.filter(function (it) { return (it.category || '') === c; }).forEach(function (it) {
+        var inCart = cart[it.id] || 0;
+        h += '<div class="item-card"><div class="item-top"><div class="item-text"><h3>' + esc(it.name) + '</h3>' +
+          '<span class="price">' + money(it.price) + '</span>' +
+          (Number(it.stock) > 0
+            ? '<span class="stock">' + Number(it.stock) + ' in stock</span>'
+            : '<span class="out">Out of stock</span>') +
+          '</div>' + itemPicHtml(it) + '</div>' +
+          (Number(it.stock) > 0
+            ? '<button class="small" data-add="' + it.id + '">Add' + (inCart ? ' (' + inCart + ')' : '') + '</button>'
+            : '<button class="small" disabled>Out of stock</button>') +
+          '</div>';
+      });
+      h += '</div>';
+    });
+    el.innerHTML = h;
     el.querySelectorAll('[data-add]').forEach(function (b) {
       b.addEventListener('click', function () { addToCart(Number(b.getAttribute('data-add'))); });
     });
-    $('sale-clear').addEventListener('click', function () { cart = {}; lastReceipt = null; updateBadges(); renderSell(); });
-    $('sale-complete').addEventListener('click', completeSale);
-    renderCartLines();
   }
-  function addToCart(id) {
+  function showSellSearchErr(msg) {
+    var e = $('sell-search-err');
+    if (e) { e.hidden = false; e.textContent = msg; }
+  }
+  function hideSellSearchErr() {
+    var e = $('sell-search-err');
+    if (e) e.hidden = true;
+  }
+  function clearSellSearch() {
+    sellQuery = '';
+    var s = $('sell-search');
+    if (s) s.value = '';
+    hideSellSearchErr();
+    renderSellResults();
+  }
+  /* Enter in the Sell search box. A hardware barcode scanner types the
+     code and presses Enter, so this is the scanner path too — not only
+     the phone camera. An exact barcode match adds that item; otherwise
+     a single matching item is added; anything else stays on screen. */
+  function sellSearchEnter() {
+    var q = String(sellQuery || '').trim();
+    if (!q) return;
+    var items = store.items || [];
+    var byBarcode = items.filter(function (it) { return String(it.barcode || '') !== '' && String(it.barcode) === q; })[0];
+    if (byBarcode) {
+      if (Number(byBarcode.stock) <= 0) { showSellSearchErr(byBarcode.name + ' is out of stock.'); return; }
+      clearSellSearch();
+      addToCart(byBarcode.id, true);
+      return;
+    }
+    var matched = items.filter(function (it) { return matchesSellQuery(it, q); });
+    if (matched.length === 1) {
+      if (Number(matched[0].stock) <= 0) { showSellSearchErr(matched[0].name + ' is out of stock.'); return; }
+      clearSellSearch();
+      addToCart(matched[0].id, true);
+      return;
+    }
+    if (matched.length === 0) {
+      showSellSearchErr(/^\d+$/.test(q) ? 'No item with that barcode.' : 'No items match your search.');
+      return;
+    }
+    /* Several matches: the filtered list below already shows them — the
+       cashier picks one. */
+  }
+  function addToCart(id, fromSearch) {
     var it = itemById(id);
     if (!it || Number(it.stock) <= 0) return;
     var cur = cart[id] || 0;
@@ -395,6 +544,7 @@
     }
     cart[id] = cur + 1;
     updateBadges();
+    if (fromSearch) refocusSellSearch = true;
     renderSell();
   }
   function renderCartLines() {
@@ -582,9 +732,11 @@
   function openScanner(target) {
     scanTarget = target;
     if (typeof window.Html5Qrcode === 'undefined') {
-      var note = $('scan-note');
-      if (note) { note.hidden = false; note.textContent = 'Scanner could not load — check your connection and try again.'; }
-      else alert('Scanner could not load — check your connection and try again.');
+      var msg = 'Scanner could not load — check your connection and try again.';
+      var note0 = $('scan-note');
+      if (note0) { note0.hidden = false; note0.textContent = msg; return; }
+      var ierr = $('i-err');
+      if (ierr) { ierr.hidden = false; ierr.textContent = msg; return; }
       return;
     }
     if (!scanOverlay) {
@@ -714,6 +866,13 @@
       '<label>Stock</label><input id="i-stock" type="number" min="0" step="1" inputmode="numeric" value="0">' +
       '<label>Category</label><input id="i-cat" type="text" placeholder="Drinks, Food, Other…">' +
       '<label>Barcode (optional)</label><input id="i-barcode" type="text" inputmode="numeric" placeholder="The number under the product barcode">' +
+      '<label>Picture (optional)</label>' +
+      '<div class="icon-field">' +
+      '<img id="i-pic-preview" class="item-thumb" src="' + esc(itemPic) + '" alt=""' + (itemPic ? '' : ' hidden') + '>' +
+      '<input id="i-pic-file" type="file" accept="image/*">' +
+      '<button type="button" id="i-pic-remove" class="small secondary">Remove picture</button>' +
+      '</div>' +
+      '<p class="info" id="i-pic-out">One small picture shown next to the item on Shop and Sell. It is shrunk to 200px before uploading.</p>' +
       '<div class="row"><button type="button" class="secondary" id="i-scan">📷 Scan barcode</button></div>' +
       '<div class="row"><button id="i-save">Save item</button>' +
       '<button id="i-cancel" class="secondary" hidden>Cancel edit</button></div>' +
@@ -725,8 +884,41 @@
     $('i-save').addEventListener('click', saveItem);
     var scanItemBtn = $('i-scan');
     if (scanItemBtn) scanItemBtn.addEventListener('click', function () { openScanner('setup'); });
-    $('i-cancel').addEventListener('click', function () { itemEditId = null; renderSetup(); });
+    $('i-cancel').addEventListener('click', function () { itemEditId = null; itemPic = ''; renderSetup(); });
     wireIconField();
+    wireItemPicField();
+  }
+  /* Wire the item picture field in Setup: picking a picture uploads it
+     at once and stores the URL on the item being added/edited; Remove
+     clears it. The URL is only persisted when the item is saved. */
+  function wireItemPicField() {
+    var file = $('i-pic-file');
+    if (file) file.addEventListener('change', function () {
+      var f = file.files && file.files[0];
+      if (!f) return;
+      var out = $('i-pic-out');
+      if (out) out.textContent = 'Uploading picture…';
+      uploadItemPic(f).then(function (url) {
+        itemPic = url;
+        var prev = $('i-pic-preview');
+        if (prev) { prev.src = url; prev.hidden = false; }
+        if (out) out.textContent = 'Picture uploaded — save the item to keep it.';
+        file.value = '';
+      }).catch(function (err) {
+        if (out) out.textContent = 'Could not upload the picture: ' + (err && err.message ? err.message : 'please try again.');
+        file.value = '';
+      });
+    });
+    var rem = $('i-pic-remove');
+    if (rem) rem.addEventListener('click', function () {
+      itemPic = '';
+      var prev = $('i-pic-preview');
+      if (prev) { prev.src = ''; prev.hidden = true; }
+      var out = $('i-pic-out');
+      if (out) out.textContent = 'Picture removed — save the item to keep it removed.';
+      var file = $('i-pic-file');
+      if (file) file.value = '';
+    });
   }
   function renderItemsList() {
     var el = $('items-list');
@@ -736,6 +928,7 @@
     var h = '';
     items.forEach(function (it) {
       h += '<div class="cart-line"><div><b>' + esc(it.name) + '</b><br><span class="info">' + esc(it.category || '') + ' · ' + money(it.price) + ' · stock ' + Number(it.stock) + (it.barcode ? ' · #' + esc(it.barcode) : '') + '</span></div>' +
+        itemPicHtml(it) +
         '<div class="row"><button class="small secondary" data-edit="' + it.id + '">Edit</button>' +
         (delConfirmId === it.id
           ? '<span><b>Delete "' + esc(it.name) + '"?</b> <button class="small danger" data-del-yes="' + it.id + '">Yes, delete</button> <button class="small secondary" data-del-no="' + it.id + '">Keep it</button></span>'
@@ -752,6 +945,11 @@
         $('i-stock').value = it.stock;
         $('i-cat').value = it.category || '';
         $('i-barcode').value = it.barcode || '';
+        itemPic = it.pic || '';
+        var prev = $('i-pic-preview');
+        if (prev) { if (itemPic) { prev.src = itemPic; prev.hidden = false; } else { prev.src = ''; prev.hidden = true; } }
+        var out = $('i-pic-out');
+        if (out) out.textContent = itemPic ? 'Picture uploaded — save the item to keep it.' : 'One small picture shown next to the item on Shop and Sell. It is shrunk to 200px before uploading.';
         $('item-form-title').textContent = 'Edit item — ' + it.name;
         $('i-cancel').hidden = false;
         window.scrollTo(0, document.getElementById('item-form-title').offsetTop - 80);
@@ -819,10 +1017,10 @@
     if (!name) { err.hidden = false; err.textContent = 'Item name is required.'; return; }
     if (!(price >= 0)) { err.hidden = false; err.textContent = 'Price must be 0 or more.'; return; }
     err.hidden = true;
-    var item = { name: name, price: price, stock: stock, category: cat, barcode: barcode, is_active: true };
+    var item = { name: name, price: price, stock: stock, category: cat, barcode: barcode, pic: itemPic, is_active: true };
     if (itemEditId) item.id = itemEditId;
     rpc('save_pos_item', { p_slug: SLUG, p_u: ownerCreds.u, p_p: ownerCreds.p, p_item: item })
-      .then(function () { itemEditId = null; return loadStore(); })
+      .then(function () { itemEditId = null; itemPic = ''; return loadStore(); })
       .then(function () { renderSetup(); })
       .catch(function (e) { err.hidden = false; err.textContent = 'Error: ' + e.message; });
   }
@@ -843,7 +1041,7 @@
   function init() {
     if (!SLUG) {
       $('site-name').textContent = 'POS';
-      $('view-shop').innerHTML = '<div class="card"><h2>Store not found</h2><p class="info">This POS page needs a store link like autofly.us.com/pos?s=your-store.</p></div>';
+      $('view-shop').innerHTML = '<div class="card"><h2>Store not found</h2><p class="info">This POS page needs a store link. Ask AutoFly for your store link.</p></div>';
       return;
     }
     loadStore().then(function (d) {

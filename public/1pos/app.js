@@ -348,7 +348,7 @@
       field('Business name', 'st-name', b.name) +
       field('About', 'st-about', b.about) +
       field('Phone', 'st-phone', b.phone, 'tel') +
-      field('Email (sale copies go here; empty = AutoFly inbox)', 'st-email', b.email, 'email') +
+      field('Email (sale copies go here; empty = Yently inbox)', 'st-email', b.email, 'email') +
       field('Address', 'st-address', b.address) +
       field('Hours', 'st-hours', b.hours) +
       '<label>Tax rate (%)</label><input id="st-tax" type="number" min="0" step="0.01" value="' + esc(data.taxRate == null ? 0 : data.taxRate) + '"></div>' +

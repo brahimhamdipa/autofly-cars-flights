@@ -57,13 +57,38 @@ label { font-weight: 600; font-size: 14px; }
 .icon-field { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 4px 0 12px; }
 .icon-field input[type="file"] { width: auto; flex: 1; min-width: 180px; margin: 0; }
 img.icon-preview { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; flex: none; }
-/* Per-item pictures: text on the left, a small thumbnail on the right
-   — 96×72, the same size as the dealer Setup thumbnails. */
-.item-top { display: flex; gap: 10px; align-items: flex-start; }
-.item-text { flex: 1; min-width: 0; }
-.menu-item img.item-pic { width: 96px; height: 72px; object-fit: cover; border-radius: 8px; flex: none; }
+/* Featured slideshow: big dish pictures at the top of the Menu page. */
+.featured-slideshow { position: relative; border-radius: 14px; overflow: hidden; margin-bottom: 12px; background: #111827; }
+.featured-slideshow[hidden] { display: none; }
+.featured-img { width: 100%; height: 280px; object-fit: cover; display: block; }
+.featured-overlay { position: absolute; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 40px 14px 12px; background: linear-gradient(transparent, rgba(0,0,0,.68)); color: #fff; }
+.featured-name { font-size: 22px; font-weight: 800; }
+.featured-price { font-size: 20px; font-weight: 800; color: #fbbf24; white-space: nowrap; }
+.featured-slideshow .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(17,24,39,.55); color: #fff; border: 0; width: 38px; height: 38px; border-radius: 999px; cursor: pointer; font-size: 20px; line-height: 1; padding: 0 0 2px; }
+.featured-slideshow .slide-btn:hover { background: rgba(17,24,39,.8); }
+.featured-slideshow .slide-btn.prev { left: 10px; }
+.featured-slideshow .slide-btn.next { right: 10px; }
+.featured-slideshow .slide-count { position: absolute; top: 10px; right: 10px; background: rgba(17,24,39,.65); color: #fff; font-size: 13px; padding: 3px 10px; border-radius: 999px; }
+.slide-dots { position: absolute; bottom: 46px; left: 50%; transform: translateX(-50%); display: flex; gap: 6px; }
+.slide-dots .dot { width: 10px; height: 10px; border-radius: 999px; border: 0; padding: 0; background: rgba(255,255,255,.55); cursor: pointer; }
+.slide-dots .dot.active { background: #fff; }
+/* Menu item pictures: one LARGE picture on top of each card. */
+.menu-item img.item-pic-big { width: 100%; aspect-ratio: 16 / 10; max-height: 220px; object-fit: cover; border-radius: 14px 14px 0 0; margin: -14px -14px 0; display: block; }
 /* Setup picture thumbnails, same as the dealer Setup pictures. */
 .pic-thumbs { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 12px; }
 .pic-thumb { width: 96px; }
 .pic-thumb img { width: 96px; height: 72px; object-fit: cover; border-radius: 8px; display: block; }
 .pic-thumb button { margin-top: 4px; width: 100%; }
+/* Kitchen on a big screen (TV/monitor): large text, readable from a
+   few metres away. The Menu/ordering side stays phone-friendly. */
+#view-kitchen h3 { font-size: 28px; }
+#view-kitchen .kitchen-item { font-size: 24px; padding: 12px 0; }
+#view-kitchen .kitchen-item input { width: 30px; height: 30px; }
+#view-kitchen .info { font-size: 19px; }
+#view-kitchen button { font-size: 19px; }
+#view-kitchen .card.new-order { border: 3px solid #f5a623; background: #fffbeb; }
+#view-kitchen .new-badge { background: #f5a623; color: #111827; font-weight: 800; font-size: 18px; padding: 2px 10px; border-radius: 999px; margin-left: 8px; }
+/* TV remote focus: thick gold outline so the cook can see the
+   selected button from across the room. */
+#view-kitchen button:focus-visible,
+#view-kitchen button.remote-focus, #view-kitchen input[type="checkbox"].remote-focus { outline: 4px solid #f5a623; outline-offset: 2px; background: #fff7e0; color: #111827; }

@@ -54,6 +54,17 @@
   var kitchenTimer = null;
   var currentView = 'menu';
   var menuSearch = ''; // public menu search text, kept while typing
+  var slideIdx = 0; // featured slideshow: index into slideItems
+  var slideTimer = null; // featured slideshow auto-advance timer
+  var slideItems = []; // menu items with a picture, in menu order
+  var kitchenSeen = {}; // order id -> true, seeded on first Kitchen load
+  var kitchenFirstLoad = true; // first poll after opening Kitchen seeds, never beeps
+  var kitchenNewAt = {}; // order id -> timestamp it first appeared (new-order highlight)
+  var audioCtx = null; // Web Audio context, created/resumed on a user gesture
+  var SOUND_KEY = 'diner-sound-' + SLUG;
+  var soundOn = true; // Kitchen beep on/off, persisted per restaurant
+  try { if (localStorage.getItem(SOUND_KEY) === 'off') soundOn = false; } catch (e) {}
+  var remoteFocusIdx = -1; // TV remote: index into the Kitchen's visible buttons
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -117,7 +128,11 @@
      long edge first (same rules as the shop picture uploads: JPEG 0.8,
      PNGs stay PNG, small pictures untouched, any failure falls back to
      the original file). */
-  function shrinkIconImage(file) {
+  /* Shrink a picture before uploading: JPEG 0.8, PNGs stay PNG,
+     small pictures untouched, any failure falls back to the
+     original file. The icon is shrunk to 200px; menu item pictures
+     to 800px, because they are now shown big on the Menu page. */
+  function shrinkImage(file, maxEdge) {
     try {
       return new Promise(function (resolve) {
         var url = URL.createObjectURL(file);
@@ -125,8 +140,8 @@
         img.onload = function () {
           URL.revokeObjectURL(url);
           var w0 = img.naturalWidth, h0 = img.naturalHeight;
-          if (!w0 || !h0 || Math.max(w0, h0) <= 200) { resolve(file); return; }
-          var scale = 200 / Math.max(w0, h0);
+          if (!w0 || !h0 || Math.max(w0, h0) <= maxEdge) { resolve(file); return; }
+          var scale = maxEdge / Math.max(w0, h0);
           var canvas = document.createElement('canvas');
           canvas.width = Math.round(w0 * scale);
           canvas.height = Math.round(h0 * scale);
@@ -145,6 +160,7 @@
       return Promise.resolve(file);
     }
   }
+  function shrinkIconImage(file) { return shrinkImage(file, 200); }
   function uploadIconImage(file) {
     return shrinkIconImage(file).then(function (up) {
       var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -159,11 +175,13 @@
       });
     });
   }
-  /* One small picture per menu item, same shrink as the icon (200px,
-     JPEG 0.8, PNGs stay PNG). Uploaded at once to store/diner-items/
-     and stored on the draft item as `pic` — a public URL or ''. */
+  /* One picture per menu item, shrunk to 800px on its long edge
+     (JPEG 0.8, PNGs stay PNG) — the pictures are now shown big on
+     the Menu page, so a 200px file would look blurry at full width.
+     Uploaded at once to store/diner-items/ and stored on the draft
+     item as `pic` — a public URL or ''. */
   function uploadItemPicture(file) {
-    return shrinkIconImage(file).then(function (up) {
+    return shrinkImage(file, 800).then(function (up) {
       var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       var path = 'store/diner-items/' + SLUG + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + safe;
       return fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
@@ -284,6 +302,7 @@
       '<div class="row"><button id="emp-go">Unlock</button></div>' +
       '<div id="emp-out" style="margin-top:12px"></div></div>';
     $('emp-go').addEventListener('click', function () {
+      ensureAudio(); // user gesture: lets the Kitchen beep play later
       var out = $('emp-out');
       var p = $('emp-pass').value;
       out.innerHTML = '<p class="info">Checking…</p>';
@@ -313,6 +332,7 @@
   function show(view) {
     currentView = view;
     if (view !== 'kitchen') stopKitchenPoll();
+    if (view !== 'menu') stopSlideTimer();
     ['menu', 'order', 'kitchen', 'receipt', 'setup'].forEach(function (v) {
       $('view-' + v).hidden = v !== view;
     });
@@ -333,17 +353,18 @@
     var hay = [item.name, item.description].map(function (x) { return String(x == null ? '' : x).toLowerCase(); }).join(' ');
     return hay.indexOf(q) !== -1;
   }
-  /* One menu item: text on the left, its small picture on the right
-     (96×72, the same size as the dealer Setup thumbnails). Items
-     without a picture show no thumbnail. A legacy `image` is shown
-     the same way when there is no `pic`. */
+  /* One menu item: one LARGE picture on top of the card (full width,
+     about 16:10, capped at 220px tall), then name, description,
+     price and the Add button below it. Items without a picture show
+     no picture area at all. A legacy `image` is shown the same way
+     when there is no `pic`. */
   function menuItemHtml(item, i) {
     var pic = item.pic || item.image || '';
-    var h = '<div class="menu-item"><div class="item-top"><div class="item-text"><h3>' + esc(item.name) + '</h3>';
+    var h = '<div class="menu-item">';
+    if (pic) h += '<img class="item-pic-big" src="' + esc(pic) + '" alt="">';
+    h += '<h3>' + esc(item.name) + '</h3>';
     if (item.description) h += '<div class="desc">' + esc(item.description) + '</div>';
-    h += '</div>';
-    if (pic) h += '<img class="item-pic" src="' + esc(pic) + '" alt="">';
-    h += '</div><div class="row"><span class="price">' + money(item.price) + '</span>' +
+    h += '<div class="row"><span class="price">' + money(item.price) + '</span>' +
       '<span style="flex:1"></span>' +
       (empUnlocked ? '<button data-add="' + i + '">Add</button>' : '') + '</div></div>';
     return h;
@@ -375,6 +396,12 @@
       });
     }
     grid.innerHTML = html;
+    /* The featured slideshow only runs while the search is empty. */
+    var ss = $('menu-slideshow');
+    if (ss) {
+      ss.hidden = !!menuSearch;
+      if (menuSearch) stopSlideTimer(); else startSlideTimer();
+    }
     grid.querySelectorAll('[data-add]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var i = btn.getAttribute('data-add');
@@ -400,6 +427,7 @@
       html += '<div class="card"><p class="info">This is the public menu — take a look around. To order, enter the employee password.</p>' +
         '<button id="menu-order">Order</button></div>';
     }
+    html += '<div id="menu-slideshow"></div>';
     html += '<input id="menu-search" type="text" placeholder="Search menu…" value="' + esc(menuSearch) + '">';
     html += '<div id="menu-grid"></div>';
     el.innerHTML = html;
@@ -412,7 +440,79 @@
       menuSearch = search.value;
       renderMenuGrid();
     });
+    renderSlideshow();
     renderMenuGrid();
+  }
+
+  /* ---------- Featured slideshow (top of the Menu page) ---------- */
+  /* Cycles through the menu items that have a picture, in menu
+     order — one big image, full content width, with the dish name
+     and price overlaid at the bottom. Auto-advances every 5s; a
+     hover (or touch) pauses it, and any manual step (arrow or dot)
+     restarts the 5s timer. Shown only while the search box is empty. */
+  function slideList() {
+    return (data.menu || []).filter(function (it) { return it.pic || it.image; });
+  }
+  function stopSlideTimer() {
+    if (slideTimer) { clearInterval(slideTimer); slideTimer = null; }
+  }
+  function startSlideTimer() {
+    stopSlideTimer();
+    if (!slideItems.length || menuSearch) return;
+    slideTimer = setInterval(function () { showSlide(slideIdx + 1); }, 5000);
+  }
+  function paintSlide() {
+    var box = $('menu-slideshow');
+    if (!box || !slideItems.length) return;
+    var item = slideItems[slideIdx % slideItems.length];
+    var pic = item.pic || item.image || '';
+    var img = box.querySelector('.featured-img');
+    if (img && img.getAttribute('src') !== pic) img.setAttribute('src', pic);
+    var nm = box.querySelector('.featured-name');
+    if (nm) nm.textContent = item.name;
+    var pr = box.querySelector('.featured-price');
+    if (pr) pr.textContent = money(item.price);
+    var ct = box.querySelector('.slide-count');
+    if (ct) ct.textContent = (slideIdx + 1) + ' of ' + slideItems.length;
+    box.querySelectorAll('.dot').forEach(function (d, i) {
+      d.classList.toggle('active', i === slideIdx);
+    });
+  }
+  function showSlide(n) {
+    if (!slideItems.length) return;
+    slideIdx = ((n % slideItems.length) + slideItems.length) % slideItems.length;
+    paintSlide();
+    startSlideTimer();
+  }
+  function renderSlideshow() {
+    var box = $('menu-slideshow');
+    if (!box) return;
+    slideItems = slideList();
+    slideIdx = 0;
+    stopSlideTimer();
+    if (!slideItems.length) { box.innerHTML = ''; box.hidden = true; return; }
+    var dots = '';
+    slideItems.forEach(function (_, i) {
+      dots += '<button class="dot' + (i === 0 ? ' active' : '') + '" data-slide-dot="' + i + '" aria-label="Dish ' + (i + 1) + '"></button>';
+    });
+    var first = slideItems[0];
+    box.innerHTML = '<img class="featured-img" src="' + esc(first.pic || first.image || '') + '" alt="">' +
+      '<div class="featured-overlay"><span class="featured-name">' + esc(first.name) + '</span><span class="featured-price">' + money(first.price) + '</span></div>' +
+      '<button class="slide-btn prev" data-slide-prev aria-label="Previous dish">‹</button>' +
+      '<button class="slide-btn next" data-slide-next aria-label="Next dish">›</button>' +
+      '<span class="slide-count">1 of ' + slideItems.length + '</span>' +
+      '<div class="slide-dots">' + dots + '</div>';
+    box.hidden = !!menuSearch;
+    box.querySelector('[data-slide-prev]').addEventListener('click', function () { showSlide(slideIdx - 1); });
+    box.querySelector('[data-slide-next]').addEventListener('click', function () { showSlide(slideIdx + 1); });
+    box.querySelectorAll('[data-slide-dot]').forEach(function (d) {
+      d.addEventListener('click', function () { showSlide(Number(d.getAttribute('data-slide-dot'))); });
+    });
+    box.addEventListener('mouseenter', stopSlideTimer);
+    box.addEventListener('mouseleave', startSlideTimer);
+    box.addEventListener('touchstart', stopSlideTimer, { passive: true });
+    box.addEventListener('touchend', startSlideTimer, { passive: true });
+    startSlideTimer();
   }
 
   /* ---------- Order ---------- */
@@ -480,16 +580,97 @@
     });
   }
 
+  /* ---------- Kitchen beep (big screen in the kitchen) ---------- */
+  /* The Kitchen runs on a big screen/TV: when a new order arrives,
+     the screen plays a loud triple-beep from its own speakers so
+     the cooks hear it across the room. Synthesized with the Web
+     Audio API — no audio file. Browsers block sound until the user
+     has interacted with the page, so the audio context is created
+     and resumed on a user gesture (employee unlock, Kitchen tab
+     click, or the sound toggle itself). */
+  function ensureAudio() {
+    try {
+      if (!audioCtx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return null;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    } catch (e) { return null; }
+  }
+  function playTripleBeep() {
+    if (!soundOn) return;
+    var ctx = ensureAudio();
+    if (!ctx) return;
+    try {
+      /* Three 880 Hz tones, 0.2s each, 0.15s apart, full volume. */
+      [0, 1, 2].forEach(function (k) {
+        var t = ctx.currentTime + k * 0.35;
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(1, t);
+        gain.gain.setValueAtTime(1, t + 0.2);
+        gain.gain.linearRampToValueAtTime(0.0001, t + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.25);
+      });
+    } catch (e) {}
+  }
+  function soundToggleHtml() {
+    return '<button id="sound-toggle" class="small secondary">' + (soundOn ? '🔔 Sound: On' : '🔇 Sound: Off') + '</button>';
+  }
+  function wireSoundToggle() {
+    var btn = $('sound-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      soundOn = !soundOn;
+      try { localStorage.setItem(SOUND_KEY, soundOn ? 'on' : 'off'); } catch (e) {}
+      btn.textContent = soundOn ? '🔔 Sound: On' : '🔇 Sound: Off';
+      if (soundOn) playTripleBeep(); // gesture + proves the sound works
+    });
+  }
+
   /* ---------- Kitchen (employee password, shared across devices) ---------- */
   function openKitchen() {
     if (needEmp($('view-kitchen'), 'kitchen')) return;
+    /* Fresh open: the orders already waiting seed the seen set, so
+       they never beep — only orders that arrive afterwards do. */
+    kitchenSeen = {};
+    kitchenNewAt = {};
+    kitchenFirstLoad = true;
+    remoteFocusIdx = -1;
     fetchKitchen();
     stopKitchenPoll();
     kitchenTimer = setInterval(fetchKitchen, 5000);
   }
   function fetchKitchen() {
     rpc('list_diner_orders_open', { p_slug: SLUG, p_epass: empPass }).then(function (rows) {
-      kitchenOrders = rows || [];
+      var list = rows || [];
+      if (kitchenFirstLoad) {
+        /* First load seeds the seen set — no beep for orders that
+           were already waiting when the Kitchen opened. */
+        kitchenSeen = {};
+        list.forEach(function (o) { kitchenSeen[o.id] = true; });
+        kitchenFirstLoad = false;
+      } else {
+        var hasNew = false;
+        list.forEach(function (o) {
+          if (!kitchenSeen[o.id]) {
+            kitchenSeen[o.id] = true;
+            kitchenNewAt[o.id] = Date.now();
+            hasNew = true;
+          }
+        });
+        /* One beep per poll cycle that brings any new order, even
+           when several arrive together. */
+        if (hasNew) playTripleBeep();
+      }
+      kitchenOrders = list;
       updateBadges();
       if (currentView === 'kitchen') renderKitchen();
     }).catch(function () {
@@ -499,19 +680,52 @@
       }
     });
   }
+  /* TV remote: after each Kitchen re-render (the list polls every
+     5s), put the remote focus back on the same button, so the cook
+     does not lose their place. */
+  function kitchenButtons() {
+    var el = $('view-kitchen');
+    if (!el) return [];
+    var btns = [];
+    el.querySelectorAll('button, input[type="checkbox"]').forEach(function (b) {
+      if (!b.disabled && b.offsetParent !== null) btns.push(b);
+    });
+    return btns;
+  }
+  function restoreRemoteFocus() {
+    if (remoteFocusIdx < 0) return;
+    var btns = kitchenButtons();
+    if (!btns.length) { remoteFocusIdx = -1; return; }
+    if (remoteFocusIdx >= btns.length) remoteFocusIdx = btns.length - 1;
+    btns[remoteFocusIdx].classList.add('remote-focus');
+    btns[remoteFocusIdx].focus();
+  }
+  function remoteMove(dir) {
+    var btns = kitchenButtons();
+    if (!btns.length) return;
+    remoteFocusIdx = (remoteFocusIdx + dir + btns.length) % btns.length;
+    btns.forEach(function (b, i) { b.classList.toggle('remote-focus', i === remoteFocusIdx); });
+    btns[remoteFocusIdx].focus();
+  }
   function renderKitchen() {
     var el = $('view-kitchen');
     var active = kitchenOrders.filter(function (o) { return o.status === 'active'; });
     if (active.length === 0) {
-      el.innerHTML = '<h2>Kitchen</h2><p class="info">No active orders right now. New orders appear here by themselves — no need to refresh.</p>';
+      el.innerHTML = '<h2>Kitchen</h2><div class="row">' + soundToggleHtml() + '</div><p class="info">No active orders right now. New orders appear here by themselves — no need to refresh.</p>';
+      wireSoundToggle();
+      restoreRemoteFocus();
       return;
     }
-    var html = '<h2>Kitchen</h2><p class="info">Orders refresh on their own every few seconds.</p>';
+    var html = '<h2>Kitchen</h2><div class="row">' + soundToggleHtml() + '</div><p class="info">Orders refresh on their own every few seconds.</p>';
     active.forEach(function (order) {
       var d = order.data || {};
       var items = d.items || [];
       var allCooked = items.length > 0 && items.every(function (it) { return it.cooked; });
-      html += '<div class="card"><h3>Table ' + d.table + '</h3>' +
+      /* New orders (arrived while the Kitchen screen was open, within
+         the last 2 minutes) stand out with a gold border + NEW badge,
+         so the cooks spot them from across the room. */
+      var isNew = kitchenNewAt[order.id] && (Date.now() - kitchenNewAt[order.id] < 120000);
+      html += '<div class="card' + (isNew ? ' new-order' : '') + '"><h3>Table ' + d.table + (isNew ? '<span class="new-badge">NEW</span>' : '') + '</h3>' +
         '<p class="info">' + new Date(d.createdAt || order.created_at).toLocaleString() + '</p>';
       items.forEach(function (it, i) {
         html += '<div class="kitchen-item"><input type="checkbox" data-cook="' + order.id + ':' + i + '"' +
@@ -557,6 +771,8 @@
         rpc('delete_diner_order_open', { p_slug: SLUG, p_order_id: id, p_epass: empPass }).then(fetchKitchen).catch(fetchKitchen);
       });
     });
+    wireSoundToggle();
+    restoreRemoteFocus();
   }
 
   /* ---------- Receipt (visitor's own orders, printable) ---------- */
@@ -745,7 +961,39 @@
 
   /* ---------- Start ---------- */
   document.querySelectorAll('#tabs button').forEach(function (btn) {
-    btn.addEventListener('click', function () { show(btn.getAttribute('data-view')); });
+    btn.addEventListener('click', function () {
+      if (btn.getAttribute('data-view') === 'kitchen') ensureAudio(); // gesture: lets the Kitchen beep play
+      show(btn.getAttribute('data-view'));
+    });
+  });
+  /* TV remote navigation, Kitchen tab only: the Kitchen runs on a
+     big screen, and the remote sends plain arrow keys + Enter. Any
+     arrow moves the focus to the next/previous visible action
+     button (wrapping at the ends); Enter activates the focused
+     button. Typing in a text input is left alone. */
+  document.addEventListener('keydown', function (e) {
+    if (currentView !== 'kitchen') return;
+    var ae = document.activeElement;
+    /* Typing in a text field is left alone — but a checkbox is a
+       remote target too, so only text-like inputs block the keys. */
+    if (ae && (ae.tagName === 'TEXTAREA' || ae.tagName === 'SELECT' || (ae.tagName === 'INPUT' && ae.type !== 'checkbox'))) return;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      remoteMove(e.key === 'ArrowUp' || e.key === 'ArrowLeft' ? -1 : 1);
+    } else if (e.key === 'Enter') {
+      var focused = document.querySelector('#view-kitchen .remote-focus');
+      if (!focused) return;
+      if (focused.tagName === 'INPUT' && focused.type === 'checkbox') {
+        /* OK on a checkbox ticks it (Enter alone does not toggle a
+           checkbox in every browser), and the change event saves it. */
+        e.preventDefault();
+        focused.checked = !focused.checked;
+        focused.dispatchEvent(new Event('change', { bubbles: true }));
+      } else if (document.activeElement !== focused) {
+        e.preventDefault(); focused.click();
+      }
+      /* Button already focused: let the browser's own Enter press it. */
+    }
   });
   /* Black ↑ Top pill at the bottom-left, exactly like the shop pages:
      always visible, tap it to jump back to the top. */

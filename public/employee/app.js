@@ -267,8 +267,8 @@
     renderHeaderIcon(biz && biz.icon ? biz.icon : '');
     $('site-about').textContent = biz ? (biz.about || '') : '';
     $('site-footer').innerHTML = biz
-      ? esc([biz.address, biz.phone].filter(Boolean).join(' · ')) + '<br>Powered by AutoFly'
-      : 'Powered by AutoFly';
+      ? esc([biz.address, biz.phone].filter(Boolean).join(' · ')) + '<br>Powered by Yently'
+      : 'Powered by Yently';
     document.title = (biz ? biz.name : 'Employee') + ' — Employee Time';
   }
 
@@ -363,7 +363,7 @@
         esc(s.name) + ' (' + esc(s.code || '') + ')</option>';
     }).join('');
     el.innerHTML = '<h2>Log Time — ' + esc(biz.name) + '</h2><div class="card">' +
-      '<p class="info">Record a clock-in (and a clock-out, when the shift ends). The record is shared with the business, and a copy is emailed to AutoFly.</p>' +
+      '<p class="info">Record a clock-in (and a clock-out, when the shift ends). The record is shared with the business, and a copy is emailed to Yently.</p>' +
       '<label>Employee</label><select id="lg-emp">' + opts + '</select>' +
       '<label>Date</label><input id="lg-date" type="date" value="' + todayStr() + '">' +
       '<label>Clock in</label><input id="lg-in" type="time" value="' + nowTime() + '">' +
@@ -488,7 +488,7 @@
     if (!biz) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
     if (!ownerCreds) {
       el.innerHTML = '<h2>Setup</h2><div class="card">' +
-        '<p class="info">Enter the username and password AutoFly gave this business.</p>' +
+        '<p class="info">Enter the username and password Yently gave this business.</p>' +
         '<label>Username</label><input id="st-user" type="text" autocomplete="username">' +
         '<label>Password</label><input id="st-pass" type="password" autocomplete="current-password">' +
         '<div class="row"><button id="st-go">Log in</button></div>' +
@@ -701,7 +701,7 @@
     };
   }
   function draftStatusText() {
-    if (draftStatus === 'pending') return 'Draft status: pending — waiting for AutoFly to approve it.';
+    if (draftStatus === 'pending') return 'Draft status: pending — waiting for Yently to approve it.';
     if (draftStatus === 'approved') return 'Draft status: approved — approved, live now.';
     return 'Draft status: editing — saved, not sent yet.';
   }
@@ -747,8 +747,8 @@
   /* ---------- start ---------- */
   function notFound() {
     $('site-name').textContent = 'Employee';
-    $('site-footer').textContent = 'Powered by AutoFly';
-    $('view-employees').innerHTML = '<div class="card"><h2>Business not found</h2><p class="info">This page needs a business link. Ask AutoFly to set it up.</p></div>';
+    $('site-footer').textContent = 'Powered by Yently';
+    $('view-employees').innerHTML = '<div class="card"><h2>Business not found</h2><p class="info">This page needs a business link. Ask Yently to set it up.</p></div>';
   }
   if (!SLUG) {
     notFound();

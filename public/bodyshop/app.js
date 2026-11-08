@@ -282,8 +282,8 @@
     renderHeaderIcon(shop && shop.icon ? shop.icon : '');
     $('site-about').textContent = shop ? (shop.about || '') : '';
     $('site-footer').innerHTML = shop
-      ? esc([shop.address, shop.phone].filter(Boolean).join(' · ')) + '<br>Powered by AutoFly'
-      : 'Powered by AutoFly';
+      ? esc([shop.address, shop.phone].filter(Boolean).join(' · ')) + '<br>Powered by Yently'
+      : 'Powered by Yently';
     document.title = (shop ? shop.name : 'Bodyshop') + ' — Bodyshop';
   }
 
@@ -817,7 +817,7 @@
     if (!shop) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
     if (!ownerCreds) {
       el.innerHTML = '<h2>Setup</h2><div class="card">' +
-        '<p class="info">Enter the username and password AutoFly gave this shop.</p>' +
+        '<p class="info">Enter the username and password Yently gave this shop.</p>' +
         '<label>Username</label><input id="st-user" type="text" autocomplete="username">' +
         '<label>Password</label><input id="st-pass" type="password" autocomplete="current-password">' +
         '<div class="row"><button id="st-go">Log in</button></div>' +
@@ -864,7 +864,7 @@
       '<label>Hours</label><input id="d-hours" type="text" value="' + esc(draft.hours || '') + '">' +
       '<div class="row"><button id="d-save">Save draft</button>' +
       '<button id="d-upload" class="secondary">Upload for approval</button></div>' +
-      '<p class="info" id="d-status">Draft status: ' + esc(draftStatus) + (draftStatus === 'pending' ? ' — waiting for AutoFly to approve it.' : draftStatus === 'approved' ? ' — approved, live now.' : ' — not sent yet.') + '</p>' +
+      '<p class="info" id="d-status">Draft status: ' + esc(draftStatus) + (draftStatus === 'pending' ? ' — waiting for Yently to approve it.' : draftStatus === 'approved' ? ' — approved, live now.' : ' — not sent yet.') + '</p>' +
       '<p class="error" id="d-err" hidden></p></div>';
     $('d-save').addEventListener('click', function () { saveDraft(false); });
     $('d-upload').addEventListener('click', function () { saveDraft(true); });
@@ -899,7 +899,7 @@
         }
         return rpc('submit_bodyshop_draft', { p_slug: SLUG, p_u: ownerCreds.u, p_p: ownerCreds.p }).then(function () {
           draftStatus = 'pending';
-          $('d-status').textContent = 'Draft status: pending — waiting for AutoFly to approve it.';
+          $('d-status').textContent = 'Draft status: pending — waiting for Yently to approve it.';
           notifyEmail('Bodyshop draft for approval: ' + d.name, 'bodyshop_draft', { slug: SLUG, name: d.name });
         });
       })
@@ -938,13 +938,13 @@
   function init() {
     if (!SLUG) {
       $('site-name').textContent = 'Bodyshop';
-      $('view-request').innerHTML = '<div class="card"><h2>Shop not found</h2><p class="info">This bodyshop page needs a shop link. Ask AutoFly for your shop link.</p></div>';
+      $('view-request').innerHTML = '<div class="card"><h2>Shop not found</h2><p class="info">This bodyshop page needs a shop link. Ask Yently for your shop link.</p></div>';
       return;
     }
     rpc('get_bodyshop_live', { p_slug: SLUG }).then(function (d) {
       if (!d || !d.name) {
         $('site-name').textContent = 'Bodyshop';
-        $('view-request').innerHTML = '<div class="card"><h2>Shop not found</h2><p class="info">No bodyshop with this link yet. Ask AutoFly to set it up.</p></div>';
+        $('view-request').innerHTML = '<div class="card"><h2>Shop not found</h2><p class="info">No bodyshop with this link yet. Ask Yently to set it up.</p></div>';
         return;
       }
       shop = d;

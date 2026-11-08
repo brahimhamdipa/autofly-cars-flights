@@ -95,7 +95,7 @@ export default function RestaurantsPage({ go }) {
         <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
 
-      {demoOpen && <DemoInterestPopup systemName="Restaurant ordering page" demoUrl="/diner?r=demo-restaurant" onClose={() => setDemoOpen(false)} />}
+      {demoOpen && <DemoInterestPopup systemName="Restaurant ordering page" onClose={() => setDemoOpen(false)} />}
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your restaurant online</h3>

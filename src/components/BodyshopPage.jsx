@@ -99,7 +99,7 @@ export default function BodyshopPage({ go }) {
         <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
 
-      {demoOpen && <DemoInterestPopup systemName="Bodyshop management" demoUrl="/bodyshop?b=demo-bodyshop" onClose={() => setDemoOpen(false)} />}
+      {demoOpen && <DemoInterestPopup systemName="Bodyshop management" onClose={() => setDemoOpen(false)} />}
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your bodyshop online</h3>

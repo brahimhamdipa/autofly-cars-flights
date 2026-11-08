@@ -92,7 +92,7 @@ export default function BarbersPage({ go }) {
         <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
 
-      {demoOpen && <DemoInterestPopup systemName="Barbershop booking page" demoUrl="/barbers?s=demo-barber" onClose={() => setDemoOpen(false)} />}
+      {demoOpen && <DemoInterestPopup systemName="Barbershop booking page" onClose={() => setDemoOpen(false)} />}
 
       <div className="hero-card">
         <h3>Request your booking page</h3>

@@ -98,7 +98,7 @@ export default function EmployeePage({ go }) {
         <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
 
-      {demoOpen && <DemoInterestPopup systemName="Employee time page" demoUrl="/employee?e=demo-employee" onClose={() => setDemoOpen(false)} />}
+      {demoOpen && <DemoInterestPopup systemName="Employee time page" onClose={() => setDemoOpen(false)} />}
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your employee time page</h3>

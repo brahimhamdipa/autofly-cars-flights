@@ -95,7 +95,7 @@ export default function PosPage({ go }) {
         <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
 
-      {demoOpen && <DemoInterestPopup systemName="Point of sale page" demoUrl="/pos?s=demo-pos" onClose={() => setDemoOpen(false)} />}
+      {demoOpen && <DemoInterestPopup systemName="Point of sale page" onClose={() => setDemoOpen(false)} />}
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your point of sale</h3>

@@ -4,11 +4,11 @@ import { submitCarInquiry } from './CarSection'
 // Demo-interest popup for the Business Systems ad pages — the Cars
 // "I'm interested" popup (InterestModal in CarSection.jsx) with "car"
 // replaced by the demo system. The button on each ad page's demo card
-// opens this; after sending, the visitor can open the live demo from
-// the confirmation. The inquiry lands in car_inquiries as
+// opens this. The inquiry lands in car_inquiries as
 // "Demo Request — <system>" and emails the owner, exactly like a car
-// inquiry.
-export default function DemoInterestPopup({ systemName, demoUrl, onClose }) {
+// inquiry. No demo link anywhere on the ad pages — the demo is reached
+// only from a link the owner shares.
+export default function DemoInterestPopup({ systemName, onClose }) {
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: `I'm interested in a demo of the ${systemName}.` })
   const [status, setStatus] = useState('')
   const [sent, setSent] = useState(false)
@@ -33,7 +33,6 @@ export default function DemoInterestPopup({ systemName, demoUrl, onClose }) {
           <div className="confirm">
             <h3>✓ Sent!</h3>
             <p>Thanks {form.name.split(' ')[0] || 'there'} — your interest in the demo was sent. We'll be in touch shortly.</p>
-            <a href={demoUrl} target="_blank" rel="noreferrer"><button type="button">Open the demo now</button></a>
             <button onClick={onClose}>Close</button>
           </div>
         ) : (

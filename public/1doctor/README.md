@@ -2,7 +2,7 @@
 
 A doctor's clinic page for AutoFly, built in the same pattern as the
 restaurant (dine), houses, and barbershop templates: one self-contained
-folder, live at `autofly.us.com/<folder>`.
+folder, live at `yently.com/<folder>`.
 
 ## Files
 
@@ -18,7 +18,7 @@ folder, live at `autofly.us.com/<folder>`.
 ## Copying it (making a new clinic page)
 
 Copy the whole folder under a new name (for example `doctor2`), and
-`autofly.us.com/doctor2` opens that copy. Nothing else needs changing
+`yently.com/doctor2` opens that copy. Nothing else needs changing
 for the address to work — but the *clinic name shown* comes from that
 copy's `data.json`, so open the new page's Setup tab and change it there.
 

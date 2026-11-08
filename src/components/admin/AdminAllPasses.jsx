@@ -4,8 +4,8 @@ import { supabase } from '../../lib/supabaseClient'
 
 // All Passes: every login the admin has handed out, in one place —
 // the link, the username, the password, who uses it, and the note.
-// Grouped by area (Stores, Diner, POS, Barbers, Websites, Chat), with a
-// search box over everything. Display only: a pass is created, edited
+// Grouped by area (Stores, Diner, POS, Dealer, Employee, Bodyshop,
+// Barbers, Websites, Chat), with a search box over everything. Display
 // or deleted in its own table, this page just gathers them.
 // Passwords show readable here BY DESIGN, like everywhere else in
 // Admin — this page is owner-only, and the whole point of it is that
@@ -20,6 +20,9 @@ const GROUPS = [
   { key: 'stores', title: 'Stores' },
   { key: 'diner', title: 'Diner' },
   { key: 'pos', title: 'POS' },
+  { key: 'dealer', title: 'Dealer' },
+  { key: 'employee', title: 'Employee' },
+  { key: 'bodyshop', title: 'Bodyshop' },
   { key: 'barbers', title: 'Barbers' },
   { key: 'websites', title: 'Websites' },
   { key: 'chat', title: 'Chat' },
@@ -39,7 +42,7 @@ export default function AdminAllPasses() {
       if (error) { failedGroups.push(key); return [] }
       return data || []
     }
-    const [providers, formRows, employees, passRows, intakeRows, dinerRows, shopRows, uploadRows, folderRows, posRows] = await Promise.all([
+    const [providers, formRows, employees, passRows, intakeRows, dinerRows, shopRows, uploadRows, folderRows, posRows, dealerRows, employeeRows, bodyshopRows] = await Promise.all([
       grab('stores', supabase.from('store_providers').select('id, name')),
       grab('stores', supabase.from('providersForm').select('id, provider_id, f, u, p, comment').order('f')),
       grab('chat', supabase.from('employees').select('id, firstName, lastName')),
@@ -50,6 +53,9 @@ export default function AdminAllPasses() {
       grab('websites', supabase.from('upload_forms').select('id, f, u, p, folder, note').order('f')),
       grab('websites', supabase.from('folder_passes').select('id, folder, username, password, note').order('folder')),
       grab('pos', supabase.from('pos_stores').select('id, slug, name, u, p, epass, note').order('name')),
+      grab('dealer', supabase.from('dealer_shops').select('id, slug, name, u, p, epass, note').order('name')),
+      grab('employee', supabase.from('employee_shops').select('id, slug, name, u, p, epass, note').order('name')),
+      grab('bodyshop', supabase.from('bodyshop_shops').select('id, slug, name, u, p, epass, note').order('name')),
     ])
     const providerName = (id) => providers.find(p => p.id === id)?.name || '—'
     const employeeName = (id) => {
@@ -70,6 +76,21 @@ export default function AdminAllPasses() {
       ...posRows.map(r => ({
         key: 'pos-' + r.id, group: 'pos', kind: 'POS pass',
         link: '/pos?s=' + r.slug, linkText: 'autofly.us.com/pos?s=' + r.slug,
+        user: r.u, pass: r.p, passExtra: r.epass ? 'Team: ' + r.epass : '', customer: r.name || '—', note: r.note || '',
+      })),
+      ...dealerRows.map(r => ({
+        key: 'dealer-' + r.id, group: 'dealer', kind: 'Dealer pass',
+        link: '/dealer?d=' + r.slug, linkText: 'autofly.us.com/dealer?d=' + r.slug,
+        user: r.u, pass: r.p, passExtra: r.epass ? 'Team: ' + r.epass : '', customer: r.name || '—', note: r.note || '',
+      })),
+      ...employeeRows.map(r => ({
+        key: 'employee-' + r.id, group: 'employee', kind: 'Employee pass',
+        link: '/employee?e=' + r.slug, linkText: 'autofly.us.com/employee?e=' + r.slug,
+        user: r.u, pass: r.p, passExtra: r.epass ? 'Team: ' + r.epass : '', customer: r.name || '—', note: r.note || '',
+      })),
+      ...bodyshopRows.map(r => ({
+        key: 'bodyshop-' + r.id, group: 'bodyshop', kind: 'Bodyshop pass',
+        link: '/bodyshop?b=' + r.slug, linkText: 'autofly.us.com/bodyshop?b=' + r.slug,
         user: r.u, pass: r.p, passExtra: r.epass ? 'Team: ' + r.epass : '', customer: r.name || '—', note: r.note || '',
       })),
       ...shopRows.map(r => ({

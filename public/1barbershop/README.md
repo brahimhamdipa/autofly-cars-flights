@@ -44,7 +44,7 @@ is the confirmation.
 1. Copy the whole folder, paste it under a new name (lowercase
    letters, digits, and dashes only; never `admin`).
 2. After the site rebuilds (a few minutes), the copy opens at
-   `autofly.us.com/<new name>`.
+   `yently.com/<new name>`.
 3. Change the displayed shop name in the copy's Setup tab (the name
    comes from that folder's `data.json`, not from the folder name),
    download the new `data.json`, and swap it into the copied folder.

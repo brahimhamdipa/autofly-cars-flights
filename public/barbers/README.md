@@ -6,7 +6,7 @@ which shop from the link.
 
 ## Links
 
-- Visitor link: `autofly.us.com/barbers?s=<slug>` — the Book tab
+- Visitor link: the shop's own private link — the Book tab
   (anyone can book an appointment, no login) and the Serving Now
   tab (public, initials only).
 - Bookings: the Bookings tab asks for the shop's shared employee

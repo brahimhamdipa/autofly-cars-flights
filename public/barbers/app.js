@@ -1,5 +1,5 @@
 /* Barbers page app — ONE folder for every barber shop.
-   The shop comes from the link (?s=<slug>), and its services, info,
+   The shop comes from its own private link, and its services, info,
    and bookings live in the database — there is no data.json file here.
    Visitors see the last APPROVED services. Anyone can book an
    appointment (no login); Serving Now is public too, but it shows
@@ -40,11 +40,13 @@
   var empPass = null; // employee password in memory only, never stored
   var empUnlocked = false; // true once the employee password is entered, or when the shop has none set
   var bookings = []; // employee view (full details)
+  var cancelBookingId = null; // booking id awaiting an in-page cancel confirmation
   var serving = []; // public Serving Now rows (initials only)
   var bookingsTimer = null;
   var servingTimer = null;
   var servingClock = null;
   var currentView = 'book';
+  var bookSearch = ''; // public services search text, kept while typing
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -129,6 +131,23 @@
     return shrinkIconImage(file).then(function (up) {
       var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       var path = 'store/icons/' + SLUG + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + safe;
+      return fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
+        method: 'POST',
+        headers: { 'Content-Type': up.type || 'application/octet-stream', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+        body: up
+      }).then(function (res) {
+        if (!res.ok) throw new Error('upload failed (HTTP ' + res.status + ')');
+        return SUPABASE_URL + '/storage/v1/object/public/product-images/' + path;
+      });
+    });
+  }
+  /* One small picture per service, same shrink as the icon (200px,
+     JPEG 0.8, PNGs stay PNG). Uploaded at once to store/barber-items/
+     and stored on the draft service as `pic` — a public URL or ''. */
+  function uploadItemPicture(file) {
+    return shrinkIconImage(file).then(function (up) {
+      var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      var path = 'store/barber-items/' + SLUG + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + safe;
       return fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
         method: 'POST',
         headers: { 'Content-Type': up.type || 'application/octet-stream', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
@@ -291,6 +310,34 @@
   }
 
   /* ---------- Book (public, no login) ---------- */
+  function serviceMatches(s, q) {
+    if (!q) return true;
+    return String(s.name || '').toLowerCase().indexOf(q) !== -1;
+  }
+  /* The services grid alone, re-rendered as the visitor types in the
+     search box, so the search input never loses focus. Each service
+     shows its small picture on the right (96×72, the same size as
+     the dealer Setup thumbnails); services without one show none. */
+  function renderBookGrid() {
+    var grid = $('book-grid');
+    if (!grid) return;
+    var q = (bookSearch || '').toLowerCase();
+    var services = (data.services || []).filter(function (s) { return serviceMatches(s, q); });
+    if (!services.length) {
+      grid.innerHTML = '<p class="info">' + (bookSearch ? 'No services match your search.' : 'No services listed yet — check back soon.') + '</p>';
+      return;
+    }
+    var html = '<div class="menu-grid">';
+    services.forEach(function (s) {
+      html += '<div class="menu-item"><div class="item-top"><div class="item-text"><h3>' + esc(s.name) + '</h3>' +
+        (s.description ? '<div class="desc">' + esc(s.description) + '</div>' : '') + '</div>' +
+        (s.pic ? '<img class="item-pic" src="' + esc(s.pic) + '" alt="">' : '') +
+        '</div><div class="row"><span class="price">' + money(s.price) + '</span>' +
+        '<span class="info">' + (s.duration ? s.duration + ' min' : '') + '</span></div></div>';
+    });
+    html += '</div>';
+    grid.innerHTML = html;
+  }
   function renderBook() {
     var el = $('view-book');
     if (!data) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
@@ -301,19 +348,9 @@
     if (data.hours) info += '<p>🕐 ' + esc(data.hours) + '</p>';
     info += '</div>';
     var services = data.services || [];
-    var html = info + '<h2>Services</h2>';
-    if (services.length === 0) {
-      html += '<p class="info">No services listed yet — check back soon.</p>';
-    } else {
-      html += '<div class="menu-grid">';
-      services.forEach(function (s) {
-        html += '<div class="menu-item"><h3>' + esc(s.name) + '</h3>' +
-          (s.description ? '<div class="desc">' + esc(s.description) + '</div>' : '') +
-          '<div class="row"><span class="price">' + money(s.price) + '</span>' +
-          '<span class="info">' + (s.duration ? s.duration + ' min' : '') + '</span></div></div>';
-      });
-      html += '</div>';
-    }
+    var html = info + '<h2>Services</h2>' +
+      '<input id="book-search" type="text" placeholder="Search services…" value="' + esc(bookSearch) + '">' +
+      '<div id="book-grid"></div>';
     var today = todayLocal();
     html += '<h2>Book an appointment</h2><div class="card">' +
       '<label>Your name</label><input id="bk-name" type="text" autocomplete="name">' +
@@ -331,6 +368,12 @@
       '<div class="row"><button id="bk-go">Book appointment</button></div>' +
       '<div id="bk-out" style="margin-top:12px"></div></div>';
     el.innerHTML = html;
+    var search = $('book-search');
+    if (search) search.addEventListener('input', function () {
+      bookSearch = search.value;
+      renderBookGrid();
+    });
+    renderBookGrid();
     $('bk-go').addEventListener('click', function () {
       var out = $('bk-out');
       var name = $('bk-name').value.trim();
@@ -399,7 +442,9 @@
         '<div class="row" style="margin-top:10px">' +
         '<button data-watch="' + b.id + '">' + (running ? 'Stop' : 'Stopwatch') + '</button>' +
         '<button class="secondary" data-done="' + b.id + '">Mark done</button>' +
-        '<button class="danger" data-cancel="' + b.id + '">Cancel</button></div></div>';
+        (cancelBookingId === b.id
+          ? '<span><b>Cancel this booking?</b> <button class="danger" data-cancel-yes="' + b.id + '">Yes, cancel</button> <button class="secondary" data-cancel-no="' + b.id + '">Keep it</button></span>'
+          : '<button class="danger" data-cancel="' + b.id + '">Cancel</button>') + '</div></div>';
     });
     if (past.length > 0) {
       html += '<h2>Past bookings</h2>';
@@ -430,8 +475,18 @@
     });
     el.querySelectorAll('[data-cancel]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (!window.confirm('Cancel this booking?')) return;
-        update(btn.getAttribute('data-cancel'), 'cancelled', null);
+        cancelBookingId = Number(btn.getAttribute('data-cancel'));
+        renderBookings();
+      });
+    });
+    el.querySelectorAll('[data-cancel-no]').forEach(function (btn) {
+      btn.addEventListener('click', function () { cancelBookingId = null; renderBookings(); });
+    });
+    el.querySelectorAll('[data-cancel-yes]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-cancel-yes');
+        cancelBookingId = null;
+        update(id, 'cancelled', null);
       });
     });
   }
@@ -548,6 +603,12 @@
         '<label>Price</label><input data-f="price" type="number" step="0.01" min="0" value="' + esc(s.price) + '">' +
         '<label>Duration in minutes</label><input data-f="duration" type="number" min="0" value="' + esc(s.duration == null ? '' : s.duration) + '">' +
         '<label>Description</label><input data-f="description" value="' + esc(s.description || '') + '">' +
+        '<label>Picture</label>' +
+        '<div class="pic-thumbs">' +
+        (s.pic ? '<div class="pic-thumb"><img src="' + esc(s.pic) + '" alt="Service picture"><button class="small danger" data-pic-remove="' + i + '">Remove</button></div>' : '') +
+        '</div>' +
+        '<input type="file" accept="image/*" data-pic-file="' + i + '">' +
+        '<p class="info" data-pic-status="' + i + '" hidden></p>' +
         '<button class="small danger" data-remove="' + i + '">Remove service</button>';
       row.querySelectorAll('[data-f]').forEach(function (input) {
         input.addEventListener('input', function () {
@@ -559,6 +620,28 @@
         draft.services.splice(i, 1);
         renderSetup();
       });
+      /* Picking a picture uploads it at once and stores the URL on the
+         draft service; Remove clears it. The draft is only persisted
+         when the owner saves it, like every other field. */
+      var picFile = row.querySelector('[data-pic-file]');
+      if (picFile) picFile.addEventListener('change', function () {
+        var f = picFile.files && picFile.files[0];
+        if (!f) return;
+        var st = row.querySelector('[data-pic-status]');
+        if (st) { st.hidden = false; st.textContent = 'Uploading picture…'; }
+        uploadItemPicture(f).then(function (url) {
+          s.pic = url;
+          drawServices();
+        }).catch(function (err) {
+          if (st) { st.hidden = false; st.textContent = 'Could not upload the picture: ' + (err && err.message ? err.message : 'please try again.'); }
+          picFile.value = '';
+        });
+      });
+      var picRemove = row.querySelector('[data-pic-remove]');
+      if (picRemove) picRemove.addEventListener('click', function () {
+        s.pic = '';
+        drawServices();
+      });
       return row;
     }
     function drawServices() {
@@ -568,7 +651,7 @@
     drawServices();
     wireIconField();
     $('setup-add').addEventListener('click', function () {
-      draft.services.push({ name: 'New service', price: 0, duration: 30, description: '' });
+      draft.services.push({ name: 'New service', price: 0, duration: 30, description: '', pic: '' });
       drawServices();
     });
     function collectDraft() {
@@ -623,7 +706,7 @@
   }
   if (!SLUG) {
     $('site-name').textContent = 'Shop not found';
-    $('view-book').innerHTML = '<div class="error">This link doesn\'t point to a barber shop. Check the link and try again — a shop link looks like autofly.us.com/barbers?s=your-shop.</div>';
+    $('view-book').innerHTML = '<div class="error">This link doesn\'t point to a barber shop. Check the link and try again — ask AutoFly for your shop link.</div>';
   } else {
     rpc('get_barbershop_live', { p_slug: SLUG }).then(function (json) {
       if (!json || !json.name) throw new Error('not found');

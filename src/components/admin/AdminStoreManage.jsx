@@ -53,6 +53,7 @@ const TABLES = [
   ['barbershop_bookings', 'Barber Bookings', 'barbershop_bookings'],
   ['barbershop_orders', 'Barbershop Orders', 'barbershop_order'],
   ['tv_gallery_orders', 'TV Gallery Orders', 'tv_gallery_order'],
+  ['live_chat_orders', 'Live Chat Orders', 'live_chat_order'],
   ['pos_stores', 'POS Passes', 'pos_stores'],
   ['pos_approvals', 'POS Approval', 'pos_stores'],
   ['pos_sales', 'POS Sales', 'pos_sales'],
@@ -109,6 +110,7 @@ const blankDraft = (table) => {
   if (table === 'barbershop_bookings') return {}
   if (table === 'barbershop_orders') return { customer_name: '', customer_email: '', customer_phone: '', plan: 'Barbershop booking page', price: 15, note: '' }
   if (table === 'tv_gallery_orders') return { customer_name: '', customer_email: '', customer_phone: '', plan: 'TV Gallery page', price: 2, note: '' }
+  if (table === 'live_chat_orders') return { customer_name: '', customer_email: '', customer_phone: '', plan: 'Live chat page', price: 3, note: '' }
   if (table === 'pos_stores') return { slug: '', name: '', u: '', p: '', epass: '', note: '' }
   if (table === 'pos_approvals') return {}
   if (table === 'pos_sales') return {}
@@ -378,6 +380,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
     if (table === 'barbershop_bookings') q = supabase.from(tableName).select('*').order('id', { ascending: false })
     if (table === 'barbershop_orders') q = supabase.from(tableName).select('*').order('id')
     if (table === 'tv_gallery_orders') q = supabase.from(tableName).select('*').order('id')
+    if (table === 'live_chat_orders') q = supabase.from(tableName).select('*').order('id')
     if (table === 'pos_approvals') q = supabase.from(tableName).select('*').eq('draft_status', 'pending').order('id')
     if (table === 'pos_sales') q = supabase.from(tableName).select('*, store:pos_stores(name)').order('id', { ascending: false })
     if (table === 'pos_orders') q = supabase.from(tableName).select('*').order('id')

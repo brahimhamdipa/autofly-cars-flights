@@ -195,7 +195,7 @@
         body: JSON.stringify({ subject: 'Barber intake: ' + shop + ' (pending approval)', table: 'barber_intake', record: record })
       }).catch(function () { /* inbox copy failed; submission still saved */ });
     }).then(function () {
-      setStatus('Thanks! Your details were sent to AutoFly and are waiting for approval. We will confirm your page once it is built.', true);
+      setStatus('Thanks! Your details were sent to Yently and are waiting for approval. We will confirm your page once it is built.', true);
       $('intake-form').reset();
       document.querySelectorAll('#services-rows .service-row').forEach(function (r, i) { if (i > 0) r.remove(); });
       DAYS.forEach(function (day, i) {

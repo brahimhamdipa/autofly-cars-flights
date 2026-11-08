@@ -26,11 +26,11 @@ import { shrinkImage } from '../lib/storeUpload'
 //   fullscreen like the urgent messages on TV (big, red, impossible
 //   to miss). Empty message: nothing shows, just the pictures.
 // - TV remote: in the fullscreen, Left/Right flip pictures, Up/Down
-//   moves between the buttons (menu / close / Prev / Next / One
-//   picture or Slideshow / Want this for your business?), OK presses
-//   the highlighted button, Esc closes the open menu first, then the
-//   gallery. Buttons and fields also show a thick gold outline when
-//   focused, so the remote's position is visible on a TV.
+//   moves between the buttons (menu / close / arrows / play or pause
+//   / Want this for your business?), OK presses the highlighted
+//   button, Esc closes the open menu first, then the gallery.
+//   Buttons and fields also show a thick gold outline when focused,
+//   so the remote's position is visible on a TV.
 // - The controls hide on their own after a few seconds so the
 //   picture is clean. They come back on a tap or a key press — never
 //   on an automatic picture change. The menu button (top left) and
@@ -47,7 +47,10 @@ const MAX_PICS = 7
 // it, so seven TVs on the same link can each hold a different
 // picture. ?pic=N opens One picture on that picture. The demo
 // gallery also carries the Business Systems ☰ submenu (top left),
-// like the other Business Systems pages. The demo form row (f =
+// like the other Business Systems pages — in the fullscreen it
+// hides with the controls, and the page behind the gallery has it
+// too, so the visitor can always get back to the Business Systems
+// pages. The demo form row (f =
 // 'demo-tv-gallery', u/p 'demo') is seeded in the database — this
 // page only opens it, it never creates it.
 export default function UploadFormPage({ slug, goBack, go }) {
@@ -90,6 +93,7 @@ export default function UploadFormPage({ slug, goBack, go }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuAddonsOpen, setMenuAddonsOpen] = useState(false)
   const menuRef = useRef(null)
+  const pageMenuRef = useRef(null)
   const menuOpenRef = useRef(false)
   const fileRef = useRef(null)
   const replaceRef = useRef(null)
@@ -316,10 +320,41 @@ export default function UploadFormPage({ slug, goBack, go }) {
     pokeControls()
   }
 
+  // The Business Systems ☰ submenu, used twice on the demo page: in
+  // the fullscreen (top left, hides with the controls) and on the
+  // page behind the gallery (top left, always there). Same links as
+  // the other Business Systems pages.
+  const menuBox = (ref) => (
+    <div ref={ref} className="car-submenu-wrap" style={{ marginBottom: 0 }}>
+      <button type="button" className="car-submenu-btn" aria-label="Business Systems menu" onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); pokeControls() }}>
+        <span className="burger" aria-hidden="true"><span /><span /><span /></span>
+      </button>
+      {menuOpen && (
+        <div className="car-submenu">
+          <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('business-cart') }}>My Cart</button>
+          <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('restaurants') }}>Restaurant</button>
+          <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('pos') }}>POS</button>
+          <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('barbers') }}>Barber</button>
+          <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('dealer') }}>Dealer</button>
+          <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('employee') }}>Employee</button>
+          <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('bodyshop') }}>Bodyshop</button>
+          <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('simple-barbershop') }}>Sample Website</button>
+          <button type="button" onClick={e => { e.stopPropagation(); setMenuAddonsOpen(o => !o) }}>Add-ons {menuAddonsOpen ? '▾' : '▸'}</button>
+          {menuAddonsOpen && (
+            <a href="/demo-tv-gallery" style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', textDecoration: 'none', borderTop: '1px solid #f1f2f5' }}>TV Gallery</a>
+          )}
+        </div>
+      )}
+    </div>
+  )
+
   // The gallery submenu closes when the visitor taps anywhere else.
   useEffect(() => {
     if (!menuOpen) return
-    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) { setMenuOpen(false); pokeControls() } }
+    const onDown = (e) => {
+      const inMenu = [menuRef.current, pageMenuRef.current].some(r => r && r.contains(e.target))
+      if (!inMenu) { setMenuOpen(false); pokeControls() }
+    }
     window.addEventListener('pointerdown', onDown)
     return () => window.removeEventListener('pointerdown', onDown)
   }, [menuOpen])
@@ -353,6 +388,11 @@ export default function UploadFormPage({ slug, goBack, go }) {
   return (
     <div className="upload-form-page">
       <style>{`.upload-form-page button:focus-visible, .upload-form-page input:focus-visible { outline: 3px solid #f5a623; outline-offset: 2px; }`}</style>
+      {demoMode && viewIndex === null && (
+        <div style={{ position: 'fixed', top: 12, left: 12, zIndex: 10 }} onClick={e => e.stopPropagation()}>
+          {menuBox(pageMenuRef)}
+        </div>
+      )}
       <div className="hero-card">
         {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
         <h2>📷 Picture upload</h2>
@@ -414,6 +454,9 @@ export default function UploadFormPage({ slug, goBack, go }) {
             <>
               <p>The demo gallery is playing fullscreen — close it any time with Esc, or tap below to open it again.</p>
               <button type="button" onClick={() => openGallery(openingPic())} disabled={pics.length === 0}>View the gallery</button>
+              <div style={{ marginTop: 10 }}>
+                <button type="button" onClick={() => go && go('tv-gallery')}>Want this for your business?</button>
+              </div>
               {pics.length === 0 && !loading && <p className="hint">No pictures in the demo gallery yet.</p>}
             </>
           ) : (
@@ -428,28 +471,8 @@ export default function UploadFormPage({ slug, goBack, go }) {
           <style>{`@keyframes pos-ticker-scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } } .pos-ticker { animation: pos-ticker-scroll 36s linear infinite; } .gallery-remote button:focus { outline: 3px solid #f5a623; outline-offset: 3px; }`}</style>
           <img src={pics[viewIndex].url} alt={pics[viewIndex].name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onClick={e => { e.stopPropagation(); toggleControls() }} />
           {demoMode && (
-            <div ref={menuRef} style={{ position: 'absolute', top: 12, left: 12, zIndex: 5, opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }} onClick={e => e.stopPropagation()}>
-              <div className="car-submenu-wrap" style={{ marginBottom: 0 }}>
-                <button type="button" className="car-submenu-btn" aria-label="Business Systems menu" onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); pokeControls() }}>
-                  <span className="burger" aria-hidden="true"><span /><span /><span /></span>
-                </button>
-                {menuOpen && (
-                  <div className="car-submenu">
-                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('business-cart') }}>My Cart</button>
-                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('restaurants') }}>Restaurant</button>
-                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('pos') }}>POS</button>
-                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('barbers') }}>Barber</button>
-                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('dealer') }}>Dealer</button>
-                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('employee') }}>Employee</button>
-                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('bodyshop') }}>Bodyshop</button>
-                    <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('simple-barbershop') }}>Sample Website</button>
-                    <button type="button" onClick={e => { e.stopPropagation(); setMenuAddonsOpen(o => !o) }}>Add-ons {menuAddonsOpen ? '▾' : '▸'}</button>
-                    {menuAddonsOpen && (
-                      <a href="/demo-tv-gallery" style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', textDecoration: 'none', borderTop: '1px solid #f1f2f5' }}>TV Gallery</a>
-                    )}
-                  </div>
-                )}
-              </div>
+            <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 5, opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }} onClick={e => e.stopPropagation()}>
+              {menuBox(menuRef)}
             </div>
           )}
           <button type="button" className="car-submenu-btn" aria-label="Close gallery" onClick={e => { e.stopPropagation(); closeGallery() }} style={{ position: 'absolute', top: 12, right: 12, zIndex: 5, fontSize: 22, color: '#374151', opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }}>✕</button>
@@ -460,11 +483,11 @@ export default function UploadFormPage({ slug, goBack, go }) {
           )}
           <div style={{ position: 'absolute', bottom: message.trim() ? 64 : 16, left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: '#fff', opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }}>
             <span style={{ fontSize: 12, opacity: 0.7 }}>Tap the picture to hide these buttons</span>
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12 }}>
-              <button type="button" onClick={e => { e.stopPropagation(); setViewIndex((viewIndex - 1 + pics.length) % pics.length); pokeControls() }}>‹ Prev</button>
-              <span>{viewIndex + 1} of {pics.length} · {galleryMode === 'slideshow' ? 'Slideshow' : 'One picture'}</span>
-              <button type="button" onClick={e => { e.stopPropagation(); setViewIndex((viewIndex + 1) % pics.length); pokeControls() }}>Next ›</button>
-              <button type="button" onClick={e => { e.stopPropagation(); setMode(galleryMode === 'slideshow' ? 'single' : 'slideshow') }}>{galleryMode === 'slideshow' ? '▣ One picture' : '▶ Slideshow'}</button>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8 }}>
+              <button type="button" aria-label="Previous picture" onClick={e => { e.stopPropagation(); setViewIndex((viewIndex - 1 + pics.length) % pics.length); pokeControls() }} style={{ padding: '6px 12px', fontSize: 18 }}>‹</button>
+              <span>{viewIndex + 1}/{pics.length}</span>
+              <button type="button" aria-label="Next picture" onClick={e => { e.stopPropagation(); setViewIndex((viewIndex + 1) % pics.length); pokeControls() }} style={{ padding: '6px 12px', fontSize: 18 }}>›</button>
+              <button type="button" aria-label={galleryMode === 'slideshow' ? 'Hold one picture' : 'Play the slideshow'} onClick={e => { e.stopPropagation(); setMode(galleryMode === 'slideshow' ? 'single' : 'slideshow') }} style={{ padding: '6px 12px', fontSize: 18 }}>{galleryMode === 'slideshow' ? '❚❚' : '▶'}</button>
               {demoMode && <button type="button" onClick={e => { e.stopPropagation(); if (go) go('tv-gallery') }}>Want this for your business?</button>}
             </div>
           </div>

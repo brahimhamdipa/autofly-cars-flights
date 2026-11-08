@@ -114,6 +114,118 @@
       }).catch(function () {});
     } catch (e) {}
   }
+  /* ---------- Icon picture (one small square image) ---------- */
+  /* The icon lives in the draft/live data as `icon` — a public URL or ''.
+     It is uploaded to the product-images bucket, shrunk to 200px on its
+     long edge first (same rules as the shop picture uploads: JPEG 0.8,
+     PNGs stay PNG, small pictures untouched, any failure falls back to
+     the original file). */
+  function shrinkIconImage(file) {
+    try {
+      return new Promise(function (resolve) {
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+          URL.revokeObjectURL(url);
+          var w0 = img.naturalWidth, h0 = img.naturalHeight;
+          if (!w0 || !h0 || Math.max(w0, h0) <= 200) { resolve(file); return; }
+          var scale = 200 / Math.max(w0, h0);
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.round(w0 * scale);
+          canvas.height = Math.round(h0 * scale);
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          var outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          canvas.toBlob(function (blob) {
+            if (!blob) { resolve(file); return; }
+            var name = outType === 'image/jpeg' ? file.name.replace(/\.[^.]+$/, '') + '.jpg' : file.name;
+            resolve(new File([blob], name, { type: outType }));
+          }, outType, 0.8);
+        };
+        img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+        img.src = url;
+      });
+    } catch (e) {
+      return Promise.resolve(file);
+    }
+  }
+  function uploadIconImage(file) {
+    return shrinkIconImage(file).then(function (up) {
+      var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      var path = 'store/icons/' + SLUG + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + safe;
+      return fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
+        method: 'POST',
+        headers: { 'Content-Type': up.type || 'application/octet-stream', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+        body: up
+      }).then(function (res) {
+        if (!res.ok) throw new Error('upload failed (HTTP ' + res.status + ')');
+        return SUPABASE_URL + '/storage/v1/object/public/product-images/' + path;
+      });
+    });
+  }
+  /* Show the live icon next to the business name in the header — only
+     when there is one. Created once and re-used, so repeated header
+     renders never duplicate it, and removing the icon restores the
+     header exactly as it was. */
+  function renderHeaderIcon(url) {
+    var nameEl = $('site-name');
+    if (!nameEl) return;
+    var brand = nameEl.closest ? nameEl.closest('.brand') : null;
+    if (!brand) {
+      var p = nameEl.parentNode;
+      brand = p && p.parentNode;
+      if (!brand) return;
+    }
+    var img = brand.querySelector('img.site-icon');
+    if (!url) {
+      if (img) img.remove();
+      return;
+    }
+    if (!img) {
+      img = document.createElement('img');
+      img.className = 'site-icon';
+      img.alt = '';
+      var ref = nameEl.parentNode;
+      if (ref === brand) ref = nameEl;
+      brand.insertBefore(img, ref);
+    }
+    if (img.getAttribute('src') !== url) img.setAttribute('src', url);
+  }
+  /* Wire the icon field in Setup: picking a picture uploads it at once
+     and stores the URL on the draft; Remove clears it. The draft is
+     only persisted when the owner saves it, like every other field. */
+  function wireIconField() {
+    var iconFile = $('setup-icon-file');
+    if (iconFile) iconFile.addEventListener('change', function () {
+      var f = iconFile.files && iconFile.files[0];
+      if (!f) return;
+      var out = $('setup-icon-out');
+      if (out) out.textContent = 'Uploading icon…';
+      uploadIconImage(f).then(function (url) {
+        draft.icon = url;
+        var prev = $('setup-icon-preview');
+        if (prev) { prev.src = url; prev.hidden = false; }
+        var urlField = $('setup-icon-url');
+        if (urlField) urlField.value = url;
+        if (out) out.textContent = 'Icon uploaded — save the draft to keep it.';
+        iconFile.value = '';
+      }).catch(function (err) {
+        if (out) out.textContent = 'Could not upload the icon: ' + (err && err.message ? err.message : 'please try again.');
+        iconFile.value = '';
+      });
+    });
+    var iconRemove = $('setup-icon-remove');
+    if (iconRemove) iconRemove.addEventListener('click', function () {
+      draft.icon = '';
+      var prev = $('setup-icon-preview');
+      if (prev) { prev.src = ''; prev.hidden = true; }
+      var urlField = $('setup-icon-url');
+      if (urlField) urlField.value = '';
+      var out = $('setup-icon-out');
+      if (out) out.textContent = 'Icon removed — save the draft to keep it removed.';
+      var file = $('setup-icon-file');
+      if (file) file.value = '';
+    });
+  }
   function staffByCode(code) {
     return (biz.staff || []).filter(function (s) { return String(s.code) === String(code); })[0] || null;
   }
@@ -151,6 +263,7 @@
 
   function setHeader() {
     $('site-name').textContent = biz ? biz.name : 'Employee';
+    renderHeaderIcon(biz && biz.icon ? biz.icon : '');
     $('site-about').textContent = biz ? (biz.about || '') : '';
     $('site-footer').innerHTML = biz
       ? esc([biz.address, biz.phone].filter(Boolean).join(' · ')) + '<br>Powered by AutoFly'
@@ -387,6 +500,14 @@
       '<div class="card"><h3>Business details</h3>' +
       '<p class="info">Changes save as a draft. Upload for approval and the admin makes them live.</p>' +
       '<label>Business name</label><input id="d-name" type="text" value="' + esc(draft.name || '') + '">' +
+      '<label>Icon picture</label>' +
+      '<div class="icon-field">' +
+      '<img id="setup-icon-preview" class="icon-preview" src="' + esc(draft.icon || '') + '" alt=""' + (draft.icon ? '' : ' hidden') + '>' +
+      '<input id="setup-icon-file" type="file" accept="image/*">' +
+      '<button type="button" id="setup-icon-remove" class="small secondary">Remove icon</button>' +
+      '</div>' +
+      '<input id="setup-icon-url" type="hidden" value="' + esc(draft.icon || '') + '">' +
+      '<p class="info" id="setup-icon-out">One small picture shown next to the business name. It is shrunk to 200px before uploading.</p>' +
       '<label>Address</label><input id="d-address" type="text" value="' + esc(draft.address || '') + '">' +
       '<label>Phone</label><input id="d-phone" type="tel" value="' + esc(draft.phone || '') + '">' +
       '<label>Hours</label><input id="d-hours" type="text" value="' + esc(draft.hours || '') + '">' +
@@ -425,6 +546,7 @@
     });
     $('s-save').addEventListener('click', saveStaff);
     $('s-cancel').addEventListener('click', function () { staffEditId = null; renderSetup(); });
+    wireIconField();
   }
   function renderJobsList() {
     var el = $('jobs-list');
@@ -538,6 +660,11 @@
     draft.phone = $('d-phone').value.trim();
     draft.hours = $('d-hours').value.trim();
     draft.about = $('d-about').value.trim();
+    /* The icon URL lives in a hidden field (set by the upload / Remove
+       handlers), read back here like every other Setup field, so the
+       icon survives any re-render that syncs the draft. */
+    var iconUrl = $('setup-icon-url');
+    if (iconUrl) draft.icon = iconUrl.value;
   }
   function collectDraft() {
     syncDraftFields();
@@ -547,6 +674,7 @@
       phone: draft.phone || '',
       hours: draft.hours || '',
       about: draft.about || '',
+      icon: draft.icon || '',
       jobs: (draft.jobs || []).slice()
     };
   }

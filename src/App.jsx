@@ -33,6 +33,7 @@ import PosPage from './components/PosPage'
 import DealerPage from './components/DealerPage'
 import EmployeePage from './components/EmployeePage'
 import BodyshopPage from './components/BodyshopPage'
+import TvGalleryPage from './components/TvGalleryPage'
 import BusinessCartPage from './components/BusinessCartPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
@@ -107,8 +108,8 @@ export default function App() {
   }, [])
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
-  const BUSINESS_TABS = ['restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'business-cart']
-  const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'business-cart'].includes(tab)
+  const BUSINESS_TABS = ['restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'business-cart']
+  const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'business-cart'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -191,6 +192,7 @@ export default function App() {
             {tab === 'employee' && <EmployeePage go={go} />}
             {tab === 'bodyshop' && <BodyshopPage go={go} />}
             {tab === 'simple-barbershop' && <SimpleBarbershopPage go={go} />}
+            {tab === 'tv-gallery' && <TvGalleryPage go={go} />}
             {tab === 'business-cart' && <BusinessCartPage go={go} />}
           </BusinessCartProvider>
         )}
@@ -204,7 +206,7 @@ export default function App() {
         {tab === 'services-contact' && <ServicesContactPage go={go} />}
         {tab === 'about' && <AboutPage />}
         {tab === 'admin' && <AdminPage />}
-        {tab === 'provider-form' && <ProviderFormPage slug={formSlug} goBack={goBack} onAuthedChange={setFormAuthed} />}
+        {tab === 'provider-form' && <ProviderFormPage slug={formSlug} goBack={goBack} onAuthedChange={setFormAuthed} go={go} />}
       </main>
       <footer className="footer">
         <p>AutoFly.us.com — Cars, Flights & More — All in One Place</p>

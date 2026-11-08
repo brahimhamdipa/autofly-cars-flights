@@ -266,7 +266,7 @@
   function staffUnlocked() { return !!staffCreds; }
   function renderStaffLogin(el, heading, after) {
     el.innerHTML = '<h2>' + heading + '</h2><div class="card">' +
-      '<p class="info">Enter the username and password AutoFly gave this restaurant.</p>' +
+      '<p class="info">Enter the username and password Yently gave this restaurant.</p>' +
       '<label>Username</label><input id="st-user" type="text" autocomplete="username">' +
       '<label>Password</label><input id="st-pass" type="password" autocomplete="current-password">' +
       '<div class="row"><button id="st-go">Sign in</button></div>' +
@@ -824,9 +824,9 @@
     });
   }
   function statusLine() {
-    if (draftStatus === 'pending') return 'Your changes were sent to AutoFly and are waiting for approval. Visitors still see the approved menu.';
+    if (draftStatus === 'pending') return 'Your changes were sent to Yently and are waiting for approval. Visitors still see the approved menu.';
     if (draftStatus === 'approved') return 'Your last upload was approved and is now live.';
-    return 'Your changes are saved as a draft. Visitors still see the approved menu until you upload and AutoFly approves.';
+    return 'Your changes are saved as a draft. Visitors still see the approved menu until you upload and Yently approves.';
   }
   function renderSetup() {
     var el = $('view-setup');
@@ -952,7 +952,7 @@
         draft = d;
         draftStatus = 'pending';
         notifyEmail('Diner draft for approval: ' + (d.name || SLUG), { restaurant: d.name || '', slug: SLUG });
-        out.innerHTML = '<p class="info">Uploaded! Your changes were sent to AutoFly and are waiting for approval. We will confirm once they are live.</p>';
+        out.innerHTML = '<p class="info">Uploaded! Your changes were sent to Yently and are waiting for approval. We will confirm once they are live.</p>';
       }).catch(function (err) {
         out.innerHTML = '<p class="error">Could not upload: ' + esc(err.message) + '</p>';
       });
@@ -1003,7 +1003,7 @@
   }
   if (!SLUG) {
     $('site-name').textContent = 'Restaurant not found';
-    $('view-menu').innerHTML = '<div class="error">This link doesn\'t point to a restaurant. Check the link and try again — ask AutoFly for your restaurant link.</div>';
+    $('view-menu').innerHTML = '<div class="error">This link doesn\'t point to a restaurant. Check the link and try again — ask Yently for your restaurant link.</div>';
   } else {
     rpc('get_diner_live', { p_slug: SLUG }).then(function (json) {
       if (!json || !json.name) throw new Error('not found');
@@ -1021,7 +1021,7 @@
       if (data.hours) foot.push(esc(data.hours));
       var firstLine = foot.join(' · ');
       $('site-footer').innerHTML = (firstLine ? '<div>' + firstLine + '</div>' : '') +
-        '<div>Powered by AutoFly</div>';
+        '<div>Powered by Yently</div>';
       updateBadges();
       rpc('diner_pass_status', { p_slug: SLUG }).then(function (s) {
         empUnlocked = (s !== 'locked');

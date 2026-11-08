@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { shrinkImage } from '../lib/storeUpload'
 
-// Public picture-upload page, reached at autofly.us.com/<form name>.
+// Public picture-upload page, reached at yently.com/<form name>.
 // The customer logs in with the username and password the admin gave
 // them (checked server-side — the form's row is never readable by
 // visitors), then uploads pictures into their folder and views them

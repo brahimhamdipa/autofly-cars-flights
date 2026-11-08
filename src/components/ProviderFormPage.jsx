@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { supabase, NOTIFY_EMAIL } from '../lib/supabaseClient'
 
@@ -10,7 +10,7 @@ import { PicField } from './admin/StoreFormBits'
 import EmployeeChatView from './EmployeeChatView'
 import UploadFormPage from './UploadFormPage'
 
-// Public provider form page, reached at autofly.us.com/<form name>.
+// Public provider form page, reached at yently.com/<form name>.
 // The store owner logs in with the username and password the admin
 // gave them (checked server-side — the form's row is never readable
 // by visitors), then submits items one at a time: each submit inserts
@@ -29,6 +29,127 @@ const blankItem = () => ({
   delivery: true, pickup: true, stock: '', pics: [], subcategoryIds: []
 
 })
+
+// Plain, detailed explanations for every field — shown when the
+// store taps the "?" next to a label, so nobody has to guess how to
+// fill the form in.
+const HELP = {
+  username: 'The username Yently gave you for this form. It is the one in the email or message from Yently — type it exactly as it is written, small letters and all. It is not your email address.',
+  password: 'The password Yently gave you for this form. Type it exactly as it is written — passwords care about big and small letters. If it does not work, check for an extra space at the end, or ask Yently to send it again.',
+  store: 'This is already filled in for you — it is your store\'s name, from the form Yently made for you. You cannot change it here. If it shows the wrong store, stop and contact Yently.',
+  category: 'Pick the group your item belongs to — for example Drinks, Food, or Clothes. This decides where the item shows in the shop, so customers can find it. If no group fits perfectly, pick the closest one and mention it in the description.',
+  variants: 'Tick every version of this item that a customer can choose — for example sizes, flavours, or colours. Each tick becomes a choice the customer picks when they buy. If the item has no versions, leave all of them unticked.',
+  name: 'The name customers will see in the shop. Keep it short and clear — what it is, and the size if it matters. For example: Fresh Orange Juice 1L, or Cotton T-Shirt — Blue, Large.',
+  price: 'What one of these costs, in dollars. Type numbers only — for example 3.99. Do not type a $ sign. This is the price the customer pays.',
+  description: 'A few words about the item — what it is made of, how big it is, what is inside, anything that helps a customer decide. You can leave it empty, but a short description sells better.',
+  deliveryAddress: 'The address deliveries start from — your shop, your kitchen, or wherever you keep the item. Only needed if you deliver this item. If you do not deliver, leave it empty.',
+  pickupAddress: 'The address where customers come to collect the item. Only needed if you offer pickup. If customers cannot pick it up, leave it empty.',
+  delivery: 'Ticked means you deliver this item to the customer. Untick it if this item is pickup only.',
+  pickup: 'Ticked means the customer can come and collect this item. Untick it if this item is delivery only.',
+  stock: 'How many of this item you have right now. Leave it empty if you do not count stock — the item will always show as available. If you put a number, the item shows as out of stock when it reaches 0.',
+  pictures: 'Tap Upload pictures and pick photos from your phone or computer — you can pick more than one at once. The first picture is the main one customers see. Clear, bright photos sell better. Tap the ✕ next to a picture to remove it.',
+  addBulk: 'Adds the item above to your list. It is not sent yet — it just joins the list below. Fill in the next item the same way.',
+  batchList: 'Everything in the list so far. Tap Remove next to an item to take it out of the list.',
+  download: 'Saves your list as a file (data.json) on your phone or computer — a copy to keep, or to send to someone else to finish.',
+  loadFile: 'Loads a list from a data.json file — for example one you downloaded before, or one someone made for you. It replaces the list you have now.',
+  uploadBatch: 'Sends the whole list to Yently for approval at once. The items show on your store once they are approved.',
+}
+
+// The "?" button next to a field label. Tap once to open the
+// explanation under it, tap again — or tap anywhere else on the
+// page — to close it. Only one help is open at a time: tapping
+// another "?" closes this one first.
+function Help({ text }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+  return (
+    <span className="help" ref={ref}>
+      <button type="button" className="help-btn" aria-label="Help" onClick={() => setOpen(o => !o)}>?</button>
+      {open && <span className="help-pop">{text}</span>}
+    </span>
+  )
+}
+
+// The item fields, shared by the single-item form and the bulk form
+// so both stay identical. Defined at module level (not inside the
+// page) so typing never loses focus or closes an open help.
+// item/setItem are the form's own state and setter; storeName is the
+// store this form belongs to (already filled in, never typed).
+function ItemFields({ item, setItem, categories, subcats, storeName }) {
+  const set = (patch) => setItem(prev => ({ ...prev, ...patch }))
+  const visibleSubcats = subcats.filter(s => s.category_id === Number(item.category_id))
+  return (
+    <>
+      <div className="field">
+        <span className="field-label">Store <Help text={HELP.store} /></span>
+        <input disabled value={storeName} />
+      </div>
+      <div className="field">
+        <span className="field-label">Category <Help text={HELP.category} /></span>
+        <select required value={item.category_id} onChange={e => set({ category_id: e.target.value, subcategoryIds: [] })}>
+          <option value="">— Category —</option>
+          {categories.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+        </select>
+      </div>
+      <div className="field">
+        <span className="field-label">Variants <Help text={HELP.variants} /></span>
+        {visibleSubcats.length === 0
+          ? <p className="hint" style={{ margin: 0 }}>Pick a category first — its versions show here to tick.</p>
+          : visibleSubcats.map(s => (
+            <label key={s.id} className="check">
+              <input
+                type="checkbox"
+                checked={(item.subcategoryIds || []).includes(s.id)}
+                onChange={() => setItem(prev => ({ ...prev, subcategoryIds: (prev.subcategoryIds || []).includes(s.id) ? prev.subcategoryIds.filter(x => x !== s.id) : [...prev.subcategoryIds, s.id] }))}
+              /> {formatVariant(s)}
+            </label>
+          ))}
+      </div>
+      <div className="field">
+        <span className="field-label">Item name <Help text={HELP.name} /></span>
+        <input required placeholder="Item name" value={item.name} onChange={e => set({ name: e.target.value })} />
+      </div>
+      <div className="field">
+        <span className="field-label">Price <Help text={HELP.price} /></span>
+        <input required placeholder="Price" type="number" step="0.01" min="0" value={item.price} onChange={e => set({ price: e.target.value })} />
+      </div>
+      <div className="field">
+        <span className="field-label">Description <Help text={HELP.description} /></span>
+        <textarea placeholder="Description" value={item.description} onChange={e => set({ description: e.target.value })} />
+      </div>
+      <div className="field">
+        <span className="field-label">Delivery address <Help text={HELP.deliveryAddress} /></span>
+        <input placeholder="Delivery address (where delivery comes from)" value={item.delivery_address} onChange={e => set({ delivery_address: e.target.value })} />
+      </div>
+      <div className="field">
+        <span className="field-label">Pickup address <Help text={HELP.pickupAddress} /></span>
+        <input placeholder="Pickup address (where to pick up)" value={item.pickup_address} onChange={e => set({ pickup_address: e.target.value })} />
+      </div>
+      <div className="field-row">
+        <label className="check"><input type="checkbox" checked={item.delivery} onChange={e => set({ delivery: e.target.checked })} /> Delivery available</label>
+        <Help text={HELP.delivery} />
+      </div>
+      <div className="field-row">
+        <label className="check"><input type="checkbox" checked={item.pickup} onChange={e => set({ pickup: e.target.checked })} /> Pickup available</label>
+        <Help text={HELP.pickup} />
+      </div>
+      <div className="field">
+        <span className="field-label">Stock <Help text={HELP.stock} /></span>
+        <input placeholder="Stock (how many available — leave empty if not tracked)" type="number" min="0" value={item.stock} onChange={e => set({ stock: e.target.value })} />
+      </div>
+      <div className="field">
+        <span className="field-label">Pictures <Help text={HELP.pictures} /></span>
+        <PicField pics={item.pics} setPics={pics => set({ pics })} />
+      </div>
+    </>
+  )
+}
 
 export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
 
@@ -257,7 +378,7 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
     <div>
       <div className="hero-card">
         {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
-        <h2>📝 Provider form</h2>
+        <h2>🏪 Store Setup</h2>
         {authed
           ? <p>Add items for <b>{authed.providerName}</b> — each submit sends one item for approval; it appears on the store once Yently approves it.</p>
           : <p>Log in with the username and password Yently gave you for this form.</p>}
@@ -265,91 +386,73 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
 
       {!authed && (
         <form onSubmit={login} className="form-card">
-          <input required placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />
-          <input required placeholder="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          <div className="field">
+            <span className="field-label">Username <Help text={HELP.username} /></span>
+            <input required placeholder="Username" value={username} onChange={e => setUsername(e.target.value)} />
+          </div>
+          <div className="field">
+            <span className="field-label">Password <Help text={HELP.password} /></span>
+            <input required placeholder="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} />
+          </div>
           <button type="submit" disabled={loggingIn}>{loggingIn ? 'Opening...' : 'Open form'}</button>
           {loginError && <p className="status">{loginError}</p>}
         </form>
       )}
 
       {authed?.kind === 'provider' && (
-        <form onSubmit={submitItem} className="form-card">
-          <label>Store
-            <input disabled value={authed.providerName} />
-          </label>
-          <select required value={item.category_id} onChange={e => setItem({ ...item, category_id: e.target.value, subcategoryIds: []})}>
-            <option value="">— Category —</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-          </select>
-          {subcats.filter(s => s.category_id === Number(item.category_id)).map(s => (
-          <label key={s.id} style={{ display: 'block'}}>
-            <input
-              type="checkbox"
-              checked={(item.subcategoryIds || []).includes(s.id)}
-              onChange={() => setItem(prev => ({...prev, subcategoryIds: (prev.subcategoryIds || []).includes(s.id)? prev.subcategoryIds.filter(x => x!== s.id): [...prev.subcategoryIds, s.id]}))}
-              /> {formatVariant(s)}
-          </label>
-          ))}
-          <input required placeholder="Item name" value={item.name} onChange={e => setItem({ ...item, name: e.target.value })} />
-          <input required placeholder="Price" type="number" step="0.01" min="0" value={item.price} onChange={e => setItem({ ...item, price: e.target.value })} />
-          <textarea placeholder="Description" value={item.description} onChange={e => setItem({ ...item, description: e.target.value })} />
-          <input placeholder="Delivery address (where delivery comes from)" value={item.delivery_address} onChange={e => setItem({ ...item, delivery_address: e.target.value })} />
-          <input placeholder="Pickup address (where to pick up)" value={item.pickup_address} onChange={e => setItem({ ...item, pickup_address: e.target.value })} />
-          <label><input type="checkbox" checked={item.delivery} onChange={e => setItem({ ...item, delivery: e.target.checked })} /> Delivery available</label>
-          <label><input type="checkbox" checked={item.pickup} onChange={e => setItem({ ...item, pickup: e.target.checked })} /> Pickup available</label>
-          <input placeholder="Stock (how many available — leave empty if not tracked)" type="number" min="0" value={item.stock} onChange={e => setItem({ ...item, stock: e.target.value })} />
-          <PicField pics={item.pics} setPics={pics => setItem({ ...item, pics })} />
-          <button type="submit" disabled={submitting}>{submitting ? 'Saving...' : 'Submit item'}</button>
-          {status && <p className="status">{status}</p>}
-        </form>
-      )}
-      {authed?.kind === 'provider' && (
-        <div className="form-card">
-          <h3>Add items in bulk</h3>
-          <p>Fill items one by one below — take your time, the list is kept in this browser. When you are done, download it as data.json to keep a copy, or send the whole list for approval at once.</p>
-          <form onSubmit={addBulkItem}>
-            <select required value={bulkItem.category_id} onChange={e => setBulkItem({ ...bulkItem, category_id: e.target.value, subcategoryIds: []})}>
-              <option value="">— Category —</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
-            {subcats.filter(s => s.category_id === Number(bulkItem.category_id)).map(s => (
-            <label key={s.id} style={{ display: 'block'}}>
-              <input
-                type="checkbox"
-                checked={(bulkItem.subcategoryIds || []).includes(s.id)}
-                onChange={() => setBulkItem(prev => ({...prev, subcategoryIds: (prev.subcategoryIds || []).includes(s.id)? prev.subcategoryIds.filter(x => x!== s.id): [...prev.subcategoryIds, s.id]}))}
-                /> {formatVariant(s)}
-            </label>
-            ))}
-            <input required placeholder="Item name" value={bulkItem.name} onChange={e => setBulkItem({ ...bulkItem, name: e.target.value })} />
-            <input required placeholder="Price" type="number" step="0.01" min="0" value={bulkItem.price} onChange={e => setBulkItem({ ...bulkItem, price: e.target.value })} />
-            <textarea placeholder="Description" value={bulkItem.description} onChange={e => setBulkItem({ ...bulkItem, description: e.target.value })} />
-            <input placeholder="Delivery address (where delivery comes from)" value={bulkItem.delivery_address} onChange={e => setBulkItem({ ...bulkItem, delivery_address: e.target.value })} />
-            <input placeholder="Pickup address (where to pick up)" value={bulkItem.pickup_address} onChange={e => setBulkItem({ ...bulkItem, pickup_address: e.target.value })} />
-            <label><input type="checkbox" checked={bulkItem.delivery} onChange={e => setBulkItem({ ...bulkItem, delivery: e.target.checked })} /> Delivery available</label>
-            <label><input type="checkbox" checked={bulkItem.pickup} onChange={e => setBulkItem({ ...bulkItem, pickup: e.target.checked })} /> Pickup available</label>
-            <input placeholder="Stock (how many available — leave empty if not tracked)" type="number" min="0" value={bulkItem.stock} onChange={e => setBulkItem({ ...bulkItem, stock: e.target.value })} />
-            <PicField pics={bulkItem.pics} setPics={pics => setBulkItem({ ...bulkItem, pics })} />
-            <button type="submit">Add an Item</button>
-          </form>
-          {batchItems.length > 0 && (
-            <div>
-              <p><b>Items in this list ({batchItems.length}):</b></p>
-              {batchItems.map((it, i) => (
-                <p key={i}>{it.name} — ${it.price} <button type="button" className="btn-mini" onClick={() => setBatchItems(batchItems.filter((_, j) => j !== i))}>Remove</button></p>
-              ))}
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-            <button type="button" onClick={downloadBatch} disabled={batchItems.length === 0}>Download data.json</button>
-            <label className="btn-soft" style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 16px', borderRadius: 10, cursor: 'pointer' }}>
-              Load a data.json file
-              <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={loadBatchFile} />
-            </label>
-            <button type="button" onClick={submitBatch} disabled={batchBusy || batchItems.length === 0}>{batchBusy ? 'Sending...' : 'Upload for approval'}</button>
+        <>
+          <div className="hero-card">
+            <h3>Two ways to add items</h3>
+            <p><a href="#one-item">1. Add one item</a> — fill in one item and send it straight away.</p>
+            <p><a href="#bulk">2. Add many items at once</a> — build a list and send it all together.</p>
           </div>
-          {batchStatus && <p className="status">{batchStatus}</p>}
-        </div>
+
+          <form onSubmit={submitItem} className="form-card" id="one-item" style={{ scrollMarginTop: 130 }}>
+            <h3>1 — Add one item</h3>
+            <p className="hint">Fill in the item and tap Submit item. It goes to Yently for approval first, and shows on your store once it is approved. One submit = one item.</p>
+            <ItemFields item={item} setItem={setItem} categories={categories} subcats={subcats} storeName={authed.providerName} />
+            <button type="submit" disabled={submitting}>{submitting ? 'Saving...' : 'Submit item'}</button>
+            {status && <p className="status">{status}</p>}
+          </form>
+
+          <div className="form-card" id="bulk" style={{ scrollMarginTop: 130 }}>
+            <h3>2 — Add many items at once</h3>
+            <p className="hint">Faster when you have a lot of items. Fill in items one by one — they are kept in a list in this browser, so you can take your time — then send the whole list for approval at once. The list stays saved in this browser even if you close the page and come back.</p>
+            <form onSubmit={addBulkItem} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <ItemFields item={bulkItem} setItem={setBulkItem} categories={categories} subcats={subcats} storeName={authed.providerName} />
+              <div className="field-row" style={{ marginTop: 10 }}>
+                <button type="submit">Add an Item</button>
+                <Help text={HELP.addBulk} />
+              </div>
+            </form>
+            {batchItems.length > 0 && (
+              <div>
+                <p><b>Items in this list ({batchItems.length}):</b> <Help text={HELP.batchList} /></p>
+                {batchItems.map((it, i) => (
+                  <p key={i}>{it.name} — ${it.price} <button type="button" className="btn-mini" onClick={() => setBatchItems(batchItems.filter((_, j) => j !== i))}>Remove</button></p>
+                ))}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
+              <span className="field-row">
+                <button type="button" onClick={downloadBatch} disabled={batchItems.length === 0}>Download data.json</button>
+                <Help text={HELP.download} />
+              </span>
+              <span className="field-row">
+                <label className="btn-soft" style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 16px', borderRadius: 10, cursor: 'pointer' }}>
+                  Load a data.json file
+                  <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={loadBatchFile} />
+                </label>
+                <Help text={HELP.loadFile} />
+              </span>
+              <span className="field-row">
+                <button type="button" onClick={submitBatch} disabled={batchBusy || batchItems.length === 0}>{batchBusy ? 'Sending...' : 'Upload for approval'}</button>
+                <Help text={HELP.uploadBatch} />
+              </span>
+            </div>
+            {batchStatus && <p className="status">{batchStatus}</p>}
+          </div>
+        </>
       )}
     </div>
   )

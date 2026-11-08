@@ -47,7 +47,7 @@ const MENUS = [
   ] },
   { n: 2, name: 'Cars', items: [] },
   { n: 3, name: 'Flights', items: [] },
-  { n: 4, name: 'More', items: [
+  { n: 4, name: 'Business Systems', items: [
     { label: 'Diner', children: [
       { label: 'Diner Passes', table: 'diner_restaurants' },
       { label: 'Diner Approvals', table: 'diner_approvals' },
@@ -147,10 +147,6 @@ export default function AdminPage() {
 
   const menuRef = useRef(null)
 
-  const [newPassword, setNewPassword] = useState('')
-
-  const [pwMsg, setPwMsg] = useState('')
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session))
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => setSession(s))
@@ -176,7 +172,7 @@ export default function AdminPage() {
       } else {
         const { data, error } = await supabase.auth.signUp({
           email, password,
-          options: { emailRedirectTo: 'https://autofly.us.com' },
+          options: { emailRedirectTo: 'https://yently.com' },
         })
         if (error) throw error
         if (data.session) {
@@ -234,19 +230,9 @@ export default function AdminPage() {
   const sendReset = async () => {
     if (!email.trim()) { setAuthMsg('Type your admin email above first, then tap Forgot password.'); return }
     setAuthMsg('Sending password reset email...')
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: 'https://autofly.us.com' })
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: 'https://yently.com' })
     if (error) { setAuthMsg('Error: ' + error.message); return }
-    setAuthMsg('✓ Reset email sent. Tap the link in that email — you will come back to this site already logged in — then set your new password with the "Change password" box at the top of the Admin page.')
-  }
-
-  const changePassword = async (e) => {
-    e.preventDefault()
-    if (newPassword.length < 6) { setPwMsg('Password must be at least 6 characters.'); return }
-    setPwMsg('Saving...')
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    if (error) { setPwMsg('Error: ' + error.message); return }
-    setNewPassword('')
-    setPwMsg('✓ Password changed.')
+    setAuthMsg('✓ Reset email sent. Tap the link in that email — you will come back to this site already logged in — then set your new password in Admin → menu 5 → All Passes, at the bottom of the page.')
   }
 
   if (session === undefined) {
@@ -313,12 +299,6 @@ export default function AdminPage() {
           )}
         </div>
       </div>
-      <form className="pw-row no-print" onSubmit={changePassword}>
-        <span>🔑 Change password:</span>
-        <input type="password" placeholder="New password" value={newPassword} onChange={e => setNewPassword(e.target.value)} />
-        <button type="submit" className="btn-mini">Change password</button>
-        {pwMsg && <span className="status">{pwMsg}</span>}
-      </form>
       {section === 'products' && <AdminProducts />}
       {section === 'orders' && <AdminOrders />}
       {section === 'submissions' && <AdminSubmissions />}

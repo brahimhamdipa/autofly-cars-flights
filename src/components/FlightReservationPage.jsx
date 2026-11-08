@@ -72,7 +72,7 @@ function buildPdf(travelers, trip, message) {
 
   doc.setFontSize(9)
   doc.setTextColor(120)
-  doc.text('Submitted via autofly.us.com', left, 285)
+  doc.text('Submitted via yently.com', left, 285)
   return doc
 }
 

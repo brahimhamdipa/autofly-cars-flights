@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { loadBarberPageData, insertBarberReservation } from '../lib/barberData'
 
-// Public barber template page, reached at autofly.us.com/<slug> when
+// Public barber template page, reached at yently.com/<slug> when
 // the slug matches a website_domain row (see the ProviderFormPage
 // edit: the domain check runs first, so this page needs NO login).
 // Three parts, all driven by the tables: Header (website_header),

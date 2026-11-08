@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, POS_PLAN_KEY, POS_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
+import DemoInterestPopup from './DemoInterestPopup'
 
 // Sales page for the point of sale (reached from More ▾ → Restaurants
 // → POS). One product only: a store's own register page with live
@@ -18,6 +19,7 @@ export default function PosPage({ go }) {
   const [form, setForm] = useState({ name: '', store: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
   const handleSubmit = async (e) => {
@@ -90,8 +92,10 @@ export default function PosPage({ go }) {
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Try the demo store</h3>
         <p>See the register working before you ask for one — the demo store is live, with the cashier password <b>demo</b>.</p>
-        <a href="/pos?s=demo-pos" target="_blank" rel="noreferrer"><button type="button">Open the demo register</button></a>
+        <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
+
+      {demoOpen && <DemoInterestPopup systemName="Point of sale page" demoUrl="/pos?s=demo-pos" onClose={() => setDemoOpen(false)} />}
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your point of sale</h3>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, BODYSHOP_PLAN_KEY, BODYSHOP_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
+import DemoInterestPopup from './DemoInterestPopup'
 
 // Sales page for the bodyshop management page (reached from More ▾
 // → Restaurants → Bodyshop, and from the Bodyshop submenu). One
@@ -20,6 +21,7 @@ export default function BodyshopPage({ go }) {
   const [form, setForm] = useState({ name: '', shop: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
   const handleSubmit = async (e) => {
@@ -94,8 +96,10 @@ export default function BodyshopPage({ go }) {
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Try the demo shop</h3>
         <p>See the bodyshop page working before you ask for one — the demo shop is live, with the employee password <b>demo</b>.</p>
-        <a href="/bodyshop?b=demo-bodyshop" target="_blank" rel="noreferrer"><button type="button">Open the demo shop</button></a>
+        <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
+
+      {demoOpen && <DemoInterestPopup systemName="Bodyshop management" demoUrl="/bodyshop?b=demo-bodyshop" onClose={() => setDemoOpen(false)} />}
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your bodyshop online</h3>

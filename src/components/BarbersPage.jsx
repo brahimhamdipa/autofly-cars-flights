@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, BARBERSHOP_PLAN_KEY, BARBERSHOP_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
+import DemoInterestPopup from './DemoInterestPopup'
 
 // Advertising page for the live barbershop booking system (reached
 // from More ▾ → Business Systems → Barber). One system: a shop's own
@@ -17,6 +18,7 @@ export default function BarbersPage({ go }) {
   const [form, setForm] = useState({ name: '', shop: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
   const handleSubmit = async (e) => {
@@ -87,8 +89,10 @@ export default function BarbersPage({ go }) {
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Try the demo barbershop</h3>
         <p>See the booking page working before you ask for one — the demo barbershop is live, with the employee password <b>demo</b>.</p>
-        <a href="/barbers?s=demo-barber" target="_blank" rel="noreferrer"><button type="button">Open the demo barbershop</button></a>
+        <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
+
+      {demoOpen && <DemoInterestPopup systemName="Barbershop booking page" demoUrl="/barbers?s=demo-barber" onClose={() => setDemoOpen(false)} />}
 
       <div className="hero-card">
         <h3>Request your booking page</h3>

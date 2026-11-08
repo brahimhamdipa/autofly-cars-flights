@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, RESTAURANT_PLAN_KEY, RESTAURANT_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
+import DemoInterestPopup from './DemoInterestPopup'
 
 // Sales page for restaurant ordering (reached from More ▾ → Restaurants).
 // One product only: a restaurant's own ordering page with a live
@@ -18,6 +19,7 @@ export default function RestaurantsPage({ go }) {
   const [form, setForm] = useState({ name: '', restaurant: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
   const handleSubmit = async (e) => {
@@ -90,8 +92,10 @@ export default function RestaurantsPage({ go }) {
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Try the demo store</h3>
         <p>See the ordering page working before you ask for one — the demo restaurant is live, with the employee password <b>demo</b>.</p>
-        <a href="/diner?r=demo-restaurant" target="_blank" rel="noreferrer"><button type="button">Open the demo restaurant</button></a>
+        <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
+
+      {demoOpen && <DemoInterestPopup systemName="Restaurant ordering page" demoUrl="/diner?r=demo-restaurant" onClose={() => setDemoOpen(false)} />}
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your restaurant online</h3>

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, EMPLOYEE_PLAN_KEY, EMPLOYEE_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
+import DemoInterestPopup from './DemoInterestPopup'
 
 // Sales page for the employee time page (reached from More ▾ →
 // Restaurants → Employee, and from the Employee submenu). One
@@ -20,6 +21,7 @@ export default function EmployeePage({ go }) {
   const [form, setForm] = useState({ name: '', team: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
   const handleSubmit = async (e) => {
@@ -93,8 +95,10 @@ export default function EmployeePage({ go }) {
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Try the demo team</h3>
         <p>See the time page working before you ask for one — the demo team is live, with the employee password <b>demo</b>.</p>
-        <a href="/employee?e=demo-employee" target="_blank" rel="noreferrer"><button type="button">Open the demo team</button></a>
+        <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
+
+      {demoOpen && <DemoInterestPopup systemName="Employee time page" demoUrl="/employee?e=demo-employee" onClose={() => setDemoOpen(false)} />}
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your employee time page</h3>

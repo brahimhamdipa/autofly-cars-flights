@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, DEALER_PLAN_KEY, DEALER_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
+import DemoInterestPopup from './DemoInterestPopup'
 
 // Sales page for the dealer website (reached from More ▾ → Restaurants
 // → Dealer, and from the Dealer submenu). One product only: a car
@@ -20,6 +21,7 @@ export default function DealerPage({ go }) {
   const [form, setForm] = useState({ name: '', dealership: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
   const handleSubmit = async (e) => {
@@ -93,8 +95,10 @@ export default function DealerPage({ go }) {
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Try the demo dealership</h3>
         <p>See the dealer page working before you ask for one — the demo dealership is live, with the employee password <b>demo</b>.</p>
-        <a href="/dealer?d=demo-dealer" target="_blank" rel="noreferrer"><button type="button">Open the demo dealership</button></a>
+        <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
+
+      {demoOpen && <DemoInterestPopup systemName="Dealer website" demoUrl="/dealer?d=demo-dealer" onClose={() => setDemoOpen(false)} />}
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your dealership online</h3>

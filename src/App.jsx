@@ -32,6 +32,17 @@ import RestaurantsPage from './components/RestaurantsPage'
 import RestaurantsCartPage from './components/RestaurantsCartPage'
 import PosPage from './components/PosPage'
 import { RestaurantCartProvider } from './lib/RestaurantCartContext'
+import PosCartPage from './components/PosCartPage'
+import { PosCartProvider } from './lib/PosCartContext'
+import DealerPage from './components/DealerPage'
+import DealerCartPage from './components/DealerCartPage'
+import { DealerCartProvider } from './lib/DealerCartContext'
+import EmployeePage from './components/EmployeePage'
+import EmployeeCartPage from './components/EmployeeCartPage'
+import { EmployeeCartProvider } from './lib/EmployeeCartContext'
+import BodyshopPage from './components/BodyshopPage'
+import BodyshopCartPage from './components/BodyshopCartPage'
+import { BodyshopCartProvider } from './lib/BodyshopCartContext'
 import BarberCartPage from './components/BarberCartPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
@@ -107,8 +118,8 @@ export default function App() {
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
   const BARBER_TABS = ['barbers', 'barber-cart', 'simple-barbershop']
-  const RESTAURANT_TABS = ['restaurants', 'restaurant-cart', 'pos']
-  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes', 'restaurants', 'restaurant-cart', 'pos', 'barbers', 'barber-cart', 'simple-barbershop'].includes(tab)
+  const RESTAURANT_TABS = ['restaurants', 'restaurant-cart', 'pos', 'pos-cart', 'dealer', 'dealer-cart', 'employee', 'employee-cart', 'bodyshop', 'bodyshop-cart']
+  const inMore = ['services', 'services-home', 'services-business', 'services-contact', 'about', 'clothes', 'restaurants', 'restaurant-cart', 'pos', 'pos-cart', 'dealer', 'dealer-cart', 'employee', 'employee-cart', 'bodyshop', 'bodyshop-cart', 'barbers', 'barber-cart', 'simple-barbershop'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -129,8 +140,8 @@ export default function App() {
               <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
               {moreOpen && (
                 <span className="dropdown-menu">
-                  <a onClick={() => go('restaurants')}>Restaurants</a>
-                  <a onClick={() => go('barbers')}>Barbers</a>
+                  <a onClick={() => go('restaurants')}>Business Systems</a>
+                  <a onClick={() => go('barbers')}>Sample Websites</a>
                   <a onClick={() => go('services')}>Services</a>
                   <a onClick={() => go('about')}>About Us</a>
                 </span>
@@ -185,9 +196,24 @@ export default function App() {
         )}
         {RESTAURANT_TABS.includes(tab) && (
           <RestaurantCartProvider>
+          <PosCartProvider>
+          <DealerCartProvider>
+          <EmployeeCartProvider>
+          <BodyshopCartProvider>
             {tab === 'restaurants' && <RestaurantsPage go={go} />}
             {tab === 'restaurant-cart' && <RestaurantsCartPage go={go} />}
             {tab === 'pos' && <PosPage go={go} />}
+            {tab === 'pos-cart' && <PosCartPage go={go} />}
+            {tab === 'dealer' && <DealerPage go={go} />}
+            {tab === 'dealer-cart' && <DealerCartPage go={go} />}
+            {tab === 'employee' && <EmployeePage go={go} />}
+            {tab === 'employee-cart' && <EmployeeCartPage go={go} />}
+            {tab === 'bodyshop' && <BodyshopPage go={go} />}
+            {tab === 'bodyshop-cart' && <BodyshopCartPage go={go} />}
+          </BodyshopCartProvider>
+          </EmployeeCartProvider>
+          </DealerCartProvider>
+          </PosCartProvider>
           </RestaurantCartProvider>
         )}
         {BARBER_TABS.includes(tab) && (

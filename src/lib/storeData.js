@@ -323,7 +323,7 @@ export function buildReceiptPdf({ kind, refId, storeName, customer, lines, total
   const doc = new jsPDF()
   let y = 20
   doc.setFontSize(18)
-  doc.text('AutoFly — Receipt', 14, y)
+  doc.text('Yently — Receipt', 14, y)
   y += 10
   doc.setFontSize(12)
   doc.text(`${kind === 'hold' ? 'Hold' : 'Order'} #${refId} — ${storeName}`, 14, y)
@@ -357,7 +357,7 @@ export function buildReceiptPdf({ kind, refId, storeName, customer, lines, total
     y += 6
     doc.text('you pay the store when you make your arrangement.', 14, y)
   } else {
-    doc.text('Thank you for ordering with AutoFly.', 14, y)
+    doc.text('Thank you for ordering with Yently.', 14, y)
   }
   const base64 = doc.output('datauristring').split(',')[1]
   const download = (filename) => doc.save(filename)

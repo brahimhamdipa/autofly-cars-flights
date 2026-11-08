@@ -20,7 +20,7 @@
   var BASE = window.RMS_BASE || folderBase();
   var SLUG = (BASE.replace(/^\/|\/$/g, '').split('/').pop() || 'bodyshop')
     .replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-  var DATA_KEY = 'bodyshop-data-' + SLUG;
+  var DATA_KEY = 'bodyshop-data-v2-' + SLUG;
   var SETUP_KEY = 'folder-pass-' + SLUG;
 
   /* Public by design: the same publishable key the main AutoFly site ships

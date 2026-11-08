@@ -28,7 +28,7 @@ import AdminAllPasses from './admin/AdminAllPasses'
 // Labels are the admin's own names for the tables, not the database
 // table names.
 const MENUS = [
-  { n: 1, name: 'Shopping', items: [
+  { n: 1, name: 'Shop', items: [
     { label: 'Products & Stock', section: 'products' },
     { label: 'Orders', section: 'orders' },
     { label: 'Form Submissions', section: 'submissions' },

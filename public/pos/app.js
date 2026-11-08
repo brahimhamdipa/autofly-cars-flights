@@ -333,8 +333,8 @@
       ? [store.address, store.phone].filter(Boolean).join(' · ')
       : '';
     $('site-footer').innerHTML = store
-      ? esc([store.address, store.phone].filter(Boolean).join(' · ')) + '<br>Powered by AutoFly'
-      : 'Powered by AutoFly';
+      ? esc([store.address, store.phone].filter(Boolean).join(' · ')) + '<br>Powered by Yently'
+      : 'Powered by Yently';
     document.title = (store ? store.name : 'POS') + ' — Point of Sale';
   }
 
@@ -808,7 +808,7 @@
     if (!store) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
     if (!ownerCreds) {
       el.innerHTML = '<h2>Setup</h2><div class="card">' +
-        '<p class="info">Enter the username and password AutoFly gave this store.</p>' +
+        '<p class="info">Enter the username and password Yently gave this store.</p>' +
         '<label>Username</label><input id="st-user" type="text" autocomplete="username">' +
         '<label>Password</label><input id="st-pass" type="password" autocomplete="current-password">' +
         '<div class="row"><button id="st-go">Log in</button></div>' +
@@ -855,7 +855,7 @@
       '<label>Receipt message</label><input id="d-msg" type="text" value="' + esc(draft.receiptMessage || '') + '">' +
       '<div class="row"><button id="d-save">Save draft</button>' +
       '<button id="d-upload" class="secondary">Upload for approval</button></div>' +
-      '<p class="info" id="d-status">Draft status: ' + esc(draftStatus) + (draftStatus === 'pending' ? ' — waiting for AutoFly to approve it.' : draftStatus === 'approved' ? ' — approved, live now.' : ' — not sent yet.') + '</p>' +
+      '<p class="info" id="d-status">Draft status: ' + esc(draftStatus) + (draftStatus === 'pending' ? ' — waiting for Yently to approve it.' : draftStatus === 'approved' ? ' — approved, live now.' : ' — not sent yet.') + '</p>' +
       '<p class="error" id="d-err" hidden></p></div>' +
       '<div class="card"><h3>Items</h3>' +
       '<p class="info">Items go live right away — no approval needed. Stock drops by itself with every sale.</p>' +
@@ -1001,7 +1001,7 @@
         }
         return rpc('submit_pos_draft', { p_slug: SLUG, p_u: ownerCreds.u, p_p: ownerCreds.p }).then(function () {
           draftStatus = 'pending';
-          $('d-status').textContent = 'Draft status: pending — waiting for AutoFly to approve it.';
+          $('d-status').textContent = 'Draft status: pending — waiting for Yently to approve it.';
           notifyEmail('POS draft for approval: ' + d.name, { slug: SLUG, name: d.name });
         });
       })
@@ -1041,13 +1041,13 @@
   function init() {
     if (!SLUG) {
       $('site-name').textContent = 'POS';
-      $('view-shop').innerHTML = '<div class="card"><h2>Store not found</h2><p class="info">This POS page needs a store link. Ask AutoFly for your store link.</p></div>';
+      $('view-shop').innerHTML = '<div class="card"><h2>Store not found</h2><p class="info">This POS page needs a store link. Ask Yently for your store link.</p></div>';
       return;
     }
     loadStore().then(function (d) {
       if (!d) {
         $('site-name').textContent = 'POS';
-        $('view-shop').innerHTML = '<div class="card"><h2>Store not found</h2><p class="info">No store with this link yet. Ask AutoFly to set it up.</p></div>';
+        $('view-shop').innerHTML = '<div class="card"><h2>Store not found</h2><p class="info">No store with this link yet. Ask Yently to set it up.</p></div>';
         return;
       }
       return rpc('pos_pass_status', { p_slug: SLUG }).then(function (st) {

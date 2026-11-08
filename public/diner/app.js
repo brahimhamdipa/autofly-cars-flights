@@ -1,5 +1,5 @@
 /* Diner page app — ONE folder for every restaurant.
-   The restaurant comes from the link (?r=<slug>), and its menu, info,
+   The restaurant comes from its own private link, and its menu, info,
    and orders live in the database — there is no data.json file here.
    Visitors see the last APPROVED menu. The customer logs in with the
    username + password the admin created for their restaurant (that
@@ -50,8 +50,10 @@
   var sentNote = '';
   var myOrders = loadMyOrders();
   var kitchenOrders = [];
+  var delOrderId = null; // kitchen order id awaiting an in-page delete confirmation
   var kitchenTimer = null;
   var currentView = 'menu';
+  var menuSearch = ''; // public menu search text, kept while typing
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -147,6 +149,23 @@
     return shrinkIconImage(file).then(function (up) {
       var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       var path = 'store/icons/' + SLUG + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + safe;
+      return fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
+        method: 'POST',
+        headers: { 'Content-Type': up.type || 'application/octet-stream', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+        body: up
+      }).then(function (res) {
+        if (!res.ok) throw new Error('upload failed (HTTP ' + res.status + ')');
+        return SUPABASE_URL + '/storage/v1/object/public/product-images/' + path;
+      });
+    });
+  }
+  /* One small picture per menu item, same shrink as the icon (200px,
+     JPEG 0.8, PNGs stay PNG). Uploaded at once to store/diner-items/
+     and stored on the draft item as `pic` — a public URL or ''. */
+  function uploadItemPicture(file) {
+    return shrinkIconImage(file).then(function (up) {
+      var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      var path = 'store/diner-items/' + SLUG + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + safe;
       return fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
         method: 'POST',
         headers: { 'Content-Type': up.type || 'application/octet-stream', 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
@@ -309,44 +328,54 @@
   }
 
   /* ---------- Menu ---------- */
-  function renderMenu() {
-    var el = $('view-menu');
-    if (!data) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
-    var info = '<div class="card info">';
-    if (data.address) info += '<p>📍 ' + esc(data.address) + '</p>';
-    if (data.phone) info += '<p>📞 ' + esc(data.phone) + '</p>';
-    if (data.email) info += '<p>✉️ ' + esc(data.email) + '</p>';
-    if (data.hours) info += '<p>🕐 ' + esc(data.hours) + '</p>';
-    info += '</div>';
+  function menuMatches(item, q) {
+    if (!q) return true;
+    var hay = [item.name, item.description].map(function (x) { return String(x == null ? '' : x).toLowerCase(); }).join(' ');
+    return hay.indexOf(q) !== -1;
+  }
+  /* One menu item: text on the left, its small picture on the right
+     (96×72, the same size as the dealer Setup thumbnails). Items
+     without a picture show no thumbnail. A legacy `image` is shown
+     the same way when there is no `pic`. */
+  function menuItemHtml(item, i) {
+    var pic = item.pic || item.image || '';
+    var h = '<div class="menu-item"><div class="item-top"><div class="item-text"><h3>' + esc(item.name) + '</h3>';
+    if (item.description) h += '<div class="desc">' + esc(item.description) + '</div>';
+    h += '</div>';
+    if (pic) h += '<img class="item-pic" src="' + esc(pic) + '" alt="">';
+    h += '</div><div class="row"><span class="price">' + money(item.price) + '</span>' +
+      '<span style="flex:1"></span>' +
+      (empUnlocked ? '<button data-add="' + i + '">Add</button>' : '') + '</div></div>';
+    return h;
+  }
+  /* The menu grid alone, re-rendered as the visitor types in the
+     search box, so the search input never loses focus. */
+  function renderMenuGrid() {
+    var grid = $('menu-grid');
+    if (!grid) return;
+    var q = (menuSearch || '').toLowerCase();
     var cats = [];
-    data.menu.forEach(function (item) {
-      if (cats.indexOf(item.category || 'Menu') === -1) cats.push(item.category || 'Menu');
+    (data.menu || []).forEach(function (item) {
+      if (!menuMatches(item, q)) return;
+      var cat = item.category || 'Menu';
+      if (cats.indexOf(cat) === -1) cats.push(cat);
     });
-    var html = info;
-    if (!empUnlocked) {
-      html += '<div class="card"><p class="info">This is the public menu — take a look around. To order, enter the employee password.</p>' +
-        '<button id="menu-order">Order</button></div>';
-    }
-    cats.forEach(function (cat) {
-      html += '<h2>' + esc(cat) + '</h2><div class="menu-grid">';
-      data.menu.forEach(function (item, i) {
-        if ((item.category || 'Menu') !== cat) return;
-        html += '<div class="menu-item">';
-        if (item.image) html += '<img src="' + esc(item.image) + '" alt="">';
-        html += '<h3>' + esc(item.name) + '</h3>';
-        if (item.description) html += '<div class="desc">' + esc(item.description) + '</div>';
-        html += '<div class="row"><span class="price">' + money(item.price) + '</span>' +
-          '<span style="flex:1"></span>' +
-          (empUnlocked ? '<button data-add="' + i + '">Add</button>' : '') + '</div></div>';
+    var html = '';
+    if (!cats.length) {
+      html = '<div class="card"><p class="info">' + (menuSearch ? 'No items match your search.' : 'No menu items yet.') + '</p></div>';
+    } else {
+      cats.forEach(function (cat) {
+        html += '<h2>' + esc(cat) + '</h2><div class="menu-grid">';
+        data.menu.forEach(function (item, i) {
+          if ((item.category || 'Menu') !== cat) return;
+          if (!menuMatches(item, q)) return;
+          html += menuItemHtml(item, i);
+        });
+        html += '</div>';
       });
-      html += '</div>';
-    });
-    el.innerHTML = html;
-    var orderBtn = $('menu-order');
-    if (orderBtn) orderBtn.addEventListener('click', function () {
-      renderEmpPrompt(el, function () { renderMenu(); });
-    });
-    el.querySelectorAll('[data-add]').forEach(function (btn) {
+    }
+    grid.innerHTML = html;
+    grid.querySelectorAll('[data-add]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var i = btn.getAttribute('data-add');
         cart[i] = (cart[i] || 0) + 1;
@@ -356,6 +385,34 @@
         setTimeout(function () { btn.textContent = 'Add'; }, 900);
       });
     });
+  }
+  function renderMenu() {
+    var el = $('view-menu');
+    if (!data) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
+    var info = '<div class="card info">';
+    if (data.address) info += '<p>📍 ' + esc(data.address) + '</p>';
+    if (data.phone) info += '<p>📞 ' + esc(data.phone) + '</p>';
+    if (data.email) info += '<p>✉️ ' + esc(data.email) + '</p>';
+    if (data.hours) info += '<p>🕐 ' + esc(data.hours) + '</p>';
+    info += '</div>';
+    var html = info;
+    if (!empUnlocked) {
+      html += '<div class="card"><p class="info">This is the public menu — take a look around. To order, enter the employee password.</p>' +
+        '<button id="menu-order">Order</button></div>';
+    }
+    html += '<input id="menu-search" type="text" placeholder="Search menu…" value="' + esc(menuSearch) + '">';
+    html += '<div id="menu-grid"></div>';
+    el.innerHTML = html;
+    var orderBtn = $('menu-order');
+    if (orderBtn) orderBtn.addEventListener('click', function () {
+      renderEmpPrompt(el, function () { renderMenu(); });
+    });
+    var search = $('menu-search');
+    if (search) search.addEventListener('input', function () {
+      menuSearch = search.value;
+      renderMenuGrid();
+    });
+    renderMenuGrid();
   }
 
   /* ---------- Order ---------- */
@@ -463,7 +520,9 @@
       });
       html += '<div class="row" style="margin-top:10px">' +
         '<button data-fulfil="' + order.id + '"' + (allCooked ? '' : ' disabled') + '>Fulfil order</button>' +
-        '<button class="secondary" data-delorder="' + order.id + '">Delete</button></div></div>';
+        (delOrderId === order.id
+          ? '<span><b>Delete this order?</b> <button class="danger" data-delorder-yes="' + order.id + '">Yes, delete</button> <button class="secondary" data-delorder-no="' + order.id + '">Keep it</button></span>'
+          : '<button class="secondary" data-delorder="' + order.id + '">Delete</button>') + '</div></div>';
     });
     el.innerHTML = html;
     el.querySelectorAll('[data-cook]').forEach(function (box) {
@@ -484,8 +543,17 @@
     });
     el.querySelectorAll('[data-delorder]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        if (!window.confirm('Delete this order?')) return;
-        var id = Number(btn.getAttribute('data-delorder'));
+        delOrderId = Number(btn.getAttribute('data-delorder'));
+        renderKitchen();
+      });
+    });
+    el.querySelectorAll('[data-delorder-no]').forEach(function (btn) {
+      btn.addEventListener('click', function () { delOrderId = null; renderKitchen(); });
+    });
+    el.querySelectorAll('[data-delorder-yes]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = Number(btn.getAttribute('data-delorder-yes'));
+        delOrderId = null;
         rpc('delete_diner_order_open', { p_slug: SLUG, p_order_id: id, p_epass: empPass }).then(fetchKitchen).catch(fetchKitchen);
       });
     });
@@ -582,6 +650,12 @@
         '<label>Price</label><input data-f="price" type="number" step="0.01" min="0" value="' + esc(item.price) + '">' +
         '<label>Category (e.g. Starters, Main courses, Desserts, Drinks)</label><input data-f="category" value="' + esc(item.category || '') + '">' +
         '<label>Description</label><input data-f="description" value="' + esc(item.description || '') + '">' +
+        '<label>Picture</label>' +
+        '<div class="pic-thumbs">' +
+        (item.pic ? '<div class="pic-thumb"><img src="' + esc(item.pic) + '" alt="Menu item picture"><button class="small danger" data-pic-remove="' + i + '">Remove</button></div>' : '') +
+        '</div>' +
+        '<input type="file" accept="image/*" data-pic-file="' + i + '">' +
+        '<p class="info" data-pic-status="' + i + '" hidden></p>' +
         '<button class="small danger" data-remove="' + i + '">Remove item</button>';
       row.querySelectorAll('[data-f]').forEach(function (input) {
         input.addEventListener('input', function () {
@@ -593,6 +667,28 @@
         draft.menu.splice(i, 1);
         renderSetup();
       });
+      /* Picking a picture uploads it at once and stores the URL on the
+         draft item; Remove clears it. The draft is only persisted when
+         the owner saves it, like every other field. */
+      var picFile = row.querySelector('[data-pic-file]');
+      if (picFile) picFile.addEventListener('change', function () {
+        var f = picFile.files && picFile.files[0];
+        if (!f) return;
+        var st = row.querySelector('[data-pic-status]');
+        if (st) { st.hidden = false; st.textContent = 'Uploading picture…'; }
+        uploadItemPicture(f).then(function (url) {
+          item.pic = url;
+          drawMenu();
+        }).catch(function (err) {
+          if (st) { st.hidden = false; st.textContent = 'Could not upload the picture: ' + (err && err.message ? err.message : 'please try again.'); }
+          picFile.value = '';
+        });
+      });
+      var picRemove = row.querySelector('[data-pic-remove]');
+      if (picRemove) picRemove.addEventListener('click', function () {
+        item.pic = '';
+        drawMenu();
+      });
       return row;
     }
     function drawMenu() {
@@ -602,7 +698,7 @@
     drawMenu();
     wireIconField();
     $('setup-add').addEventListener('click', function () {
-      draft.menu.push({ name: 'New item', price: 0, category: 'Menu', description: '' });
+      draft.menu.push({ name: 'New item', price: 0, category: 'Menu', description: '', pic: '' });
       drawMenu();
     });
     function collectDraft() {
@@ -659,7 +755,7 @@
   }
   if (!SLUG) {
     $('site-name').textContent = 'Restaurant not found';
-    $('view-menu').innerHTML = '<div class="error">This link doesn\'t point to a restaurant. Check the link and try again — a restaurant link looks like autofly.us.com/diner?r=your-restaurant.</div>';
+    $('view-menu').innerHTML = '<div class="error">This link doesn\'t point to a restaurant. Check the link and try again — ask AutoFly for your restaurant link.</div>';
   } else {
     rpc('get_diner_live', { p_slug: SLUG }).then(function (json) {
       if (!json || !json.name) throw new Error('not found');

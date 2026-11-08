@@ -6,7 +6,7 @@ the database, and the page knows which restaurant from the link.
 
 ## Links
 
-- Visitor link: `autofly.us.com/diner?r=<slug>` — the PUBLIC menu
+- Visitor link: the restaurant's own private link — the PUBLIC menu
   (no Add buttons). Anyone with the link can look at the menu.
 - Ordering: the **Order** button on the menu unlocks the working
   site with the restaurant's shared employee password — one

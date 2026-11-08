@@ -126,7 +126,7 @@ export default function App() {
       <header className="header">
         <div className="header-row">
         <div className="brand">
-          <span className="brand-logo-row"><img className="brand-logo" src={logoUrl} alt="Yently" /><span className="brand-com">.com</span></span>
+          <img className="brand-logo" src={logoUrl} alt="Yently" />
           <span className="tagline">Business Systems, Shop, Cars &amp; Flights — All in One Place</span>
         </div>
         <div className="header-right">

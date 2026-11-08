@@ -12,6 +12,8 @@ body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-
 .lang-row .lang.soon { opacity: .55; cursor: default; }
 .brand { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .brand-logo { height: 54px; width: auto; display: block; }
+.brand-logo-row { display: inline-flex; align-items: flex-start; }
+.brand-com { font-size: 11px; font-weight: 800; color: #f5c542; line-height: 1; margin-top: 4px; margin-left: 1px; }
 .tagline { font-size: 11.5px; font-weight: 600; letter-spacing: .4px; color: #f5a623; }
 .logo { font-weight: 800; font-size: 20px; }
 .header nav { display: flex; align-items: center; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 3px; gap: 3px; }
@@ -126,9 +128,11 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .cart-fab-count { position: absolute; top: -5px; right: -5px; background: #ea580c; color: #ffffff; font-size: 11px; font-weight: 800; min-width: 19px; height: 19px; border-radius: 999px; display: flex; align-items: center; justify-content: center; padding: 0 5px; border: 2px solid #ffffff; box-sizing: border-box; }
 .menu-count { background: #ea580c; color: #ffffff; font-size: 11px; font-weight: 800; border-radius: 999px; padding: 1px 7px; margin-left: 6px; vertical-align: 1px; }
 .admin-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
-/* Admin navigation: two sticky rows that stay on screen while a long
-   form scrolls — groups on top, sections of the active group below. */
-.admin-nav { position: sticky; top: 0; z-index: 55; background: #fff; border-bottom: 1px solid #e5e7eb; padding: 10px 0 12px; margin: 0 0 10px; display: flex; flex-direction: column; gap: 8px; }
+/* Admin navigation: a plain card at the top of the page, NOT sticky —
+   it scrolls away with the page, so it can never cover the site
+   header or get stuck at the top edge while scrolling. The numbered
+   menus open in place; the dropdown stays inside the card. */
+.admin-nav { position: static; background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,.06); padding: 12px 14px; margin: 0 0 12px; display: flex; flex-direction: column; gap: 8px; }
 .admin-groups, .admin-sections { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 2px; }
 .admin-groups button, .admin-sections button { background: #f3f4f6; color: #111827; border: 1px solid #e5e7eb; border-radius: 999px; padding: 8px 14px; font-size: 14px; white-space: nowrap; }
 .admin-groups button.active, .admin-sections button.active { background: #111827; color: #fff; border-color: #111827; }
@@ -265,3 +269,37 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .chat-sendrow input { flex: 1; }
 .chat-sendrow button { white-space: nowrap; }
 .admin-chat-thread { max-height: 320px; overflow-y: auto; border: 1px solid #e5e7eb; border-radius: 12px; margin-bottom: 10px; }
+
+/* Hero slogan on the Business Systems hub: "Everything you need,
+   gently in one place." The g and y share one slot and cross-fade
+   every ~6s, so the word reads "gently" one moment and "yently" the
+   next, while "ently" never moves. */
+.slogan-word { display: inline-block; position: relative; width: 3.1em; white-space: nowrap; }
+.slogan-g, .slogan-y { position: absolute; left: 0; top: 0; animation: slogan-swap 6s ease-in-out infinite; }
+.slogan-g { color: #f5c542; }
+.slogan-y { color: #7dd3fc; animation-delay: -3s; }
+.slogan-ently { position: absolute; left: 0.62em; top: 0; color: #fff; }
+@keyframes slogan-swap {
+  0%, 42% { opacity: 1; }
+  50%, 92% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slogan-g, .slogan-y { animation: none; }
+  .slogan-g { opacity: 1; }
+  .slogan-y { opacity: 0; }
+}
+
+/* Labelled form fields (Store Setup): a label row with a "?" help
+   button next to it, above the input. */
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.field-label .help { flex-shrink: 0; }
+.field-row { display: flex; align-items: center; gap: 6px; }
+
+/* "?" help buttons: tap to open a short explanation under the field,
+   tap again or anywhere else to close. The panel fits small screens. */
+.help { position: relative; display: inline-flex; }
+.help-btn { width: 18px; height: 18px; border-radius: 50%; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-size: 12px; font-weight: 700; line-height: 1; padding: 0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+.help-btn:hover { background: #dbeafe; }
+.help-pop { position: absolute; top: calc(100% + 6px); left: 0; width: 300px; max-width: min(300px, 78vw); background: #fff; border: 1px solid #dbeafe; border-radius: 10px; box-shadow: 0 10px 28px rgba(17,24,39,.12); padding: 10px 12px; font-size: 13px; font-weight: 400; line-height: 1.5; color: #374151; text-align: left; z-index: 40; }

@@ -43,8 +43,8 @@ import './index.css'
 
 export default function App() {
   // The admin page has no visible link anywhere: it opens only by
-  // typing autofly.us.com/admin (see vercel.json rewrite). A provider
-  // form opens the same way, at autofly.us.com/<form name>.
+  // typing yently.com/admin (see vercel.json rewrite). A provider
+  // form opens the same way, at yently.com/<form name>.
   const [tab, setTab] = useState(() => {
     const path = window.location.pathname.replace(/\/$/, '')
     if (path === '/admin') return 'admin'
@@ -126,7 +126,7 @@ export default function App() {
       <header className="header">
         <div className="header-row">
         <div className="brand">
-          <img className="brand-logo" src={logoUrl} alt="Yently" />
+          <span className="brand-logo-row"><img className="brand-logo" src={logoUrl} alt="Yently" /><span className="brand-com">.com</span></span>
           <span className="tagline">Business Systems, Shop, Cars &amp; Flights — All in One Place</span>
         </div>
         <div className="header-right">
@@ -139,7 +139,6 @@ export default function App() {
               <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
               {moreOpen && (
                 <span className="dropdown-menu">
-                  <a onClick={() => go('business-hub')}>Business Systems</a>
                   <a onClick={() => go('services')}>Services</a>
                   <a onClick={() => go('about')}>About Us</a>
                 </span>
@@ -147,7 +146,7 @@ export default function App() {
             </span>
           </nav>
           <div className="lang-row" aria-label="Language">
-            <a className="lang active" href="https://autofly.us.com">En</a>
+            <a className="lang active" href="https://yently.com">En</a>
             <span className="lang soon" title="Coming soon">Fr</span>
             <span className="lang soon" title="Coming soon">Ar</span>
             <span className="lang soon" title="Coming soon">Es</span>

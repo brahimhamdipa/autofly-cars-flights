@@ -20,7 +20,10 @@
   var BASE = window.RMS_BASE || folderBase();
   var SLUG = (BASE.replace(/^\/|\/$/g, '').split('/').pop() || 'rentCarAdmin')
     .replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-  var DATA_KEY = 'rentcaradmin-data-' + SLUG;
+  // v2 key (Nov 2026): older browsers saved the pre-rename demo data under
+  // the v1 key, which would keep showing the old names. v2 starts fresh
+  // from the current data.json; anything saved under v1 is ignored.
+  var DATA_KEY = 'rentcaradmin-data-v2-' + SLUG;
   var SETUP_KEY = 'folder-pass-' + SLUG;
 
   /* Public by design: the same publishable key the main AutoFly site ships

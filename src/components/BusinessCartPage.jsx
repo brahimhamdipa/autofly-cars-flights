@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useBusinessCart } from '../lib/BusinessCartContext'
+import { useBusinessCart, bundleFor } from '../lib/BusinessCartContext'
 import { placeBusinessOrder } from '../lib/businessData'
 import { BusinessTopBar } from './BusinessMenu'
 
@@ -21,6 +21,7 @@ const PLAN_HINTS = {
   'bs:website': 'Your own bodyshop page + estimates + jobs, for your shop.',
   'b:website': 'Your own sample website, for your business.',
   'tv:website': 'Your own TV gallery page + up to 7 pictures, for your screens.',
+  'chat:website': 'Your own chat bubble + every message by email, for your website.',
 }
 
 export default function BusinessCartPage({ go }) {
@@ -32,7 +33,8 @@ export default function BusinessCartPage({ go }) {
   const [submitting, setSubmitting] = useState(false)
   const [status, setStatus] = useState('')
 
-  const total = cart.reduce((s, i) => s + (Number(i.price) || 0), 0)
+  const bundle = bundleFor(cart)
+  const orderBundle = lastOrder ? bundleFor(lastOrder) : null
 
   const placeOrder = async (e) => {
     e.preventDefault()
@@ -54,11 +56,13 @@ export default function BusinessCartPage({ go }) {
       <div className="hero-card">
         <h2>🛒 My Cart</h2>
         <p>Your Business Systems order. Place it below and AutoFly will be in touch to set up your pages.</p>
+        <p className="hint">Bundle &amp; save: 2 systems 10% off, 3 systems 15% off, 4+ systems 20% off — applied automatically, no code needed.</p>
       </div>
 
       {count === 0 && (!lastOrder || lastOrder.length === 0) && (
         <div className="hero-card">
           <p>Your cart is empty.</p>
+          <p className="hint">Tip: bundle 2 or more systems and save up to 20% — the discount applies automatically.</p>
           <button onClick={() => go && go('restaurants')}>Browse Business Systems</button>
         </div>
       )}
@@ -69,6 +73,9 @@ export default function BusinessCartPage({ go }) {
           {lastOrder.map(i => (
             <p key={i.key}>{i.name} — ${Number(i.price).toFixed(2)}/month.</p>
           ))}
+          {orderBundle && orderBundle.rate > 0 && (
+            <p><b>Monthly total after bundle discount: ${orderBundle.total.toFixed(2)}/month</b> — you're saving ${orderBundle.savings.toFixed(2)}/month.</p>
+          )}
           <p>AutoFly will be in touch to set up your pages.</p>
           <button onClick={() => go && go('restaurants')}>Back to Business Systems</button>
         </div>
@@ -105,7 +112,14 @@ export default function BusinessCartPage({ go }) {
             <label>Note (optional)
               <textarea placeholder="Your business name, city, anything that helps us set up your pages" value={note} onChange={e => setNote(e.target.value)} />
             </label>
-            <p><b>Total: ${total.toFixed(2)}/month</b></p>
+            <p>List total: ${bundle.listTotal.toFixed(2)}/month</p>
+            {bundle.rate > 0 && (
+              <p>Bundle discount ({Math.round(bundle.rate * 100)}% off): −${bundle.savings.toFixed(2)}/month</p>
+            )}
+            <p><b>Total: ${bundle.total.toFixed(2)}/month</b></p>
+            {bundle.rate > 0 && (
+              <p>You're saving ${bundle.savings.toFixed(2)}/month with the bundle.</p>
+            )}
             <button type="submit" disabled={submitting}>{submitting ? 'Placing…' : 'Place order'}</button>
             {status && <p className="status">{status}</p>}
           </form>

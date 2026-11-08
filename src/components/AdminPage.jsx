@@ -80,6 +80,7 @@ const MENUS = [
     ] },
     { label: 'Add-ons', children: [
       { label: 'TV Gallery Orders', table: 'tv_gallery_orders' },
+      { label: 'Live Chat Orders', table: 'live_chat_orders' },
     ] },
     { label: 'Barbers', children: [
       { label: 'Barber Passes', table: 'barbershop_shops' },

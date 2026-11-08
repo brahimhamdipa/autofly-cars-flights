@@ -265,8 +265,8 @@
       ? [dealer.address, dealer.phone].filter(Boolean).join(' · ')
       : '';
     $('site-footer').innerHTML = dealer
-      ? esc([dealer.address, dealer.phone].filter(Boolean).join(' · ')) + '<br>Powered by AutoFly'
-      : 'Powered by AutoFly';
+      ? esc([dealer.address, dealer.phone].filter(Boolean).join(' · ')) + '<br>Powered by Yently'
+      : 'Powered by Yently';
     document.title = (dealer ? dealer.name : 'Dealer') + ' — Car Dealership';
   }
 
@@ -710,7 +710,7 @@
     if (!dealer) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
     if (!ownerCreds) {
       el.innerHTML = '<h2>Setup</h2><div class="card">' +
-        '<p class="info">Enter the username and password AutoFly gave this dealership.</p>' +
+        '<p class="info">Enter the username and password Yently gave this dealership.</p>' +
         '<label>Username</label><input id="st-user" type="text" autocomplete="username">' +
         '<label>Password</label><input id="st-pass" type="password" autocomplete="current-password">' +
         '<div class="row"><button id="st-go">Log in</button></div>' +
@@ -757,7 +757,7 @@
       '<label>About</label><textarea id="d-about">' + esc(draft.about || '') + '</textarea>' +
       '<div class="row"><button id="d-save">Save draft</button>' +
       '<button id="d-upload" class="secondary">Upload for approval</button></div>' +
-      '<p class="info" id="d-status">Draft status: ' + esc(draftStatus) + (draftStatus === 'pending' ? ' — waiting for AutoFly to approve it.' : draftStatus === 'approved' ? ' — approved, live now.' : ' — not sent yet.') + '</p>' +
+      '<p class="info" id="d-status">Draft status: ' + esc(draftStatus) + (draftStatus === 'pending' ? ' — waiting for Yently to approve it.' : draftStatus === 'approved' ? ' — approved, live now.' : ' — not sent yet.') + '</p>' +
       '<p class="error" id="d-err" hidden></p></div>' +
       '<div class="card"><h3>Vehicles</h3>' +
       '<p class="info">Vehicles go live right away — no approval needed.</p>' +
@@ -883,7 +883,7 @@
         }
         return rpc('submit_dealer_draft', { p_slug: SLUG, p_u: ownerCreds.u, p_p: ownerCreds.p }).then(function () {
           draftStatus = 'pending';
-          $('d-status').textContent = 'Draft status: pending — waiting for AutoFly to approve it.';
+          $('d-status').textContent = 'Draft status: pending — waiting for Yently to approve it.';
           notifyEmail('Dealer draft for approval: ' + d.name, 'dealer_draft', { slug: SLUG, name: d.name });
         });
       })
@@ -1039,13 +1039,13 @@
   function init() {
     if (!SLUG) {
       $('site-name').textContent = 'Dealer';
-      $('view-vehicles').innerHTML = '<div class="card"><h2>Dealer not found</h2><p class="info">This dealer page needs your own dealership link — ask AutoFly for it.</p></div>';
+      $('view-vehicles').innerHTML = '<div class="card"><h2>Dealer not found</h2><p class="info">This dealer page needs your own dealership link — ask Yently for it.</p></div>';
       return;
     }
     loadDealer().then(function (d) {
       if (!d) {
         $('site-name').textContent = 'Dealer';
-        $('view-vehicles').innerHTML = '<div class="card"><h2>Dealer not found</h2><p class="info">No dealership with this link yet. Ask AutoFly to set it up.</p></div>';
+        $('view-vehicles').innerHTML = '<div class="card"><h2>Dealer not found</h2><p class="info">No dealership with this link yet. Ask Yently to set it up.</p></div>';
         return;
       }
       return rpc('dealer_pass_status', { p_slug: SLUG }).then(function (st) {

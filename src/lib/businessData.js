@@ -5,6 +5,7 @@ import { insertDealerOrder } from './dealerData'
 import { insertEmployeeOrder } from './employeeData'
 import { insertBodyshopOrder } from './bodyshopData'
 import { insertBarberOrder } from './barberData'
+import { insertTvGalleryOrder } from './tvGalleryData'
 import {
   RESTAURANT_PLAN_KEY,
   POS_PLAN_KEY,
@@ -13,6 +14,7 @@ import {
   EMPLOYEE_PLAN_KEY,
   BODYSHOP_PLAN_KEY,
   SAMPLE_PLAN_KEY,
+  TV_PLAN_KEY,
 } from './BusinessCartContext'
 
 // Data layer for the unified Business Systems cart. Checkout inserts
@@ -20,7 +22,8 @@ import {
 // the owner once per item — exactly what the old per-system carts
 // did, only now the items share one cart. The per-plan tables stay
 // separate (restaurant_order, pos_order, barbershop_order,
-// dealer_order, employee_order, bodyshop_order, barber_order),
+// dealer_order, employee_order, bodyshop_order, barber_order,
+// tv_gallery_order),
 // because each plan is a different product with a different
 // follow-up. No payment is taken here.
 const INSERT_BY_KEY = {
@@ -31,6 +34,7 @@ const INSERT_BY_KEY = {
   [EMPLOYEE_PLAN_KEY]: insertEmployeeOrder,
   [BODYSHOP_PLAN_KEY]: insertBodyshopOrder,
   [SAMPLE_PLAN_KEY]: insertBarberOrder,
+  [TV_PLAN_KEY]: insertTvGalleryOrder,
 }
 
 // items = [{key, name, price}]. Places each item in cart order and

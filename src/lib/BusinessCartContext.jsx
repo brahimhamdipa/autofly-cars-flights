@@ -57,7 +57,11 @@ export const SAMPLE_PLAN_KEY = 'b:website'
 export const SAMPLE_PLAN_NAME = 'Sample website'
 export const SAMPLE_PLAN_PRICE = 10
 
-// Single source of truth for the seven plans, keyed by plan key.
+export const TV_PLAN_KEY = 'tv:website'
+export const TV_PLAN_NAME = 'TV Gallery page'
+export const TV_PLAN_PRICE = 2
+
+// Single source of truth for the eight plans, keyed by plan key.
 export const BUSINESS_PLANS = {
   [RESTAURANT_PLAN_KEY]: { key: RESTAURANT_PLAN_KEY, name: RESTAURANT_PLAN_NAME, price: RESTAURANT_PLAN_PRICE },
   [POS_PLAN_KEY]: { key: POS_PLAN_KEY, name: POS_PLAN_NAME, price: POS_PLAN_PRICE },
@@ -66,6 +70,7 @@ export const BUSINESS_PLANS = {
   [EMPLOYEE_PLAN_KEY]: { key: EMPLOYEE_PLAN_KEY, name: EMPLOYEE_PLAN_NAME, price: EMPLOYEE_PLAN_PRICE },
   [BODYSHOP_PLAN_KEY]: { key: BODYSHOP_PLAN_KEY, name: BODYSHOP_PLAN_NAME, price: BODYSHOP_PLAN_PRICE },
   [SAMPLE_PLAN_KEY]: { key: SAMPLE_PLAN_KEY, name: SAMPLE_PLAN_NAME, price: SAMPLE_PLAN_PRICE },
+  [TV_PLAN_KEY]: { key: TV_PLAN_KEY, name: TV_PLAN_NAME, price: TV_PLAN_PRICE },
 }
 
 export function BusinessCartProvider({ children }) {

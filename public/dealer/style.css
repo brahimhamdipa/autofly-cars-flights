@@ -32,7 +32,7 @@ button.secondary:hover { background: #d1d5db; }
 button.danger { background: #b91c1c; }
 button:disabled { opacity: 0.45; cursor: default; }
 button.small { padding: 6px 12px; font-size: 14px; }
-select, input[type="text"], input[type="number"], input[type="email"], input[type="password"], input[type="tel"], input[type="date"], textarea { width: 100%; padding: 10px; border: 1px solid #d6d3d1; border-radius: 8px; margin: 4px 0 12px; }
+select, input[type="text"], input[type="number"], input[type="email"], input[type="password"], input[type="tel"], input[type="date"], input[type="file"], textarea { width: 100%; padding: 10px; border: 1px solid #d6d3d1; border-radius: 8px; margin: 4px 0 12px; }
 label { font-weight: 600; font-size: 14px; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .qty { display: inline-flex; align-items: center; gap: 8px; }
@@ -46,3 +46,30 @@ label { font-weight: 600; font-size: 14px; }
 #site-footer { max-width: 960px; margin: 0 auto; padding: 0 16px 24px; color: #6b7280; font-size: 14px; text-align: center; line-height: 1.8; }
 .to-top { position: fixed; left: 12px; bottom: 12px; z-index: 55; background: #111827; color: #fff; border-radius: 999px; padding: 10px 16px; box-shadow: 0 4px 16px rgba(0,0,0,.25); }
 .to-top:hover { background: #111827; }
+
+/* Vehicle pictures: search, slideshow on the public cards, details
+   popup (modelled on the main site's Cars popup), Setup thumbnails. */
+.veh-search { margin-bottom: 12px; }
+.slideshow { position: relative; background: #111827; margin: -14px -14px 6px; border-radius: 14px 14px 0 0; overflow: hidden; }
+.slideshow .slide-img { width: 100%; height: 190px; object-fit: cover; display: block; }
+.slide-empty { height: 190px; display: flex; align-items: center; justify-content: center; color: #9ca3af; background: #e5e7eb; font-size: 15px; }
+.slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(17,24,39,.55); color: #fff; border: 0; width: 34px; height: 34px; border-radius: 999px; cursor: pointer; font-size: 18px; line-height: 1; padding: 0 0 2px; }
+.slide-btn:hover { background: rgba(17,24,39,.8); }
+.slide-btn.prev { left: 8px; }
+.slide-btn.next { right: 8px; }
+.slide-count { position: absolute; bottom: 8px; right: 8px; background: rgba(17,24,39,.65); color: #fff; font-size: 12px; padding: 2px 9px; border-radius: 999px; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+.modal { background: #fff; border-radius: 16px; padding: 22px; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+.modal h3 { margin: 0 0 12px; padding-right: 30px; }
+.modal .slideshow { margin: -22px -22px 12px; border-radius: 16px 16px 0 0; }
+.modal-close { position: absolute; top: 10px; right: 10px; background: #e5e7eb; color: #111827; width: 30px; height: 30px; border-radius: 999px; padding: 0; font-size: 13px; z-index: 2; }
+.modal-close:hover { background: #d1d5db; }
+.detail-list { margin: 12px 0; }
+.detail-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid #f5f5f4; font-size: 15px; }
+.detail-row span { color: #4b5563; }
+.btn-soft { background: #e5e7eb; color: #111827; }
+.btn-soft:hover { background: #d1d5db; }
+.pic-thumbs { display: flex; flex-wrap: wrap; gap: 10px; margin: 4px 0 12px; }
+.pic-thumb { width: 96px; }
+.pic-thumb img { width: 96px; height: 72px; object-fit: cover; border-radius: 8px; display: block; }
+.pic-thumb button { margin-top: 4px; width: 100%; }

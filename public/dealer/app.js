@@ -53,6 +53,11 @@
   var cancelConfirmId = null; // booking id awaiting an in-page cancel confirmation
   var bookingsErr = ''; // last bookings error, shown inline above the list
   var delConfirmId = null; // vehicle id awaiting an in-page delete confirmation
+  var vehicleSearch = ''; // public vehicles search text, kept while typing
+  var slideIdx = {}; // vehicle id -> current slideshow picture index
+  var detailVehicleId = null; // vehicle id shown in the details popup
+  var pendingTestDriveVehicleId = null; // vehicle to preselect in Test Drive
+  var vehiclePics = []; // picture URLs for the vehicle being added/edited in Setup
 
   function $(id) { return document.getElementById(id); }
   function esc(s) {
@@ -156,6 +161,126 @@
   }
 
   /* ---------- Vehicles (public inventory) ---------- */
+  function vehiclePicsOf(v) { return (v && Array.isArray(v.pics)) ? v.pics : []; }
+  function vehicleMatches(v, q) {
+    if (!q) return true;
+    var hay = [v.make, v.model, v.year, v.price, money(v.price), v.stock_no, v.description]
+      .map(function (x) { return String(x == null ? '' : x).toLowerCase(); }).join(' ');
+    return hay.indexOf(q) !== -1;
+  }
+  /* One picture shows static, 2+ get ‹ › arrows and a "1 of N" counter,
+     none gets a plain grey placeholder block. The arrows keep their
+     position per vehicle in slideIdx, so flipping through one car does
+     not reset the others. */
+  function vehicleSlideshowHtml(v) {
+    var pics = vehiclePicsOf(v);
+    if (!pics.length) return '<div class="slideshow"><div class="slide-empty">No picture yet</div></div>';
+    var idx = slideIdx[v.id] || 0;
+    if (idx >= pics.length) idx = 0;
+    var h = '<div class="slideshow"><img class="slide-img" src="' + esc(pics[idx]) + '" alt="' + esc(vehicleLabel(v)) + '">';
+    if (pics.length > 1) {
+      h += '<button class="slide-btn prev" data-slide-prev="' + v.id + '" aria-label="Previous picture">‹</button>' +
+        '<button class="slide-btn next" data-slide-next="' + v.id + '" aria-label="Next picture">›</button>' +
+        '<span class="slide-count">' + (idx + 1) + ' of ' + pics.length + '</span>';
+    }
+    h += '</div>';
+    return h;
+  }
+  function vehicleCardHtml(v) {
+    var specs = [];
+    if (v.mileage != null && v.mileage !== '') specs.push(fmtNum(v.mileage) + ' miles');
+    if (v.fuel) specs.push(v.fuel);
+    if (v.transmission) specs.push(v.transmission);
+    if (v.body_style) specs.push(v.body_style);
+    if (v.condition) specs.push(v.condition);
+    if (v.drivetrain) specs.push(v.drivetrain);
+    if (v.doors) specs.push(v.doors + ' doors');
+    if (v.exterior) specs.push(v.exterior + ' exterior');
+    if (v.interior) specs.push(v.interior + ' interior');
+    return '<div class="item-card">' + vehicleSlideshowHtml(v) +
+      '<h3>' + esc(vehicleLabel(v)) + '</h3>' +
+      '<span class="price">' + money(v.price) + '</span>' +
+      (specs.length ? '<span class="stock">' + esc(specs.join(' · ')) + '</span>' : '') +
+      (v.stock_no ? '<span class="stock">Stock no. ' + esc(v.stock_no) + '</span>' : '') +
+      (v.description ? '<p class="info">' + esc(v.description) + '</p>' : '') +
+      '<div class="row"><button data-testdrive="' + v.id + '">Test Drive</button>' +
+      '<button class="small btn-soft" data-details="' + v.id + '" aria-label="View details">→</button></div>' +
+      '</div>';
+  }
+  function renderVehiclesGrid() {
+    var grid = $('vehicles-grid');
+    if (!grid) return;
+    var q = (vehicleSearch || '').toLowerCase();
+    var vehicles = (dealer.vehicles || []).filter(function (v) { return vehicleMatches(v, q); });
+    if (!vehicles.length) {
+      grid.innerHTML = '<div class="card"><p class="info">No vehicles match your search.</p></div>';
+      return;
+    }
+    var h = '<div class="item-grid">';
+    vehicles.forEach(function (v) { h += vehicleCardHtml(v); });
+    h += '</div>';
+    grid.innerHTML = h;
+  }
+  function attachVehicleCardListeners(root) {
+    root.querySelectorAll('[data-slide-prev]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-slide-prev');
+        var pics = vehiclePicsOf(vehicleById(id));
+        if (!pics.length) return;
+        slideIdx[id] = ((slideIdx[id] || 0) - 1 + pics.length) % pics.length;
+        renderVehicles();
+      });
+    });
+    root.querySelectorAll('[data-slide-next]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var id = b.getAttribute('data-slide-next');
+        var pics = vehiclePicsOf(vehicleById(id));
+        if (!pics.length) return;
+        slideIdx[id] = ((slideIdx[id] || 0) + 1) % pics.length;
+        renderVehicles();
+      });
+    });
+    root.querySelectorAll('[data-testdrive]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        pendingTestDriveVehicleId = Number(b.getAttribute('data-testdrive'));
+        detailVehicleId = null;
+        show('testdrive');
+      });
+    });
+    root.querySelectorAll('[data-details]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        detailVehicleId = Number(b.getAttribute('data-details'));
+        renderVehicles();
+      });
+    });
+  }
+  /* Details popup, modelled on the Cars "I'm interested" popup: an
+     overlay that closes on a backdrop tap, a card with a ✕ button,
+     the pictures up top and every field below. */
+  function vehicleDetailsHtml(v) {
+    var rows = [
+      ['Make', v.make], ['Model', v.model], ['Year', v.year],
+      ['Price', money(v.price)],
+      ['Mileage', (v.mileage != null && v.mileage !== '') ? fmtNum(v.mileage) + ' miles' : ''],
+      ['Fuel', v.fuel], ['Transmission', v.transmission], ['Body style', v.body_style],
+      ['Condition', v.condition], ['Exterior', v.exterior], ['Interior', v.interior],
+      ['Doors', v.doors], ['Drivetrain', v.drivetrain], ['Stock no.', v.stock_no]
+    ];
+    var h = '<div class="modal-overlay" data-close-details><div class="modal">' +
+      '<button class="modal-close" data-close-details aria-label="Close">✕</button>' +
+      vehicleSlideshowHtml(v) +
+      '<h3>' + esc(vehicleLabel(v)) + '</h3>' +
+      '<span class="price">' + money(v.price) + '</span>' +
+      '<div class="detail-list">';
+    rows.forEach(function (r) {
+      if (r[1] === '' || r[1] == null) return;
+      h += '<div class="detail-row"><span>' + r[0] + '</span><b>' + esc(r[1]) + '</b></div>';
+    });
+    h += '</div>';
+    if (v.description) h += '<p class="info">' + esc(v.description) + '</p>';
+    h += '<div class="row"><button data-testdrive="' + v.id + '">Test Drive</button></div></div></div>';
+    return h;
+  }
   function renderVehicles() {
     var el = $('view-vehicles');
     if (!dealer) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
@@ -174,28 +299,30 @@
       el.innerHTML = h;
       return;
     }
-    h += '<div class="item-grid">';
-    vehicles.forEach(function (v) {
-      var specs = [];
-      if (v.mileage != null && v.mileage !== '') specs.push(fmtNum(v.mileage) + ' miles');
-      if (v.fuel) specs.push(v.fuel);
-      if (v.transmission) specs.push(v.transmission);
-      if (v.body_style) specs.push(v.body_style);
-      if (v.condition) specs.push(v.condition);
-      if (v.drivetrain) specs.push(v.drivetrain);
-      if (v.doors) specs.push(v.doors + ' doors');
-      if (v.exterior) specs.push(v.exterior + ' exterior');
-      if (v.interior) specs.push(v.interior + ' interior');
-      h += '<div class="item-card"><h3>' + esc(vehicleLabel(v)) + '</h3>' +
-        '<span class="price">' + money(v.price) + '</span>' +
-        (specs.length ? '<span class="stock">' + esc(specs.join(' · ')) + '</span>' : '') +
-        (v.stock_no ? '<span class="stock">Stock no. ' + esc(v.stock_no) + '</span>' : '') +
-        (v.description ? '<p class="info">' + esc(v.description) + '</p>' : '') +
-        '</div>';
-    });
-    h += '</div>';
+    h += '<input id="veh-search" type="text" placeholder="Search vehicles…" value="' + esc(vehicleSearch) + '" class="veh-search">';
+    h += '<div id="vehicles-grid"></div>';
     h += '<div class="card"><p class="info">Like one? Book a test drive from the <b>Test Drive</b> tab, or estimate the monthly payment on the <b>Finance</b> tab.</p></div>';
+    if (detailVehicleId != null) {
+      var dv = vehicleById(detailVehicleId);
+      if (dv) h += vehicleDetailsHtml(dv);
+      else detailVehicleId = null;
+    }
     el.innerHTML = h;
+    var search = $('veh-search');
+    if (search) search.addEventListener('input', function () {
+      vehicleSearch = search.value;
+      renderVehiclesGrid();
+      attachVehicleCardListeners($('vehicles-grid'));
+    });
+    renderVehiclesGrid();
+    attachVehicleCardListeners(el);
+    el.querySelectorAll('[data-close-details]').forEach(function (n) {
+      n.addEventListener('click', function (e) {
+        if (e && e.target && e.target !== n) return;
+        detailVehicleId = null;
+        renderVehicles();
+      });
+    });
   }
 
   /* ---------- Test Drive (public form) ---------- */
@@ -225,6 +352,11 @@
       '<p class="error" id="td-err" hidden></p>' +
       '<div id="td-out" style="margin-top:12px"></div></div>';
     el.innerHTML = h;
+    if (pendingTestDriveVehicleId != null) {
+      var sel = $('td-vehicle');
+      if (sel && vehicleById(pendingTestDriveVehicleId)) sel.value = pendingTestDriveVehicleId;
+      pendingTestDriveVehicleId = null;
+    }
     $('td-go').addEventListener('click', function () {
       var err = $('td-err');
       var out = $('td-out');
@@ -529,6 +661,10 @@
       '<label>Drivetrain</label><input id="v-drivetrain" type="text" placeholder="Front Wheel Drive…">' +
       '<label>Stock no.</label><input id="v-stock" type="text" placeholder="e.g. DL-001">' +
       '<label>Description</label><textarea id="v-desc"></textarea>' +
+      '<label>Pictures (up to 7)</label>' +
+      '<input id="v-pics" type="file" accept="image/*" multiple>' +
+      '<div id="v-pics-list"></div>' +
+      '<p class="error" id="v-pics-status" hidden></p>' +
       '<div class="row"><button id="v-save">Save vehicle</button>' +
       '<button id="v-cancel" class="secondary" hidden>Cancel edit</button></div>' +
       '<p class="error" id="v-err" hidden></p></div>';
@@ -538,6 +674,9 @@
     $('d-upload').addEventListener('click', function () { saveDraft(true); });
     $('v-save').addEventListener('click', saveVehicle);
     $('v-cancel').addEventListener('click', function () { vehicleEditId = null; renderSetup(); });
+    if (!vehicleEditId) vehiclePics = [];
+    renderVehiclePics();
+    $('v-pics').addEventListener('change', onVehiclePicsChosen);
   }
   function renderVehiclesList() {
     var el = $('vehicles-list');
@@ -573,6 +712,8 @@
         $('v-drivetrain').value = v.drivetrain || '';
         $('v-stock').value = v.stock_no || '';
         $('v-desc').value = v.description || '';
+        vehiclePics = (v.pics || []).slice();
+        renderVehiclePics();
         $('vehicle-form-title').textContent = 'Edit vehicle — ' + vehicleLabel(v);
         $('v-cancel').hidden = false;
         window.scrollTo(0, document.getElementById('vehicle-form-title').offsetTop - 80);
@@ -629,6 +770,101 @@
       })
       .catch(function (e) { err.hidden = false; err.textContent = 'Error: ' + e.message; });
   }
+  /* ---------- Vehicle pictures (Setup) ---------- */
+  /* Shrink a picture in the browser before it is stored, same rules as
+     the main site's storeUpload.js: at most 1600px on the long edge,
+     JPEG quality 0.85, PNGs stay PNG, small pictures untouched, and
+     anything that fails falls back to the original file. */
+  function shrinkImage(file, maxEdge) {
+    maxEdge = maxEdge || 1600;
+    try {
+      return new Promise(function (resolve) {
+        var url = URL.createObjectURL(file);
+        var image = new Image();
+        image.onload = function () {
+          URL.revokeObjectURL(url);
+          var w0 = image.naturalWidth, h0 = image.naturalHeight;
+          if (!w0 || !h0 || Math.max(w0, h0) <= maxEdge) { resolve(file); return; }
+          var scale = maxEdge / Math.max(w0, h0);
+          var canvas = document.createElement('canvas');
+          canvas.width = Math.round(w0 * scale);
+          canvas.height = Math.round(h0 * scale);
+          canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
+          var outType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+          canvas.toBlob(function (blob) {
+            if (!blob) { resolve(file); return; }
+            var name = outType === 'image/jpeg' ? file.name.replace(/\.[^.]+$/, '') + '.jpg' : file.name;
+            resolve(new File([blob], name, { type: outType }));
+          }, outType, 0.85);
+        };
+        image.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+        image.src = url;
+      }).catch(function () { return file; });
+    } catch (e) {
+      return Promise.resolve(file);
+    }
+  }
+  /* Upload one picture to the product-images bucket, under store/dealer/,
+     and return its public URL. Anon uploads are only allowed under
+     store/ — this path qualifies, and the bucket is publicly readable. */
+  function uploadVehiclePicture(file) {
+    return shrinkImage(file).then(function (up) {
+      var safe = up.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      var path = 'store/dealer/' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '-' + safe;
+      return fetch(SUPABASE_URL + '/storage/v1/object/product-images/' + path, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': 'Bearer ' + SUPABASE_ANON_KEY },
+        body: up
+      }).then(function (res) {
+        if (!res.ok) throw new Error('Picture upload failed');
+        return SUPABASE_URL + '/storage/v1/object/public/product-images/' + path;
+      });
+    });
+  }
+  function renderVehiclePics() {
+    var el = $('v-pics-list');
+    if (!el) return;
+    var h = '<p class="info">' + vehiclePics.length + ' of 7 pictures</p>';
+    if (vehiclePics.length) {
+      h += '<div class="pic-thumbs">';
+      vehiclePics.forEach(function (url, i) {
+        h += '<div class="pic-thumb"><img src="' + esc(url) + '" alt="Vehicle picture ' + (i + 1) + '"><button class="small danger" data-pic-remove="' + i + '">Remove</button></div>';
+      });
+      h += '</div>';
+    }
+    el.innerHTML = h;
+    el.querySelectorAll('[data-pic-remove]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        vehiclePics.splice(Number(b.getAttribute('data-pic-remove')), 1);
+        renderVehiclePics();
+      });
+    });
+  }
+  function onVehiclePicsChosen() {
+    var input = $('v-pics');
+    var status = $('v-pics-status');
+    var files = (input && input.files) ? Array.prototype.slice.call(input.files) : [];
+    if (!files.length) return;
+    var room = 7 - vehiclePics.length;
+    if (room <= 0) {
+      if (status) { status.hidden = false; status.textContent = 'This vehicle already has 7 pictures — remove one to add another.'; }
+      input.value = '';
+      return;
+    }
+    if (files.length > room) {
+      if (status) { status.hidden = false; status.textContent = 'Only 7 pictures per vehicle — the extra ' + (files.length - room) + ' picture(s) were not added.'; }
+    } else if (status) { status.hidden = true; }
+    input.value = '';
+    var chain = Promise.resolve();
+    files.slice(0, room).forEach(function (file) {
+      chain = chain.then(function () { return uploadVehiclePicture(file); }).then(function (url) {
+        vehiclePics.push(url);
+        renderVehiclePics();
+      }).catch(function (err) {
+        if (status) { status.hidden = false; status.textContent = 'Upload failed: ' + err.message; }
+      });
+    });
+  }
   function collectVehicle() {
     var year = $('v-year').value.trim();
     var price = $('v-price').value.trim();
@@ -649,7 +885,8 @@
       doors: doors === '' ? null : Math.floor(Number(doors)),
       drivetrain: $('v-drivetrain').value.trim(),
       stock_no: $('v-stock').value.trim(),
-      description: $('v-desc').value.trim()
+      description: $('v-desc').value.trim(),
+      pics: vehiclePics.slice()
     };
   }
   function saveVehicle() {

@@ -26,14 +26,16 @@ import { shrinkImage } from '../lib/storeUpload'
 //   fullscreen like the urgent messages on TV (big, red, impossible
 //   to miss). Empty message: nothing shows, just the pictures.
 // - TV remote: in the fullscreen, Left/Right flip pictures, Up/Down
-//   moves between the buttons (menu / Prev / Next / One picture or
-//   Slideshow / Close / Want this for your business?), OK presses the
-//   highlighted button, Esc closes the open menu first, then the
+//   moves between the buttons (menu / close / Prev / Next / One
+//   picture or Slideshow / Want this for your business?), OK presses
+//   the highlighted button, Esc closes the open menu first, then the
 //   gallery. Buttons and fields also show a thick gold outline when
 //   focused, so the remote's position is visible on a TV.
 // - The controls hide on their own after a few seconds so the
 //   picture is clean. They come back on a tap or a key press — never
-//   on an automatic picture change.
+//   on an automatic picture change. The menu button (top left) and
+//   the X to close (top right) hide with the controls, so the
+//   fullscreen is a clean picture until the visitor taps it.
 const MAX_PICS = 7
 
 // Demo TV gallery: the slug 'demo-tv-gallery' opens the same
@@ -88,6 +90,7 @@ export default function UploadFormPage({ slug, goBack, go }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuAddonsOpen, setMenuAddonsOpen] = useState(false)
   const menuRef = useRef(null)
+  const menuOpenRef = useRef(false)
   const fileRef = useRef(null)
   const replaceRef = useRef(null)
   const galleryRef = useRef(null)
@@ -116,7 +119,9 @@ export default function UploadFormPage({ slug, goBack, go }) {
   const pokeControls = () => {
     setControlsVisible(true)
     if (hideTimer.current) clearTimeout(hideTimer.current)
-    hideTimer.current = setTimeout(() => setControlsVisible(false), 3000)
+    // While the submenu is open the controls stay up — hiding them
+    // would hide the menu the visitor is reading.
+    hideTimer.current = setTimeout(() => { if (!menuOpenRef.current) setControlsVisible(false) }, 3000)
   }
   const toggleControls = () => {
     if (controlsVisible) { setControlsVisible(false); if (hideTimer.current) clearTimeout(hideTimer.current) } else pokeControls()
@@ -167,7 +172,7 @@ export default function UploadFormPage({ slug, goBack, go }) {
         if (document.activeElement?.tagName === 'BUTTON' && galleryRef.current?.contains(document.activeElement)) return
         e.preventDefault(); toggleControls()
       }
-      if (e.key === 'Escape') { if (menuOpen) { setMenuOpen(false); return } closeGallery() }
+      if (e.key === 'Escape') { if (menuOpen) { setMenuOpen(false); pokeControls(); return } closeGallery() }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -314,10 +319,13 @@ export default function UploadFormPage({ slug, goBack, go }) {
   // The gallery submenu closes when the visitor taps anywhere else.
   useEffect(() => {
     if (!menuOpen) return
-    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false) }
+    const onDown = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) { setMenuOpen(false); pokeControls() } }
     window.addEventListener('pointerdown', onDown)
     return () => window.removeEventListener('pointerdown', onDown)
   }, [menuOpen])
+  // The hide timer reads this, so it knows not to hide the controls
+  // while the submenu is open.
+  useEffect(() => { menuOpenRef.current = menuOpen }, [menuOpen])
 
   // Demo mode: open the gallery by itself as soon as the pictures
   // load — ?pic=N picks that picture, otherwise the first one, or
@@ -420,7 +428,7 @@ export default function UploadFormPage({ slug, goBack, go }) {
           <style>{`@keyframes pos-ticker-scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } } .pos-ticker { animation: pos-ticker-scroll 36s linear infinite; } .gallery-remote button:focus { outline: 3px solid #f5a623; outline-offset: 3px; }`}</style>
           <img src={pics[viewIndex].url} alt={pics[viewIndex].name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onClick={e => { e.stopPropagation(); toggleControls() }} />
           {demoMode && (
-            <div ref={menuRef} style={{ position: 'absolute', top: 12, left: 12, zIndex: 5 }} onClick={e => e.stopPropagation()}>
+            <div ref={menuRef} style={{ position: 'absolute', top: 12, left: 12, zIndex: 5, opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }} onClick={e => e.stopPropagation()}>
               <div className="car-submenu-wrap" style={{ marginBottom: 0 }}>
                 <button type="button" className="car-submenu-btn" aria-label="Business Systems menu" onClick={e => { e.stopPropagation(); setMenuOpen(o => !o); pokeControls() }}>
                   <span className="burger" aria-hidden="true"><span /><span /><span /></span>
@@ -444,6 +452,7 @@ export default function UploadFormPage({ slug, goBack, go }) {
               </div>
             </div>
           )}
+          <button type="button" className="car-submenu-btn" aria-label="Close gallery" onClick={e => { e.stopPropagation(); closeGallery() }} style={{ position: 'absolute', top: 12, right: 12, zIndex: 5, fontSize: 22, opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }}>✕</button>
           {message.trim() && (
             <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: '#dc2626', color: '#fff', overflow: 'hidden', padding: '10px 0', zIndex: 2 }}>
               <span className="pos-ticker" style={{ display: 'inline-block', whiteSpace: 'nowrap', fontWeight: 800, fontSize: 22 }}>{message} &nbsp;•&nbsp; {message}</span>
@@ -456,7 +465,6 @@ export default function UploadFormPage({ slug, goBack, go }) {
               <span>{viewIndex + 1} of {pics.length} · {galleryMode === 'slideshow' ? 'Slideshow' : 'One picture'}</span>
               <button type="button" onClick={e => { e.stopPropagation(); setViewIndex((viewIndex + 1) % pics.length); pokeControls() }}>Next ›</button>
               <button type="button" onClick={e => { e.stopPropagation(); setMode(galleryMode === 'slideshow' ? 'single' : 'slideshow') }}>{galleryMode === 'slideshow' ? '▣ One picture' : '▶ Slideshow'}</button>
-              <button type="button" onClick={closeGallery}>Close</button>
               {demoMode && <button type="button" onClick={e => { e.stopPropagation(); if (go) go('tv-gallery') }}>Want this for your business?</button>}
             </div>
           </div>

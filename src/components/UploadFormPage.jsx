@@ -103,8 +103,14 @@ export default function UploadFormPage({ slug, goBack, go }) {
     if (viewIndex === null) return
     pokeControls()
     // Give the gallery itself the focus, so a TV remote's keys land
-    // here instead of on whichever button was last touched.
-    galleryRef.current?.focus()
+    // here instead of on whichever button was last touched — but
+    // only when the remote is NOT already sitting on a control
+    // button. An auto-advance (or a manual picture change) must not
+    // steal the remote's place and send it back to the first button.
+    const ae = document.activeElement
+    if (!(ae && ae.tagName === 'BUTTON' && galleryRef.current?.contains(ae))) {
+      galleryRef.current?.focus()
+    }
     return () => { if (hideTimer.current) clearTimeout(hideTimer.current) }
   }, [viewIndex])
   useEffect(() => {

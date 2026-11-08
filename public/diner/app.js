@@ -427,7 +427,7 @@
       html += '<div class="card"><p class="info">This is the public menu — take a look around. To order, enter the employee password.</p>' +
         '<button id="menu-order">Order</button></div>';
     }
-    html += '<div id="menu-slideshow"></div>';
+    html += '<div id="menu-slideshow" class="featured-slideshow"></div>';
     html += '<input id="menu-search" type="text" placeholder="Search menu…" value="' + esc(menuSearch) + '">';
     html += '<div id="menu-grid"></div>';
     el.innerHTML = html;

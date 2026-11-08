@@ -52,3 +52,8 @@ label { font-weight: 600; font-size: 14px; }
   #print-area, #print-area * { visibility: visible; }
   #print-area { display: block; position: absolute; top: 0; left: 0; width: 100%; }
 }
+/* Icon picture: one small square image next to the business name. */
+.brand img.site-icon { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; flex: none; }
+.icon-field { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 4px 0 12px; }
+.icon-field input[type="file"] { width: auto; flex: 1; min-width: 180px; margin: 0; }
+img.icon-preview { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; flex: none; }

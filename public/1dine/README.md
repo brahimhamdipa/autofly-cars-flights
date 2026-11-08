@@ -8,7 +8,7 @@ address from the URL — no folder name is written in the code.
 
 1. Copy this whole folder.
 2. Paste it with the new name (for example `bistro`).
-3. Open `autofly.us.com/bistro` — the copy opens under its new name,
+3. Open `yently.com/bistro` — the copy opens under its new name,
    with the same menu and setup. No code change, no redeploy step
    beyond putting the folder on the site.
 

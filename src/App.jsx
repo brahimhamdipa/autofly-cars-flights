@@ -34,6 +34,8 @@ import DealerPage from './components/DealerPage'
 import EmployeePage from './components/EmployeePage'
 import BodyshopPage from './components/BodyshopPage'
 import TvGalleryPage from './components/TvGalleryPage'
+import LiveChatPage from './components/LiveChatPage'
+import LiveChatDemo from './components/LiveChatDemo'
 import BusinessCartPage from './components/BusinessCartPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
@@ -45,12 +47,13 @@ export default function App() {
   const [tab, setTab] = useState(() => {
     const path = window.location.pathname.replace(/\/$/, '')
     if (path === '/admin') return 'admin'
+    if (path === '/demo-live-chat') return 'demo-live-chat'
     if (path !== '' && path !== '/') return 'provider-form'
     return 'products'
   })
   const [formSlug, setFormSlug] = useState(() => {
     const path = window.location.pathname.replace(/\/$/, '')
-    if (path !== '' && path !== '/' && path !== '/admin') return decodeURIComponent(path.slice(1))
+    if (path !== '' && path !== '/' && path !== '/admin' && path !== '/demo-live-chat') return decodeURIComponent(path.slice(1))
     return null
   })
   const [providerId, setProviderId] = useState(null)
@@ -85,13 +88,16 @@ export default function App() {
     if (t === 'store-detail' && param) window.location.hash = 'store/' + param
     // Keep the address bar honest for the hidden routes: entering
     // admin shows /admin, entering a provider form shows /<name>,
-    // leaving either returns to /.
+    // entering the live-chat demo shows /demo-live-chat, and leaving
+    // any of them returns to /.
     const path = window.location.pathname.replace(/\/$/, '')
     const onAdmin = path === '/admin'
-    const onForm = path !== '' && path !== '/' && !onAdmin
+    const onDemo = path === '/demo-live-chat'
+    const onForm = path !== '' && path !== '/' && !onAdmin && !onDemo
     if (t === 'admin' && !onAdmin) window.history.replaceState(null, '', '/admin')
+    else if (t === 'demo-live-chat' && !onDemo) window.history.replaceState(null, '', '/demo-live-chat')
     else if (t === 'provider-form' && param && !onForm) window.history.replaceState(null, '', '/' + param)
-    else if (t !== 'admin' && t !== 'provider-form' && (onAdmin || onForm)) window.history.replaceState(null, '', '/')
+    else if (t !== 'admin' && t !== 'provider-form' && t !== 'demo-live-chat' && (onAdmin || onForm || onDemo)) window.history.replaceState(null, '', '/')
   }
   // Back to the page the customer actually came from (or nowhere on a
   // fresh load, in which case pages hide their back link).
@@ -108,8 +114,8 @@ export default function App() {
   }, [])
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
-  const BUSINESS_TABS = ['restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'business-cart']
-  const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'business-cart'].includes(tab)
+  const BUSINESS_TABS = ['restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'demo-live-chat', 'business-cart']
+  const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'demo-live-chat', 'business-cart'].includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
@@ -193,6 +199,8 @@ export default function App() {
             {tab === 'bodyshop' && <BodyshopPage go={go} />}
             {tab === 'simple-barbershop' && <SimpleBarbershopPage go={go} />}
             {tab === 'tv-gallery' && <TvGalleryPage go={go} />}
+            {tab === 'live-chat' && <LiveChatPage go={go} />}
+            {tab === 'demo-live-chat' && <LiveChatDemo go={go} />}
             {tab === 'business-cart' && <BusinessCartPage go={go} />}
           </BusinessCartProvider>
         )}
@@ -211,7 +219,7 @@ export default function App() {
       <footer className="footer">
         <p>AutoFly.us.com — Cars, Flights & More — All in One Place</p>
       </footer>
-      {!(tab === 'provider-form' && formAuthed) && <ChatWidget />}
+      {!(tab === 'provider-form' && formAuthed) && tab !== 'demo-live-chat' && <ChatWidget />}
     </div>
   )
 }

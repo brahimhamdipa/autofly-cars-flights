@@ -136,6 +136,11 @@ export default function AdminAllPasses() {
   const [createError, setCreateError] = useState('')
   const [creating, setCreating] = useState(false)
 
+  // Change admin password: lives here at the bottom of All Passes,
+  // not at the top of every admin page.
+  const [newPassword, setNewPassword] = useState('')
+  const [pwMsg, setPwMsg] = useState('')
+
   const load = async (silent) => {
     if (!silent) setLoading(true)
     const failedGroups = []
@@ -170,7 +175,7 @@ export default function AdminAllPasses() {
     const shopRow = (prefix, group, kind, table, linkPrefix, r) => ({
       key: prefix + '-' + r.id, group, kind,
       table, id: r.id,
-      link: linkPrefix + r.slug, linkText: 'autofly.us.com' + linkPrefix + r.slug,
+      link: linkPrefix + r.slug, linkText: 'yently.com' + linkPrefix + r.slug,
       user: r.u, pass: r.p, epass: r.epass || '', passExtra: r.epass ? 'Team: ' + r.epass : '',
       customer: r.name || '—', note: r.note || '', draftStatus: r.draft_status || 'editing',
     })
@@ -178,7 +183,7 @@ export default function AdminAllPasses() {
       ...formRows.map(r => ({
         key: 'store-' + r.id, group: 'stores', kind: 'Store pass',
         table: 'providersForm', id: r.id,
-        link: '/' + r.f, linkText: 'autofly.us.com/' + r.f,
+        link: '/' + r.f, linkText: 'yently.com/' + r.f,
         user: r.u, pass: r.p, passExtra: '', customer: providerName(r.provider_id), note: r.comment || '',
       })),
       ...dinerRows.map(r => shopRow('diner', 'diner', 'Diner pass', 'diner_restaurants', '/diner?r=', r)),
@@ -190,25 +195,25 @@ export default function AdminAllPasses() {
       ...intakeRows.map(r => ({
         key: 'intake-' + r.id, group: 'websites', kind: 'Intake form',
         table: 'barber_intake_forms', id: r.id,
-        link: '/barber-intake', linkText: 'autofly.us.com/barber-intake (' + r.f + ')',
+        link: '/barber-intake', linkText: 'yently.com/barber-intake (' + r.f + ')',
         user: r.u, pass: r.p, passExtra: '', customer: '—', note: r.note || '',
       })),
       ...uploadRows.map(r => ({
         key: 'upload-' + r.id, group: 'websites', kind: 'Upload form',
         table: 'upload_forms', id: r.id,
-        link: '/' + r.f, linkText: 'autofly.us.com/' + r.f,
+        link: '/' + r.f, linkText: 'yently.com/' + r.f,
         user: r.u, pass: r.p, passExtra: 'Folder: ' + r.folder, folder: r.folder, customer: '—', note: r.note || '',
       })),
       ...folderRows.map(r => ({
         key: 'folder-' + r.id, group: 'websites', kind: 'Folder pass',
         table: 'folder_passes', id: r.id,
-        link: '/' + r.folder, linkText: 'autofly.us.com/' + r.folder,
+        link: '/' + r.folder, linkText: 'yently.com/' + r.folder,
         user: r.username, pass: r.password, passExtra: '', customer: '—', note: r.note || '',
       })),
       ...passRows.map(r => ({
         key: 'emp-' + r.id, group: 'chat', kind: 'Employee pass',
         table: 'fPasses', id: r.id,
-        link: '/' + r.formName, linkText: 'autofly.us.com/' + r.formName,
+        link: '/' + r.formName, linkText: 'yently.com/' + r.formName,
         user: r.u, pass: r.p, passExtra: '', customer: employeeName(r.employee_id), note: r.note || '',
       })),
     ]
@@ -442,17 +447,31 @@ export default function AdminAllPasses() {
     }
   }
 
+  // ----- Change admin password -----
+
+  // Changes the password used to log in to Admin. Store and shop
+  // passwords are untouched — they live in their own tables.
+  const changePassword = async (e) => {
+    e.preventDefault()
+    if (newPassword.length < 6) { setPwMsg('Password must be at least 6 characters.'); return }
+    setPwMsg('Saving…')
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) { setPwMsg('Error: ' + error.message); return }
+    setNewPassword('')
+    setPwMsg('✓ Password changed.')
+  }
+
   const createHint = () => {
-    if (createSystem === 'diner_restaurants') return 'The customer shares autofly.us.com/diner?r=' + (slugify(create.slug) || 'slug') + ' with their own customers. New restaurants start with the demo menu.'
-    if (createSystem === 'barbershop_shops') return 'The customer shares autofly.us.com/barbers?s=' + (slugify(create.slug) || 'slug') + ' with their own customers. New shops start with the demo services.'
-    if (createSystem === 'pos_stores') return 'The customer shares autofly.us.com/pos?s=' + (slugify(create.slug) || 'slug') + ' with their staff. New stores start empty — the owner adds items in Setup.'
-    if (createSystem === 'dealer_shops') return 'The customer shares autofly.us.com/dealer?d=' + (slugify(create.slug) || 'slug') + ' with their own customers. New dealers start empty — the owner adds vehicles in Setup.'
-    if (createSystem === 'employee_shops') return 'The customer shares autofly.us.com/employee?e=' + (slugify(create.slug) || 'slug') + ' with their staff. New teams start empty — the owner adds staff in Setup.'
-    if (createSystem === 'bodyshop_shops') return 'The customer shares autofly.us.com/bodyshop?b=' + (slugify(create.slug) || 'slug') + ' with their own customers. New bodyshops start empty.'
-    if (createSystem === 'providersForm') return 'The store will open autofly.us.com/' + (slugify(create.f) || 'form-name') + ' and log in there.'
-    if (createSystem === 'fPasses') return 'The employee logs in at autofly.us.com/' + (slugify(create.formName) || 'form-name') + ' with this username and password.'
-    if (createSystem === 'barber_intake_forms') return 'The barber logs in at autofly.us.com/barber-intake with this form name, a username, and a password.'
-    if (createSystem === 'upload_forms') return 'The customer logs in at autofly.us.com/' + (slugify(create.f) || 'form-name') + ' with a username and a password. Saving creates the upload folder for real.'
+    if (createSystem === 'diner_restaurants') return 'The customer shares yently.com/diner?r=' + (slugify(create.slug) || 'slug') + ' with their own customers. New restaurants start with the demo menu.'
+    if (createSystem === 'barbershop_shops') return 'The customer shares yently.com/barbers?s=' + (slugify(create.slug) || 'slug') + ' with their own customers. New shops start with the demo services.'
+    if (createSystem === 'pos_stores') return 'The customer shares yently.com/pos?s=' + (slugify(create.slug) || 'slug') + ' with their staff. New stores start empty — the owner adds items in Setup.'
+    if (createSystem === 'dealer_shops') return 'The customer shares yently.com/dealer?d=' + (slugify(create.slug) || 'slug') + ' with their own customers. New dealers start empty — the owner adds vehicles in Setup.'
+    if (createSystem === 'employee_shops') return 'The customer shares yently.com/employee?e=' + (slugify(create.slug) || 'slug') + ' with their staff. New teams start empty — the owner adds staff in Setup.'
+    if (createSystem === 'bodyshop_shops') return 'The customer shares yently.com/bodyshop?b=' + (slugify(create.slug) || 'slug') + ' with their own customers. New bodyshops start empty.'
+    if (createSystem === 'providersForm') return 'The store will open yently.com/' + (slugify(create.f) || 'form-name') + ' and log in there.'
+    if (createSystem === 'fPasses') return 'The employee logs in at yently.com/' + (slugify(create.formName) || 'form-name') + ' with this username and password.'
+    if (createSystem === 'barber_intake_forms') return 'The barber logs in at yently.com/barber-intake with this form name, a username, and a password.'
+    if (createSystem === 'upload_forms') return 'The customer logs in at yently.com/' + (slugify(create.f) || 'form-name') + ' with a username and a password. Saving creates the upload folder for real.'
     if (createSystem === 'folder_passes') return 'The folder\'s Setup tab will ask for this username and password. Leave the folder open by deleting the pass.'
     return ''
   }
@@ -505,7 +524,7 @@ export default function AdminAllPasses() {
                 return <option key={pr.id} value={pr.id} disabled={taken}>{pr.name}{taken ? ' — already has a form' : ''}</option>
               })}
             </select>
-            <input required placeholder="Form name — the word after autofly.us.com/ (e.g. paris-form)" value={create.f || ''} onChange={e => setCreate({ ...create, f: e.target.value })} />
+            <input required placeholder="Form name — the word after yently.com/ (e.g. paris-form)" value={create.f || ''} onChange={e => setCreate({ ...create, f: e.target.value })} />
             <input required placeholder="Username for the store" value={create.u || ''} onChange={e => setCreate({ ...create, u: e.target.value })} />
             <input required placeholder="Password for the store" value={create.p || ''} onChange={e => setCreate({ ...create, p: e.target.value })} />
             <input placeholder="Note for yourself (optional — not shown to the store)" value={create.comment || ''} onChange={e => setCreate({ ...create, comment: e.target.value })} />
@@ -515,7 +534,7 @@ export default function AdminAllPasses() {
               <option value="">— Employee —</option>
               {employeeList.map(emp => <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName || ''}</option>)}
             </select>
-            <input required placeholder="Form name (the link after autofly.us.com/)" value={create.formName || ''} onChange={e => setCreate({ ...create, formName: e.target.value })} />
+            <input required placeholder="Form name (the link after yently.com/)" value={create.formName || ''} onChange={e => setCreate({ ...create, formName: e.target.value })} />
             <input required placeholder="Username" value={create.u || ''} onChange={e => setCreate({ ...create, u: e.target.value })} />
             <input required placeholder="Password (visible — the employee logs in with this)" value={create.p || ''} onChange={e => setCreate({ ...create, p: e.target.value })} />
             <input placeholder="Note" value={create.note || ''} onChange={e => setCreate({ ...create, note: e.target.value })} />
@@ -528,7 +547,7 @@ export default function AdminAllPasses() {
             <input placeholder="Note for yourself (optional — not shown to the barber)" value={create.note || ''} onChange={e => setCreate({ ...create, note: e.target.value })} />
           </>)}
           {createSystem === 'upload_forms' && (<>
-            <input required placeholder="Form name — the word in autofly.us.com/form-name" value={create.f || ''} onChange={e => setCreate({ ...create, f: e.target.value })} />
+            <input required placeholder="Form name — the word in yently.com/form-name" value={create.f || ''} onChange={e => setCreate({ ...create, f: e.target.value })} />
             <input required placeholder="Username for the customer" value={create.u || ''} onChange={e => setCreate({ ...create, u: e.target.value })} />
             <input required placeholder="Password for the customer" value={create.p || ''} onChange={e => setCreate({ ...create, p: e.target.value })} />
             <input required placeholder="Upload folder name — where the pictures will go" value={create.folder || ''} onChange={e => setCreate({ ...create, folder: e.target.value })} />
@@ -627,6 +646,16 @@ export default function AdminAllPasses() {
           </div>
         )
       })}
+
+      <div className="form-card" style={{ marginTop: 20 }}>
+        <h3>🔑 Change your admin password</h3>
+        <p className="hint">This changes the password you use to log in to Admin. It only changes it here — the store and shop passwords on the rows above stay as they are.</p>
+        <form onSubmit={changePassword} className="pw-row" style={{ margin: 0 }}>
+          <input type="password" placeholder="New password" style={{ maxWidth: 260 }} value={newPassword} onChange={e => setNewPassword(e.target.value)} />
+          <button type="submit" className="btn-mini">Change password</button>
+          {pwMsg && <span className="status">{pwMsg}</span>}
+        </form>
+      </div>
     </div>
   )
 }

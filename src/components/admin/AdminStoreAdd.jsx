@@ -134,7 +134,7 @@ export default function AdminStoreAdd() {
       provider_id: Number(pf.provider_id), f, u: pf.u, p: pf.p, comment: pf.comment,
     })
     if (error) { setStatus('Error: ' + error.message); return }
-    setStatus(`✓ Provider form saved — the store opens autofly.us.com/${f} and logs in with the username and password above.`)
+    setStatus(`✓ Provider form saved — the store opens yently.com/${f} and logs in with the username and password above.`)
     setPf(blankProviderForm())
     loadForms()
   }
@@ -160,7 +160,7 @@ export default function AdminStoreAdd() {
       <SubCategoryForm draft={sc} setDraft={setSc} onSubmit={saveSubCategory} submitLabel="Save sub category" itemCategories={itemCategories} />
 
       <h3>➕ Create Provider Form</h3>
-      <p className="hint">A temporary login form for one store: the store opens autofly.us.com/&lt;form name&gt;, logs in with the username and password you set here, and submits items straight into that store's items. Delete the form in Manage when they are done — items already submitted stay.</p>
+      <p className="hint">A temporary login form for one store: the store opens yently.com/&lt;form name&gt;, logs in with the username and password you set here, and submits items straight into that store's items. Delete the form in Manage when they are done — items already submitted stay.</p>
       <ProviderFormEditor draft={pf} setDraft={setPf} onSubmit={saveProviderForm} submitLabel="Save provider form" providers={providers} takenProviderIds={forms.map(x => x.provider_id)} />
     </div>
   )

@@ -145,7 +145,7 @@ export function EmployeePassForm({ draft, setDraft, onSubmit, submitLabel, onCan
         <option value="">— Employee —</option>
         {(employees || []).map(emp => <option key={emp.id} value={emp.id}>{emp.firstName} {emp.lastName || ''}</option>)}
       </select>
-      <input required placeholder="Form name (the link after autofly.us.com/)" value={draft.formName || ''} onChange={e => setDraft({ ...draft, formName: e.target.value })} />
+      <input required placeholder="Form name (the link after yently.com/)" value={draft.formName || ''} onChange={e => setDraft({ ...draft, formName: e.target.value })} />
       <input required placeholder="Username" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password (visible — the employee logs in with this)" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <input placeholder="Note" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
@@ -343,7 +343,7 @@ export function SubCategoryForm({ draft, setDraft, onSubmit, submitLabel, onCanc
 // Form") and Stores → Manage ("Provider Forms"). One form per store
 // (one-to-one): providers that already have a form are shown disabled
 // in the list, except the row being edited, whose own provider stays
-// selectable. f is the word the store types after autofly.us.com/;
+// selectable. f is the word the store types after yently.com/;
 // p is a throwaway password the owner invents for the store — never
 // his own password — and it is shown here in plain text so he can
 // copy it to the store.
@@ -358,8 +358,8 @@ export function ProviderFormEditor({ draft, setDraft, onSubmit, submitLabel, onC
           return <option key={pr.id} value={pr.id} disabled={disabled}>{pr.name}{disabled ? ' — already has a form' : ''}</option>
         })}
       </select>
-      <input required placeholder="Form name — the word after autofly.us.com/ (e.g. paris-form)" value={draft.f || ''} onChange={e => setDraft({ ...draft, f: e.target.value })} />
-      <p className="hint">The store will open autofly.us.com/{(draft.f || 'form-name').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} and log in there.</p>
+      <input required placeholder="Form name — the word after yently.com/ (e.g. paris-form)" value={draft.f || ''} onChange={e => setDraft({ ...draft, f: e.target.value })} />
+      <p className="hint">The store will open yently.com/{(draft.f || 'form-name').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} and log in there.</p>
       <input required placeholder="Username for the store" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password for the store" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <p className="hint">Use a throwaway password you invent for this store — never your own password. Only you can see it here.</p>
@@ -494,8 +494,8 @@ export function WebsiteDomainForm({ draft, setDraft, onSubmit, submitLabel, onCa
         <option value="">— Website type (optional) —</option>
         {(types || []).map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
       </select>
-      <input required placeholder="Slug — the word after autofly.us.com/ (e.g. demo-barber)" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
-      <p className="hint">The barber's page will open at autofly.us.com/{slugPreview}. The slug can't be “admin” and can't match a provider form or employee pass name — Admin refuses it if it does.</p>
+      <input required placeholder="Slug — the word after yently.com/ (e.g. demo-barber)" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The barber's page will open at yently.com/{slugPreview}. The slug can't be “admin” and can't match a provider form or employee pass name — Admin refuses it if it does.</p>
       <input placeholder="Domain (if the barber has their own, e.g. joesbarber.com)" value={draft.domain || ''} onChange={e => setDraft({ ...draft, domain: e.target.value })} />
       <textarea placeholder="Description" value={draft.description || ''} onChange={e => setDraft({ ...draft, description: e.target.value })} />
       <input placeholder="Note" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />

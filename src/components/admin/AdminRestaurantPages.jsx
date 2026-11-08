@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabaseClient'
 
 // Admin "Restaurant Pages" section: copy, rename and delete the
 // self-contained restaurant folders under public/ (each folder is one
-// page, live at autofly.us.com/<folder>). Only folders that contain a
+// page, live at yently.com/<folder>). Only folders that contain a
 // restaurant page (data.json) are listed, so nothing else in public/
 // can be touched from here.
 //
@@ -90,7 +90,7 @@ export default function AdminRestaurantPages() {
     try {
       await runJob('copy', folder, newName, (poll) => setBusy({ action: 'copy', folder, text: progressText(poll) }))
       setCopyFor(null)
-      setMsg(`✓ Copied — autofly.us.com/${newName} will be live in a few minutes (the site rebuilds automatically). One thing to change after copying: the name shown on the page comes from inside the folder, so open the new page's Setup tab to change it.`)
+      setMsg(`✓ Copied — yently.com/${newName} will be live in a few minutes (the site rebuilds automatically). One thing to change after copying: the name shown on the page comes from inside the folder, so open the new page's Setup tab to change it.`)
       load()
     } catch (err) {
       setMsg('Copy failed: ' + err.message)
@@ -110,7 +110,7 @@ export default function AdminRestaurantPages() {
       await runJob('copy', folder, newName, (poll) => setBusy({ action: 'rename', folder, text: 'Copying to the new name… ' + progressText(poll) }))
       await runJob('delete', folder, null, (poll) => setBusy({ action: 'rename', folder, text: 'Removing the old name… ' + progressText(poll) }))
       setRenameFor(null)
-      setMsg(`✓ Renamed — autofly.us.com/${newName} will be live in a few minutes, and autofly.us.com/${folder} will stop opening the page after the rebuild.`)
+      setMsg(`✓ Renamed — yently.com/${newName} will be live in a few minutes, and yently.com/${folder} will stop opening the page after the rebuild.`)
       load()
     } catch (err) {
       setMsg('Rename failed: ' + err.message + ' (If the copy finished but the old name is still there, delete the old name by hand from this list.)')
@@ -120,12 +120,12 @@ export default function AdminRestaurantPages() {
   }
 
   const doDelete = async (folder) => {
-    if (!window.confirm(`Delete the page "${folder}" (autofly.us.com/${folder}) for good? This cannot be undone.`)) return
+    if (!window.confirm(`Delete the page "${folder}" (yently.com/${folder}) for good? This cannot be undone.`)) return
     setMsg('')
     setBusy({ action: 'delete', folder, text: 'Starting…' })
     try {
       await runJob('delete', folder, null, (poll) => setBusy({ action: 'delete', folder, text: progressText(poll) }))
-      setMsg(`✓ Deleted — autofly.us.com/${folder} will stop opening the page after the next rebuild (a few minutes).`)
+      setMsg(`✓ Deleted — yently.com/${folder} will stop opening the page after the next rebuild (a few minutes).`)
       load()
     } catch (err) {
       setMsg('Delete failed: ' + err.message)
@@ -138,7 +138,7 @@ export default function AdminRestaurantPages() {
     <div>
       <div className="hero-card">
         <h2>🍽️ Restaurant Pages</h2>
-        <p>Each restaurant page is a folder, live at autofly.us.com/<b>folder-name</b>. Copy one to make a new restaurant, rename one to change its address, or delete one you no longer need. Only folders that hold a restaurant page are listed here.</p>
+        <p>Each restaurant page is a folder, live at yently.com/<b>folder-name</b>. Copy one to make a new restaurant, rename one to change its address, or delete one you no longer need. Only folders that hold a restaurant page are listed here.</p>
         <p className="hint">After a copy or rename, give the site a few minutes to rebuild before opening the new address. And remember: the restaurant name shown on a copied page comes from inside its folder — open the new page's Setup tab to change it.</p>
       </div>
 
@@ -155,7 +155,7 @@ export default function AdminRestaurantPages() {
         <div key={f.folder} className="form-card wide">
           <h3 style={{ margin: '0 0 4px' }}>{f.name}</h3>
           <p style={{ margin: '0 0 10px' }}>
-            <a href={`https://autofly.us.com/${f.folder}`} target="_blank" rel="noreferrer">autofly.us.com/{f.folder}</a>
+            <a href={`https://yently.com/${f.folder}`} target="_blank" rel="noreferrer">yently.com/{f.folder}</a>
           </p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <button type="button" disabled={!!busy} onClick={() => { setCopyFor({ folder: f.folder, value: '' }); setRenameFor(null) }}>📋 Copy</button>

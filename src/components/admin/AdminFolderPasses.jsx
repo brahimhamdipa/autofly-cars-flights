@@ -256,7 +256,7 @@ export default function AdminFolderPasses() {
         <div key={row.id} className="form-card wide">
           <h3 style={{ margin: '0 0 4px' }}>{row.folder}</h3>
           <p style={{ margin: '0 0 10px' }}>
-            <a href={`https://autofly.us.com/${row.folder}`} target="_blank" rel="noreferrer">autofly.us.com/{row.folder}</a>
+            <a href={`https://yently.com/${row.folder}`} target="_blank" rel="noreferrer">yently.com/{row.folder}</a>
           </p>
           <p style={{ margin: '0 0 4px' }}>Username: <b>{row.username}</b></p>
           <p style={{ margin: '0 0 4px' }}>Password: <b>{row.password}</b></p>

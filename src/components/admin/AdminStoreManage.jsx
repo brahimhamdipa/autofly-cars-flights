@@ -138,8 +138,8 @@ function DinerRestaurantForm({ draft, setDraft, onSubmit, submitLabel, onCancel 
     <form className="form-card" onSubmit={onSubmit}>
       <h3>{submitLabel}</h3>
       <input required placeholder="Restaurant name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
-      <input required placeholder="Slug — the word in autofly.us.com/diner?r=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
-      <p className="hint">The customer shares autofly.us.com/diner?r={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their own customers. New restaurants start with the demo menu.</p>
+      <input required placeholder="Slug — the word in yently.com/diner?r=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The customer shares yently.com/diner?r={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their own customers. New restaurants start with the demo menu.</p>
       <input required placeholder="Username for the restaurant" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password for the restaurant" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <p className="hint">This login is what you sell — use a throwaway password you invent for this restaurant, never your own password. Only you can see it here.</p>
@@ -159,8 +159,8 @@ function BarbershopShopForm({ draft, setDraft, onSubmit, submitLabel, onCancel }
     <form className="form-card" onSubmit={onSubmit}>
       <h3>{submitLabel}</h3>
       <input required placeholder="Shop name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
-      <input required placeholder="Slug — the word in autofly.us.com/barbers?s=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
-      <p className="hint">The customer shares autofly.us.com/barbers?s={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their own customers. New shops start with the demo services.</p>
+      <input required placeholder="Slug — the word in yently.com/barbers?s=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The customer shares yently.com/barbers?s={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their own customers. New shops start with the demo services.</p>
       <input required placeholder="Username for the shop" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password for the shop" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <p className="hint">This login is what you sell — use a throwaway password you invent for this shop, never your own password. Only you can see it here.</p>
@@ -180,8 +180,8 @@ function PosStoreForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
     <form className="form-card" onSubmit={onSubmit}>
       <h3>{submitLabel}</h3>
       <input required placeholder="Store name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
-      <input required placeholder="Slug — the word in autofly.us.com/pos?s=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
-      <p className="hint">The customer shares autofly.us.com/pos?s={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their staff. New stores start empty — the owner adds items in Setup.</p>
+      <input required placeholder="Slug — the word in yently.com/pos?s=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The customer shares yently.com/pos?s={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their staff. New stores start empty — the owner adds items in Setup.</p>
       <input required placeholder="Username for the store" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password for the store" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <p className="hint">This login is what you sell — use a throwaway password you invent for this store, never your own password. Only you can see it here.</p>
@@ -201,8 +201,8 @@ function DealerShopForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
     <form className="form-card" onSubmit={onSubmit}>
       <h3>{submitLabel}</h3>
       <input required placeholder="Dealer name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
-      <input required placeholder="Slug — the word in autofly.us.com/dealer?d=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
-      <p className="hint">The customer shares autofly.us.com/dealer?d={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their own customers. New dealers start empty — the owner adds vehicles in Setup.</p>
+      <input required placeholder="Slug — the word in yently.com/dealer?d=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The customer shares yently.com/dealer?d={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their own customers. New dealers start empty — the owner adds vehicles in Setup.</p>
       <input required placeholder="Username for the dealer" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password for the dealer" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <p className="hint">This login is what you sell — use a throwaway password you invent for this dealer, never your own password. Only you can see it here.</p>
@@ -222,8 +222,8 @@ function EmployeeShopForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) 
     <form className="form-card" onSubmit={onSubmit}>
       <h3>{submitLabel}</h3>
       <input required placeholder="Team name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
-      <input required placeholder="Slug — the word in autofly.us.com/employee?e=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
-      <p className="hint">The customer shares autofly.us.com/employee?e={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their staff. New teams start empty — the owner adds staff in Setup.</p>
+      <input required placeholder="Slug — the word in yently.com/employee?e=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The customer shares yently.com/employee?e={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their staff. New teams start empty — the owner adds staff in Setup.</p>
       <input required placeholder="Username for the team" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password for the team" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <p className="hint">This login is what you sell — use a throwaway password you invent for this team, never your own password. Only you can see it here.</p>
@@ -243,8 +243,8 @@ function BodyshopShopForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) 
     <form className="form-card" onSubmit={onSubmit}>
       <h3>{submitLabel}</h3>
       <input required placeholder="Bodyshop name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
-      <input required placeholder="Slug — the word in autofly.us.com/bodyshop?b=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
-      <p className="hint">The customer shares autofly.us.com/bodyshop?b={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their own customers. New bodyshops start empty — the owner adds customers, estimates, jobs and loan cars in Setup.</p>
+      <input required placeholder="Slug — the word in yently.com/bodyshop?b=slug" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The customer shares yently.com/bodyshop?b={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their own customers. New bodyshops start empty — the owner adds customers, estimates, jobs and loan cars in Setup.</p>
       <input required placeholder="Username for the bodyshop" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password for the bodyshop" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <p className="hint">This login is what you sell — use a throwaway password you invent for this bodyshop, never your own password. Only you can see it here.</p>
@@ -264,7 +264,7 @@ function IntakeFormForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
     <form className="form-card" onSubmit={onSubmit}>
       <h3>{submitLabel}</h3>
       <input required placeholder="Form name — given to the barber for login" value={draft.f || ''} onChange={e => setDraft({ ...draft, f: e.target.value })} />
-      <p className="hint">The barber logs in at autofly.us.com/barber-intake with this form name, a username, and a password.</p>
+      <p className="hint">The barber logs in at yently.com/barber-intake with this form name, a username, and a password.</p>
       <input required placeholder="Username for the barber" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password for the barber" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <p className="hint">Use a throwaway password you invent for this barber — never your own password. Only you can see it here.</p>
@@ -281,8 +281,8 @@ function UploadFormForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) {
   return (
     <form className="form-card" onSubmit={onSubmit}>
       <h3>{submitLabel}</h3>
-      <input required placeholder="Form name — the word in autofly.us.com/form-name" value={draft.f || ''} onChange={e => setDraft({ ...draft, f: e.target.value })} />
-      <p className="hint">The customer logs in at autofly.us.com/{(draft.f || 'form-name').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with a username and a password.</p>
+      <input required placeholder="Form name — the word in yently.com/form-name" value={draft.f || ''} onChange={e => setDraft({ ...draft, f: e.target.value })} />
+      <p className="hint">The customer logs in at yently.com/{(draft.f || 'form-name').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with a username and a password.</p>
       <input required placeholder="Username for the customer" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password for the customer" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <p className="hint">This login is what you sell — use a throwaway password you invent for this customer, never your own password. Only you can see it here.</p>
@@ -508,7 +508,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
   const approveSubmission = async (row) => {
     const { data, error } = await supabase.rpc('approve_barber_intake', { p_submission_id: row.id })
     if (error) { setStatus('Cannot approve: ' + error.message); return }
-    setStatus(`✓ Approved — shop live at autofly.us.com/${data?.slug || ''}.`)
+    setStatus(`✓ Approved — shop live at yently.com/${data?.slug || ''}.`)
     setDetail(null)
     reload()
   }
@@ -664,7 +664,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
     if (table === 'barber_stores') fields.text_message = !!fields.text_message
     if (table === 'open_times') fields.hours_may_differ = !!fields.hours_may_differ
     if (table === 'barber_styles' && fields.time_to_finish !== undefined) fields.time_to_finish = fields.time_to_finish === '' || fields.time_to_finish === null ? null : Number(fields.time_to_finish)
-    // Barber website slugs are public addresses (autofly.us.com/<slug>),
+    // Barber website slugs are public addresses (yently.com/<slug>),
     // so they follow the same collision rules as provider forms and
     // employee passes. The checks only look at the OTHER tables, so
     // editing a domain without changing its slug never trips them;
@@ -975,7 +975,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
       {table === 'diner_approvals' && detail && (
         <div className="form-card">
           <h3>{detail.name}</h3>
-          <p>Link: autofly.us.com/diner?r={detail.slug} · Status: {detail.draft_status}</p>
+          <p>Link: yently.com/diner?r={detail.slug} · Status: {detail.draft_status}</p>
           <p>Draft menu (what the restaurant uploaded):</p>
           <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{detail.draft_data ? JSON.stringify(detail.draft_data, null, 2) : 'No draft yet.'}</pre>
           <div className="store-actions">
@@ -997,7 +997,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
       {table === 'barbershop_approvals' && detail && (
         <div className="form-card">
           <h3>{detail.name}</h3>
-          <p>Link: autofly.us.com/barbers?s={detail.slug} · Status: {detail.draft_status}</p>
+          <p>Link: yently.com/barbers?s={detail.slug} · Status: {detail.draft_status}</p>
           <p>Draft services (what the shop uploaded):</p>
           <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{detail.draft_data ? JSON.stringify(detail.draft_data, null, 2) : 'No draft yet.'}</pre>
           <div className="store-actions">
@@ -1019,7 +1019,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
       {table === 'pos_approvals' && detail && (
         <div className="form-card">
           <h3>{detail.name}</h3>
-          <p>Link: autofly.us.com/pos?s={detail.slug} · Status: {detail.draft_status}</p>
+          <p>Link: yently.com/pos?s={detail.slug} · Status: {detail.draft_status}</p>
           <p>Draft details (what the store uploaded):</p>
           <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{detail.draft_data ? JSON.stringify(detail.draft_data, null, 2) : 'No draft yet.'}</pre>
           <div className="store-actions">
@@ -1050,7 +1050,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
       {table === 'dealer_approvals' && detail && (
         <div className="form-card">
           <h3>{detail.name}</h3>
-          <p>Link: autofly.us.com/dealer?d={detail.slug} · Status: {detail.draft_status}</p>
+          <p>Link: yently.com/dealer?d={detail.slug} · Status: {detail.draft_status}</p>
           <p>Draft details (what the dealer uploaded):</p>
           <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{detail.draft_data ? JSON.stringify(detail.draft_data, null, 2) : 'No draft yet.'}</pre>
           <div className="store-actions">
@@ -1078,7 +1078,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
       {table === 'employee_approvals' && detail && (
         <div className="form-card">
           <h3>{detail.name}</h3>
-          <p>Link: autofly.us.com/employee?e={detail.slug} · Status: {detail.draft_status}</p>
+          <p>Link: yently.com/employee?e={detail.slug} · Status: {detail.draft_status}</p>
           <p>Draft details (what the team uploaded):</p>
           <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{detail.draft_data ? JSON.stringify(detail.draft_data, null, 2) : 'No draft yet.'}</pre>
           <div className="store-actions">
@@ -1103,7 +1103,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
       {table === 'bodyshop_approvals' && detail && (
         <div className="form-card">
           <h3>{detail.name}</h3>
-          <p>Link: autofly.us.com/bodyshop?b={detail.slug} · Status: {detail.draft_status}</p>
+          <p>Link: yently.com/bodyshop?b={detail.slug} · Status: {detail.draft_status}</p>
           <p>Draft details (what the bodyshop uploaded):</p>
           <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{detail.draft_data ? JSON.stringify(detail.draft_data, null, 2) : 'No draft yet.'}</pre>
           <div className="store-actions">
@@ -1170,7 +1170,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
           <label>Page word
             <input value={pageWord} onChange={e => setPageWord(e.target.value)} />
           </label>
-          <p className="hint">This becomes autofly.us.com/{pageWord || 'page-word'}. If approval says it is taken, change it here, save, then approve.</p>
+          <p className="hint">This becomes yently.com/{pageWord || 'page-word'}. If approval says it is taken, change it here, save, then approve.</p>
           <p>Header: {detail.payload.header_slogan || '—'} · {detail.payload.header_description || '—'}</p>
           <p>Body: {detail.payload.body_texts || '—'}</p>
           <p>Footer: {detail.payload.footer_slogan || '—'} · {detail.payload.footer_description || '—'}</p>
@@ -1261,7 +1261,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
                   </>
                 )}
                 {table === 'providers' && <><td>{r.city}</td><td>{r.country}</td><td>{(r.pics || []).length}</td><td>{r.holdorder ? 'Yes' : 'No'}</td><td>{r.payorder !== false ? 'Yes' : 'No'}</td></>}
-                {table === 'forms' && <><td><a href={`/${r.f}`} target="_blank" rel="noreferrer">autofly.us.com/{r.f}</a></td><td>{r.u}</td><td>{r.comment}</td></>}
+                {table === 'forms' && <><td><a href={`/${r.f}`} target="_blank" rel="noreferrer">yently.com/{r.f}</a></td><td>{r.u}</td><td>{r.comment}</td></>}
                 {table === 'fromdel' && <><td>{r.faddress}</td><td>{r.fcity}</td><td>{r.fstate}</td><td>{r.fzip}</td><td>{r.fcountry}</td></>}
                 {table === 'topick' && <><td>{r.taddress}</td><td>{r.tcity}</td><td>{r.tstate}</td><td>{r.tzip}</td><td>{r.tcountry}</td></>}
                 {table === 'itemcats' && <td>{r.slug}</td>}
@@ -1269,13 +1269,13 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
                 {table === 'jobs' && <td>{r.jobDescription || '—'}</td>}
                 {table === 'employees' && <><td>{jobsList.find(j => j.id === r.job_id)?.jobTitle || '—'}</td><td>{r.phone1 || '—'}</td></>}
       {table === 'languages' && <td>{(() => { const e = employeesList.find(x => x.id === r.employee_id); return e ? `${e.firstName} ${e.lastName || ''}`.trim() : '—' })()}</td>}
-            {table === 'passes' && <><td><a href={`/${r.formName}`}>autofly.us.com/{r.formName}</a></td><td>{r.u}</td><td>{r.note || '—'}</td></>}
+            {table === 'passes' && <><td><a href={`/${r.formName}`}>yently.com/{r.formName}</a></td><td>{r.u}</td><td>{r.note || '—'}</td></>}
             {table === 'barber_stores' && <><td>{r.owner_name || '—'}</td><td>{r.tel || '—'}</td><td>{r.email || '—'}</td><td>{(r.pics || []).length}</td><td>{r.text_message ? 'Yes' : 'No'}</td></>}
             {table === 'barber_locations' && <><td>{r.address || '—'}</td><td>{r.city || '—'}</td><td>{r.state || '—'}</td><td>{r.zip || '—'}</td></>}
             {table === 'open_times' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td>{r.monday || '—'}</td><td>{r.tuesday || '—'}</td><td>{r.wednesday || '—'}</td><td>{r.thursday || '—'}</td><td>{r.friday || '—'}</td><td>{r.saturday || '—'}</td><td>{r.sunday || '—'}</td><td>{r.closed || '—'}</td></>}
             {table === 'barber_customers' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td>{r.location_gps || '—'}</td><td>{r.note || '—'}</td></>}
             {table === 'barber_styles' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td>{money(r.price)}</td><td>{r.time_to_finish ?? '—'}</td><td>{(r.pics || []).length}</td></>}
-            {table === 'website_domains' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td><a href={`/${r.slug}`} target="_blank" rel="noreferrer">autofly.us.com/{r.slug}</a></td><td>{websiteTypes.find(t => t.id === r.type_id)?.name || '—'}</td><td>{r.domain || '—'}</td></>}
+            {table === 'website_domains' && <><td>{barberStores.find(s => s.id === r.store_id)?.store_name || r.store_id}</td><td><a href={`/${r.slug}`} target="_blank" rel="noreferrer">yently.com/{r.slug}</a></td><td>{websiteTypes.find(t => t.id === r.type_id)?.name || '—'}</td><td>{r.domain || '—'}</td></>}
             {table === 'website_types' && <><td>{r.description || '—'}</td><td>{(r.pics || []).length}</td></>}
             {table === 'website_headers' && <><td>{websiteDomains.find(d => d.id === r.domain_id)?.slug || r.domain_id}</td><td>{r.header_slogan || '—'}</td></>}
             {table === 'website_bodies' && <><td>{websiteDomains.find(d => d.id === r.domain_id)?.slug || r.domain_id}</td><td>{r.h1 || '—'}</td></>}

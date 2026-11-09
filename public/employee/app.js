@@ -31,6 +31,8 @@
     });
   } catch (e) {}
   var SLUG = String(params.e || '').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
+  var SLUG_FROM_PATH = false;
+  var slugResolved = false;
   if (!SLUG) {
     // Clean link (yently.com/<slug>): the middleware rewrites the
     // page server-side, so location.search is empty in the browser.
@@ -39,7 +41,24 @@
     // shows "not found" by design.
     var segs = location.pathname.split('/').filter(function (s) { return s; });
     var lastSeg = (segs[segs.length - 1] || '').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
-    if (lastSeg && lastSeg !== 'employee') SLUG = lastSeg;
+    if (lastSeg && lastSeg !== 'employee') { SLUG = lastSeg; SLUG_FROM_PATH = true; }
+  }
+  // Clean link (yently.com/<slug>): the name in the link is the CLEAN
+  // name, which usually differs from the shop's own slug (e.g.
+  // yently.com/testlink opens the Demo POS shop, slug demo-pos).
+  // The middleware rewrites the page, but the browser address stays
+  // clean, so look the clean name up in clean_links (public read)
+  // and use the real shop slug. Only runs when the slug came from
+  // the path (no ?s=/?r=/... query). Fails open: any error keeps
+  // the path slug, and the shop just shows "not found" as before.
+  function resolveSlug() {
+    if (!SLUG_FROM_PATH || slugResolved || !SLUG) return Promise.resolve();
+    slugResolved = true;
+    return fetch(SUPABASE_URL + '/rest/v1/clean_links?slug=eq.' + encodeURIComponent(SLUG) + '&select=shop_slug', {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+    }).then(function (res) { return res.ok ? res.json() : []; }).then(function (rows) {
+      if (rows && rows[0] && rows[0].shop_slug) SLUG = String(rows[0].shop_slug).toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
+    }).catch(function () {});
   }
 
   /* Public by design: the same publishable key the main AutoFly site ships
@@ -763,7 +782,7 @@
   if (!SLUG) {
     notFound();
   } else {
-    loadBiz().then(function (d) {
+    resolveSlug().then(function () { return loadBiz(); }).then(function (d) {
       if (!d || !d.name) { notFound(); return; }
       return rpc('employee_pass_status', { p_slug: SLUG }).then(function (st) {
         passLocked = st === 'locked';

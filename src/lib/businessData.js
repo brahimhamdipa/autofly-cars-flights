@@ -18,6 +18,7 @@ import { insertKidsGeographyOrder } from './kidsGeographyData'
 import { insertKidsCodingOrder } from './kidsCodingData'
 import { insertKidsReadingOrder } from './kidsReadingData'
 import {
+  bundleFor,
   RESTAURANT_PLAN_KEY,
   POS_PLAN_KEY,
   BARBERSHOP_PLAN_KEY,
@@ -27,6 +28,7 @@ import {
   SAMPLE_PLAN_KEY,
   TV_PLAN_KEY,
   CHAT_PLAN_KEY,
+  CLEAN_PLAN_KEY,
   KIDS_MATH_PLAN_KEY,
   KIDS_ENGLISH_PLAN_KEY,
   KIDS_ARABIC_PLAN_KEY,
@@ -76,8 +78,19 @@ const INSERT_BY_KEY = {
 // returns the placed items. If any insert throws, the error
 // propagates — items placed before the failure stay placed, and the
 // caller reports the error.
+//
+// Bundle note (owner's call 2026-11-09): when 2+ plans are ordered
+// together, every per-plan owner email also carries the discounted
+// monthly total, so the owner sees what the customer actually pays
+// (e.g. Restaurant $40 + POS $50 = $90 list, 10% off = $81/month) —
+// not just that plan's list price. Order rows still keep list
+// prices; only the email gains the line.
 export async function placeBusinessOrder({ name, email, phone, note, items }) {
   const placed = []
+  const bundle = bundleFor(items || [])
+  const bundleNote = bundle.rate > 0
+    ? `Bundle discount applied — customer pays $${bundle.total.toFixed(2)}/month (list $${bundle.listTotal.toFixed(2)}, ${Math.round(bundle.rate * 100)}% off, saving $${bundle.savings.toFixed(2)}/month)`
+    : null
   for (const item of items || []) {
     const insert = INSERT_BY_KEY[item.key]
     if (!insert) throw new Error('Unknown business plan: ' + item.key)
@@ -88,7 +101,7 @@ export async function placeBusinessOrder({ name, email, phone, note, items }) {
       plan: item.name,
       price: item.price,
       note,
-    }, { plan: item.name, price: item.price })
+    }, { plan: item.name, price: item.price, ...(bundleNote ? { bundle_discount: bundleNote } : {}) })
     placed.push(item)
   }
   return placed

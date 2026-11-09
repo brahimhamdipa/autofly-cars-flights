@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kids Spanish</title>
+<link rel="icon" href="data:,">
+</head>
+<body>
+<div id="app">
+  <header id="site-header">
+    <div class="brand">
+      <img id="site-logo" alt="" hidden>
+      <div>
+        <h1 id="site-name">Loading…</h1>
+        <p id="site-about"></p>
+      </div>
+    </div>
+    <nav id="tabs" role="tablist">
+      <button data-view="play" class="active">Play</button>
+      <button data-view="teacher">Teacher</button>
+      <button data-view="setup">Setup</button>
+    </nav>
+  </header>
+  <main>
+    <section id="view-play" class="view"></section>
+    <section id="view-teacher" class="view" hidden></section>
+    <section id="view-setup" class="view" hidden></section>
+  </main>
+  <footer id="site-footer"></footer>
+  <button id="to-top" class="to-top">↑ Top</button>
+</div>
+<script>
+  /* Bootstrap: work out this folder's own address from the URL itself, so
+     the app loads its own style.css and app.js under any domain. No folder
+     name is written anywhere in this page's code. The school itself
+     comes from its own private link, not from a file. */
+  (function () {
+    var p = location.pathname;
+    var last = p.split('/').pop();
+    var base = last.indexOf('.') !== -1
+      ? p.replace(/\/[^\/]*$/, '/')
+      : (p.charAt(p.length - 1) === '/' ? p : p + '/');
+    window.RMS_BASE = base;
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = base + 'style.css';
+    document.head.appendChild(link);
+    var script = document.createElement('script');
+    script.src = base + 'app.js';
+    document.body.appendChild(script);
+  })();
+</script>
+</body>
+</html>

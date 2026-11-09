@@ -65,7 +65,43 @@ export const CHAT_PLAN_KEY = 'chat:website'
 export const CHAT_PLAN_NAME = 'Live chat page'
 export const CHAT_PLAN_PRICE = 3
 
-// Single source of truth for the nine plans, keyed by plan key.
+export const KIDS_MATH_PLAN_KEY = 'kids-math'
+export const KIDS_MATH_PLAN_NAME = 'Kids Math page'
+export const KIDS_MATH_PLAN_PRICE = 10
+
+export const KIDS_ENGLISH_PLAN_KEY = 'kids-english'
+export const KIDS_ENGLISH_PLAN_NAME = 'Kids English page'
+export const KIDS_ENGLISH_PLAN_PRICE = 10
+
+export const KIDS_ARABIC_PLAN_KEY = 'kids-arabic'
+export const KIDS_ARABIC_PLAN_NAME = 'Kids Arabic page'
+export const KIDS_ARABIC_PLAN_PRICE = 10
+
+export const KIDS_FRENCH_PLAN_KEY = 'kids-french'
+export const KIDS_FRENCH_PLAN_NAME = 'Kids French page'
+export const KIDS_FRENCH_PLAN_PRICE = 10
+
+export const KIDS_SPANISH_PLAN_KEY = 'kids-spanish'
+export const KIDS_SPANISH_PLAN_NAME = 'Kids Spanish page'
+export const KIDS_SPANISH_PLAN_PRICE = 10
+
+export const KIDS_SCIENCE_PLAN_KEY = 'kids-science'
+export const KIDS_SCIENCE_PLAN_NAME = 'Kids Science page'
+export const KIDS_SCIENCE_PLAN_PRICE = 10
+
+export const KIDS_GEOGRAPHY_PLAN_KEY = 'kids-geography'
+export const KIDS_GEOGRAPHY_PLAN_NAME = 'Kids Geography page'
+export const KIDS_GEOGRAPHY_PLAN_PRICE = 10
+
+export const KIDS_CODING_PLAN_KEY = 'kids-coding'
+export const KIDS_CODING_PLAN_NAME = 'Kids Coding page'
+export const KIDS_CODING_PLAN_PRICE = 10
+
+export const KIDS_READING_PLAN_KEY = 'kids-reading'
+export const KIDS_READING_PLAN_NAME = 'Kids Reading page'
+export const KIDS_READING_PLAN_PRICE = 10
+
+// Single source of truth for the eighteen plans, keyed by plan key.
 export const BUSINESS_PLANS = {
   [RESTAURANT_PLAN_KEY]: { key: RESTAURANT_PLAN_KEY, name: RESTAURANT_PLAN_NAME, price: RESTAURANT_PLAN_PRICE },
   [POS_PLAN_KEY]: { key: POS_PLAN_KEY, name: POS_PLAN_NAME, price: POS_PLAN_PRICE },
@@ -76,9 +112,18 @@ export const BUSINESS_PLANS = {
   [SAMPLE_PLAN_KEY]: { key: SAMPLE_PLAN_KEY, name: SAMPLE_PLAN_NAME, price: SAMPLE_PLAN_PRICE },
   [TV_PLAN_KEY]: { key: TV_PLAN_KEY, name: TV_PLAN_NAME, price: TV_PLAN_PRICE },
   [CHAT_PLAN_KEY]: { key: CHAT_PLAN_KEY, name: CHAT_PLAN_NAME, price: CHAT_PLAN_PRICE },
+  [KIDS_MATH_PLAN_KEY]: { key: KIDS_MATH_PLAN_KEY, name: KIDS_MATH_PLAN_NAME, price: KIDS_MATH_PLAN_PRICE },
+  [KIDS_ENGLISH_PLAN_KEY]: { key: KIDS_ENGLISH_PLAN_KEY, name: KIDS_ENGLISH_PLAN_NAME, price: KIDS_ENGLISH_PLAN_PRICE },
+  [KIDS_ARABIC_PLAN_KEY]: { key: KIDS_ARABIC_PLAN_KEY, name: KIDS_ARABIC_PLAN_NAME, price: KIDS_ARABIC_PLAN_PRICE },
+  [KIDS_FRENCH_PLAN_KEY]: { key: KIDS_FRENCH_PLAN_KEY, name: KIDS_FRENCH_PLAN_NAME, price: KIDS_FRENCH_PLAN_PRICE },
+  [KIDS_SPANISH_PLAN_KEY]: { key: KIDS_SPANISH_PLAN_KEY, name: KIDS_SPANISH_PLAN_NAME, price: KIDS_SPANISH_PLAN_PRICE },
+  [KIDS_SCIENCE_PLAN_KEY]: { key: KIDS_SCIENCE_PLAN_KEY, name: KIDS_SCIENCE_PLAN_NAME, price: KIDS_SCIENCE_PLAN_PRICE },
+  [KIDS_GEOGRAPHY_PLAN_KEY]: { key: KIDS_GEOGRAPHY_PLAN_KEY, name: KIDS_GEOGRAPHY_PLAN_NAME, price: KIDS_GEOGRAPHY_PLAN_PRICE },
+  [KIDS_CODING_PLAN_KEY]: { key: KIDS_CODING_PLAN_KEY, name: KIDS_CODING_PLAN_NAME, price: KIDS_CODING_PLAN_PRICE },
+  [KIDS_READING_PLAN_KEY]: { key: KIDS_READING_PLAN_KEY, name: KIDS_READING_PLAN_NAME, price: KIDS_READING_PLAN_PRICE },
 }
 
-// Bundle discount — pure math, no new state. All nine plans count:
+// Bundle discount — pure math, no new state. All eighteen plans count:
 // 2 plans in the cart = 10% off the monthly total, 3 plans = 15%,
 // 4 or more = 20%. The discount is cart-level display only: each
 // order row still keeps its plan's list price (see businessData.js),

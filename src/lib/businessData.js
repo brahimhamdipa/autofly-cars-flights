@@ -7,6 +7,15 @@ import { insertBodyshopOrder } from './bodyshopData'
 import { insertBarberOrder } from './barberData'
 import { insertTvGalleryOrder } from './tvGalleryData'
 import { insertLiveChatOrder } from './liveChatData'
+import { insertKidsMathOrder } from './kidsMathData'
+import { insertKidsEnglishOrder } from './kidsEnglishData'
+import { insertKidsArabicOrder } from './kidsArabicData'
+import { insertKidsFrenchOrder } from './kidsFrenchData'
+import { insertKidsSpanishOrder } from './kidsSpanishData'
+import { insertKidsScienceOrder } from './kidsScienceData'
+import { insertKidsGeographyOrder } from './kidsGeographyData'
+import { insertKidsCodingOrder } from './kidsCodingData'
+import { insertKidsReadingOrder } from './kidsReadingData'
 import {
   RESTAURANT_PLAN_KEY,
   POS_PLAN_KEY,
@@ -17,6 +26,15 @@ import {
   SAMPLE_PLAN_KEY,
   TV_PLAN_KEY,
   CHAT_PLAN_KEY,
+  KIDS_MATH_PLAN_KEY,
+  KIDS_ENGLISH_PLAN_KEY,
+  KIDS_ARABIC_PLAN_KEY,
+  KIDS_FRENCH_PLAN_KEY,
+  KIDS_SPANISH_PLAN_KEY,
+  KIDS_SCIENCE_PLAN_KEY,
+  KIDS_GEOGRAPHY_PLAN_KEY,
+  KIDS_CODING_PLAN_KEY,
+  KIDS_READING_PLAN_KEY,
 } from './BusinessCartContext'
 
 // Data layer for the unified Business Systems cart. Checkout inserts
@@ -25,7 +43,10 @@ import {
 // did, only now the items share one cart. The per-plan tables stay
 // separate (restaurant_order, pos_order, barbershop_order,
 // dealer_order, employee_order, bodyshop_order, barber_order,
-// tv_gallery_order, live_chat_order),
+// tv_gallery_order, live_chat_order, kids_math_order,
+// kids_english_order, kids_arabic_order, kids_french_order,
+// kids_spanish_order, kids_science_order, kids_geography_order,
+// kids_coding_order, kids_reading_order),
 // because each plan is a different product with a different
 // follow-up. No payment is taken here.
 const INSERT_BY_KEY = {
@@ -38,6 +59,15 @@ const INSERT_BY_KEY = {
   [SAMPLE_PLAN_KEY]: insertBarberOrder,
   [TV_PLAN_KEY]: insertTvGalleryOrder,
   [CHAT_PLAN_KEY]: insertLiveChatOrder,
+  [KIDS_MATH_PLAN_KEY]: insertKidsMathOrder,
+  [KIDS_ENGLISH_PLAN_KEY]: insertKidsEnglishOrder,
+  [KIDS_ARABIC_PLAN_KEY]: insertKidsArabicOrder,
+  [KIDS_FRENCH_PLAN_KEY]: insertKidsFrenchOrder,
+  [KIDS_SPANISH_PLAN_KEY]: insertKidsSpanishOrder,
+  [KIDS_SCIENCE_PLAN_KEY]: insertKidsScienceOrder,
+  [KIDS_GEOGRAPHY_PLAN_KEY]: insertKidsGeographyOrder,
+  [KIDS_CODING_PLAN_KEY]: insertKidsCodingOrder,
+  [KIDS_READING_PLAN_KEY]: insertKidsReadingOrder,
 }
 
 // items = [{key, name, price}]. Places each item in cart order and

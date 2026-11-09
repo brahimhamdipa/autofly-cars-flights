@@ -71,7 +71,57 @@ const TABLES = [
   ['bodyshop_approvals', 'Bodyshop Approval', 'bodyshop_shops'],
   ['bodyshop_jobs', 'Bodyshop Jobs', 'bodyshop_jobs'],
   ['bodyshop_orders', 'Bodyshop Orders', 'bodyshop_order'],
+  ['kids_math_shops', 'Kids Math Passes', 'kids_math_shops'],
+  ['kids_math_approvals', 'Kids Math Approvals', 'kids_math_shops'],
+  ['kids_math_orders', 'Kids Math Orders', 'kids_math_order'],
+  ['kids_english_shops', 'Kids English Passes', 'kids_english_shops'],
+  ['kids_english_approvals', 'Kids English Approvals', 'kids_english_shops'],
+  ['kids_english_orders', 'Kids English Orders', 'kids_english_order'],
+  ['kids_arabic_shops', 'Kids Arabic Passes', 'kids_arabic_shops'],
+  ['kids_arabic_approvals', 'Kids Arabic Approvals', 'kids_arabic_shops'],
+  ['kids_arabic_orders', 'Kids Arabic Orders', 'kids_arabic_order'],
+  ['kids_french_shops', 'Kids French Passes', 'kids_french_shops'],
+  ['kids_french_approvals', 'Kids French Approvals', 'kids_french_shops'],
+  ['kids_french_orders', 'Kids French Orders', 'kids_french_order'],
+  ['kids_spanish_shops', 'Kids Spanish Passes', 'kids_spanish_shops'],
+  ['kids_spanish_approvals', 'Kids Spanish Approvals', 'kids_spanish_shops'],
+  ['kids_spanish_orders', 'Kids Spanish Orders', 'kids_spanish_order'],
+  ['kids_science_shops', 'Kids Science Passes', 'kids_science_shops'],
+  ['kids_science_approvals', 'Kids Science Approvals', 'kids_science_shops'],
+  ['kids_science_orders', 'Kids Science Orders', 'kids_science_order'],
+  ['kids_geography_shops', 'Kids Geography Passes', 'kids_geography_shops'],
+  ['kids_geography_approvals', 'Kids Geography Approvals', 'kids_geography_shops'],
+  ['kids_geography_orders', 'Kids Geography Orders', 'kids_geography_order'],
+  ['kids_coding_shops', 'Kids Coding Passes', 'kids_coding_shops'],
+  ['kids_coding_approvals', 'Kids Coding Approvals', 'kids_coding_shops'],
+  ['kids_coding_orders', 'Kids Coding Orders', 'kids_coding_order'],
+  ['kids_reading_shops', 'Kids Reading Passes', 'kids_reading_shops'],
+  ['kids_reading_approvals', 'Kids Reading Approvals', 'kids_reading_shops'],
+  ['kids_reading_orders', 'Kids Reading Orders', 'kids_reading_order'],
 ]
+
+// Yently Kids: one shops table + one approvals view + one orders table
+// per subject. The three tables share the subject slug in the key
+// (kids_math_shops / kids_math_approvals / kids_math_orders), so one
+// helper covers all nine subjects instead of 27 separate branches.
+const KIDS_SUBJECTS = {
+  math: { label: 'Math', folder: 'kids-math' },
+  english: { label: 'English', folder: 'kids-english' },
+  arabic: { label: 'Arabic', folder: 'kids-arabic' },
+  french: { label: 'French', folder: 'kids-french' },
+  spanish: { label: 'Spanish', folder: 'kids-spanish' },
+  science: { label: 'Science', folder: 'kids-science' },
+  geography: { label: 'Geography', folder: 'kids-geography' },
+  coding: { label: 'Coding', folder: 'kids-coding' },
+  reading: { label: 'Reading', folder: 'kids-reading' },
+}
+const kidsSubjectOf = (table) => {
+  const m = /^kids_([a-z]+)_(shops|approvals|orders)$/.exec(table || '')
+  return m ? m[1] : null
+}
+const KIDS_SHOP_TABLES = Object.keys(KIDS_SUBJECTS).map(s => 'kids_' + s + '_shops')
+const KIDS_APPROVAL_TABLES = Object.keys(KIDS_SUBJECTS).map(s => 'kids_' + s + '_approvals')
+const KIDS_ORDER_TABLES = Object.keys(KIDS_SUBJECTS).map(s => 'kids_' + s + '_orders')
 
 const slugify = (s) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 
@@ -128,6 +178,9 @@ const blankDraft = (table) => {
   if (table === 'bodyshop_approvals') return {}
   if (table === 'bodyshop_jobs') return {}
   if (table === 'bodyshop_orders') return { customer_name: '', customer_email: '', customer_phone: '', plan: 'Bodyshop management', price: 20, note: '' }
+  if (KIDS_SHOP_TABLES.includes(table)) return { slug: '', name: '', u: '', p: '', epass: '', note: '' }
+  if (KIDS_APPROVAL_TABLES.includes(table)) return {}
+  if (KIDS_ORDER_TABLES.includes(table)) return { customer_name: '', customer_email: '', customer_phone: '', plan: 'Kids ' + KIDS_SUBJECTS[kidsSubjectOf(table)].label + ' page', price: 10, note: '' }
   if (table === 'item_batches') return {}
   if (table === 'upload_forms') return { f: '', u: '', p: '', folder: '', note: '' }
   return { name: '' }
@@ -251,6 +304,30 @@ function BodyshopShopForm({ draft, setDraft, onSubmit, submitLabel, onCancel }) 
       <input placeholder="Employee password (optional — one shared password for Jobs, Estimates, Customers + Loan Cars)" value={draft.epass || ''} onChange={e => setDraft({ ...draft, epass: e.target.value })} />
       <p className="hint">Give this to the owner with the login above. Anyone with the bodyshop link can request an estimate, but the working tabs need this password. Leave it empty and they stay fully open, as before.</p>
       <input placeholder="Note for yourself (optional — not shown to the bodyshop)" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
+      <div className="store-actions">
+        <button type="submit" className="btn-primary">{submitLabel}</button>
+        {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
+      </div>
+    </form>
+  )
+}
+
+// One form for all nine Yently Kids school tables — the subject and
+// folder come from the table (kids_math_shops → Math / kids-math),
+// so the nine Passes pages share this instead of nine copies.
+function KidsShopForm({ draft, setDraft, onSubmit, submitLabel, onCancel, subject, folder }) {
+  return (
+    <form className="form-card" onSubmit={onSubmit}>
+      <h3>{submitLabel}</h3>
+      <input required placeholder="School name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
+      <input required placeholder="Slug — the word in the school's private link" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The customer shares their own private link with their students. New schools start with the demo {subject} content.</p>
+      <input required placeholder="Username for the school" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
+      <input required placeholder="Password for the school" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
+      <p className="hint">This login is what you sell — use a throwaway password you invent for this school, never your own password. Only you can see it here.</p>
+      <input placeholder="Teacher password (optional — one shared password for the Teacher area)" value={draft.epass || ''} onChange={e => setDraft({ ...draft, epass: e.target.value })} />
+      <p className="hint">Give this to the owner with the login above. Anyone with the school link can play, but the Teacher area needs this password. Leave it empty and the Teacher area stays fully open, as before.</p>
+      <input placeholder="Note for yourself (optional — not shown to the school)" value={draft.note || ''} onChange={e => setDraft({ ...draft, note: e.target.value })} />
       <div className="store-actions">
         <button type="submit" className="btn-primary">{submitLabel}</button>
         {onCancel && <button type="button" className="btn-soft" onClick={onCancel}>Cancel</button>}
@@ -394,6 +471,8 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
     if (table === 'bodyshop_approvals') q = supabase.from(tableName).select('*').eq('draft_status', 'pending').order('id')
     if (table === 'bodyshop_jobs') q = supabase.from(tableName).select('*').order('id', { ascending: false })
     if (table === 'bodyshop_orders') q = supabase.from(tableName).select('*').order('id')
+    if (KIDS_APPROVAL_TABLES.includes(table)) q = supabase.from(tableName).select('*').eq('draft_status', 'pending').order('id')
+    if (KIDS_ORDER_TABLES.includes(table)) q = supabase.from(tableName).select('*').order('id')
     if (table === 'item_batches') q = supabase.from(tableName).select('*').eq('status', 'pending').order('id')
     if (table === 'upload_forms') q = supabase.from(tableName).select('*').order('f')
     q.then(({ data, error }) => {
@@ -457,7 +536,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
   }, [rows, query])
 
   // One label per row, used by the Name cell and the delete confirm.
-  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : table === 'restaurant_orders' ? r.customer_name : table === 'intake_forms' ? r.f : table === 'intake_submissions' ? ((r.payload && r.payload.shop_name) || ('Submission #' + r.id)) : table === 'diner_restaurants' ? r.name : table === 'diner_approvals' ? r.name : table === 'diner_orders' ? ('Order #' + r.id) : table === 'barbershop_shops' ? r.name : table === 'barbershop_approvals' ? r.name : table === 'barbershop_bookings' ? ('Booking #' + r.id) : table === 'barbershop_orders' ? r.customer_name : table === 'item_batches' ? ('Batch #' + r.id) : table === 'upload_forms' ? r.f : table === 'pos_stores' ? r.name : table === 'pos_approvals' ? r.name : table === 'pos_sales' ? ('Sale #' + r.id) : table === 'pos_orders' ? r.customer_name : table === 'dealer_shops' ? r.name : table === 'dealer_approvals' ? r.name : table === 'dealer_testdrives' ? ('Test drive #' + r.id) : table === 'dealer_tradeins' ? ('Trade-in #' + r.id) : table === 'dealer_orders' ? r.customer_name : table === 'employee_shops' ? r.name : table === 'employee_approvals' ? r.name : table === 'employee_timelogs' ? ('Time #' + r.id) : table === 'employee_orders' ? r.customer_name : table === 'bodyshop_shops' ? r.name : table === 'bodyshop_approvals' ? r.name : table === 'bodyshop_jobs' ? (r.number || ('Job #' + r.id)) : table === 'bodyshop_orders' ? r.customer_name : table === 'tv_gallery_orders' ? r.customer_name : r.name
+  const rowLabel = (r) => table === 'forms' ? r.f : table === 'fromdel' ? r.fname : table === 'topick' ? r.tname : table === 'itemcats' ? r.label : table === 'subcats' ? (r.flavor || r.color || ('Sub #' + r.id)) : table === 'jobs' ? r.jobTitle : table === 'employees' ? `${r.firstName} ${r.lastName || ''}`.trim() : table === 'languages' ? r.language : table === 'passes' ? r.formName : table === 'barber_stores' ? r.store_name : table === 'barber_locations' ? r.address : table === 'open_times' ? ('Hours for store ' + r.store_id) : table === 'barber_customers' ? `${r.fname} ${r.lname || ''}`.trim() : table === 'website_domains' ? r.slug : table === 'website_headers' ? r.header_name : table === 'website_footers' ? r.footer_name : table === 'barber_reservations' ? r.customer_name : table === 'barber_orders' ? r.customer_name : table === 'restaurant_orders' ? r.customer_name : table === 'intake_forms' ? r.f : table === 'intake_submissions' ? ((r.payload && r.payload.shop_name) || ('Submission #' + r.id)) : table === 'diner_restaurants' ? r.name : table === 'diner_approvals' ? r.name : table === 'diner_orders' ? ('Order #' + r.id) : table === 'barbershop_shops' ? r.name : table === 'barbershop_approvals' ? r.name : table === 'barbershop_bookings' ? ('Booking #' + r.id) : table === 'barbershop_orders' ? r.customer_name : table === 'item_batches' ? ('Batch #' + r.id) : table === 'upload_forms' ? r.f : table === 'pos_stores' ? r.name : table === 'pos_approvals' ? r.name : table === 'pos_sales' ? ('Sale #' + r.id) : table === 'pos_orders' ? r.customer_name : table === 'dealer_shops' ? r.name : table === 'dealer_approvals' ? r.name : table === 'dealer_testdrives' ? ('Test drive #' + r.id) : table === 'dealer_tradeins' ? ('Trade-in #' + r.id) : table === 'dealer_orders' ? r.customer_name : table === 'employee_shops' ? r.name : table === 'employee_approvals' ? r.name : table === 'employee_timelogs' ? ('Time #' + r.id) : table === 'employee_orders' ? r.customer_name : table === 'bodyshop_shops' ? r.name : table === 'bodyshop_approvals' ? r.name : table === 'bodyshop_jobs' ? (r.number || ('Job #' + r.id)) : table === 'bodyshop_orders' ? r.customer_name : table === 'tv_gallery_orders' ? r.customer_name : kidsSubjectOf(table) ? (table.endsWith('_orders') ? r.customer_name : r.name) : r.name
 
   const remove = async (row) => {
     const label = rowLabel(row)
@@ -575,6 +654,18 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
     const { error } = await supabase.rpc('approve_bodyshop_draft', { p_shop_id: row.id })
     if (error) { setStatus('Cannot approve: ' + error.message); return }
     setStatus(`✓ Approved — "${row.name}" bodyshop details are now live.`)
+    setDetail(null)
+    reload()
+  }
+
+  // Kids approval: one tap makes the pending draft live. The RPC name
+  // comes from the table (kids_math_approvals → approve_kids_math_draft),
+  // so one function covers all nine subjects.
+  const approveKids = async (row) => {
+    const subject = kidsSubjectOf(table)
+    const { data, error } = await supabase.rpc('approve_kids_' + subject + '_draft', { p_shop_id: row.id })
+    if (error) { setStatus('Cannot approve: ' + error.message); return }
+    setStatus(`✓ Approved — "${data?.name || row.name}" Kids ${KIDS_SUBJECTS[subject].label} content is now live.`)
     setDetail(null)
     reload()
   }
@@ -822,7 +913,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
     reload()
   }
 
-  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : table === 'restaurant_orders' ? 'restaurant order' : table === 'intake_forms' ? 'intake form' : table === 'intake_submissions' ? 'intake submission' : table === 'diner_restaurants' ? 'diner restaurant' : table === 'diner_approvals' ? 'diner approval' : table === 'diner_orders' ? 'diner order' : table === 'barbershop_shops' ? 'barbershop shop' : table === 'barbershop_approvals' ? 'barbershop approval' : table === 'barbershop_bookings' ? 'barbershop booking' : table === 'barbershop_orders' ? 'barbershop order' : table === 'item_batches' ? 'items approval' : table === 'upload_forms' ? 'upload form' : table === 'pos_stores' ? 'POS store' : table === 'pos_approvals' ? 'POS approval' : table === 'pos_sales' ? 'POS sale' : table === 'pos_orders' ? 'POS order' : table === 'dealer_shops' ? 'dealer shop' : table === 'dealer_approvals' ? 'dealer approval' : table === 'dealer_testdrives' ? 'dealer test drive' : table === 'dealer_tradeins' ? 'dealer trade-in' : table === 'dealer_orders' ? 'dealer order' : table === 'employee_shops' ? 'employee team' : table === 'employee_approvals' ? 'employee approval' : table === 'employee_timelogs' ? 'employee time record' : table === 'employee_orders' ? 'employee order' : table === 'bodyshop_shops' ? 'bodyshop' : table === 'bodyshop_approvals' ? 'bodyshop approval' : table === 'bodyshop_jobs' ? 'bodyshop job' : table === 'bodyshop_orders' ? 'bodyshop order' : table === 'tv_gallery_orders' ? 'TV Gallery order' : 'row'
+  const kindLabel = table === 'providers' ? 'provider' : table === 'items' ? 'item' : table === 'forms' ? 'provider form' : table === 'fromdel' ? 'delivery location' : table === 'topick' ? 'pickup location' : table === 'itemcats' ? 'item category' : table === 'subcats' ? 'sub category' : table === 'jobs' ? 'job' : table === 'employees' ? 'employee' : table === 'languages' ? 'language' : table === 'passes' ? 'employee pass' : table === 'barber_stores' ? 'barber store' : table === 'barber_locations' ? 'barber location' : table === 'open_times' ? 'open hours' : table === 'barber_customers' ? 'barber customer' : table === 'barber_styles' ? 'barber style' : table === 'website_domains' ? 'barber website' : table === 'website_types' ? 'website type' : table === 'website_headers' ? 'website header' : table === 'website_bodies' ? 'website body' : table === 'website_footers' ? 'website footer' : table === 'barber_reservations' ? 'barber reservation' : table === 'barber_orders' ? 'barber order' : table === 'restaurant_orders' ? 'restaurant order' : table === 'intake_forms' ? 'intake form' : table === 'intake_submissions' ? 'intake submission' : table === 'diner_restaurants' ? 'diner restaurant' : table === 'diner_approvals' ? 'diner approval' : table === 'diner_orders' ? 'diner order' : table === 'barbershop_shops' ? 'barbershop shop' : table === 'barbershop_approvals' ? 'barbershop approval' : table === 'barbershop_bookings' ? 'barbershop booking' : table === 'barbershop_orders' ? 'barbershop order' : table === 'item_batches' ? 'items approval' : table === 'upload_forms' ? 'upload form' : table === 'pos_stores' ? 'POS store' : table === 'pos_approvals' ? 'POS approval' : table === 'pos_sales' ? 'POS sale' : table === 'pos_orders' ? 'POS order' : table === 'dealer_shops' ? 'dealer shop' : table === 'dealer_approvals' ? 'dealer approval' : table === 'dealer_testdrives' ? 'dealer test drive' : table === 'dealer_tradeins' ? 'dealer trade-in' : table === 'dealer_orders' ? 'dealer order' : table === 'employee_shops' ? 'employee team' : table === 'employee_approvals' ? 'employee approval' : table === 'employee_timelogs' ? 'employee time record' : table === 'employee_orders' ? 'employee order' : table === 'bodyshop_shops' ? 'bodyshop' : table === 'bodyshop_approvals' ? 'bodyshop approval' : table === 'bodyshop_jobs' ? 'bodyshop job' : table === 'bodyshop_orders' ? 'bodyshop order' : table === 'tv_gallery_orders' ? 'TV Gallery order' : kidsSubjectOf(table) ? ('Kids ' + KIDS_SUBJECTS[kidsSubjectOf(table)].label + (table.endsWith('_approvals') ? ' approval' : table.endsWith('_orders') ? ' order' : ' school')) : 'row'
 
   const formTitle = table === 'intake_submissions'
     ? (detail ? `Intake submission — ${rowLabel(detail)}` : 'Intake submissions')
@@ -840,6 +931,8 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
     ? (detail ? `Bodyshop approval — ${rowLabel(detail)}` : 'Bodyshop approvals')
     : table === 'item_batches'
     ? (detail ? `Items approval — ${rowLabel(detail)}` : 'Items approvals')
+    : KIDS_APPROVAL_TABLES.includes(table)
+    ? (detail ? `Kids ${KIDS_SUBJECTS[kidsSubjectOf(table)].label} approval — ${rowLabel(detail)}` : `Kids ${KIDS_SUBJECTS[kidsSubjectOf(table)].label} approvals`)
     : draft.id ? `Edit ${kindLabel} — ${rowLabel(draft)}` : `New ${kindLabel}`
 
   const submitLabel = draft.id ? 'Save changes' : `Save ${kindLabel}`
@@ -1118,6 +1211,28 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
       {table === 'bodyshop_orders' && (
         <p className="hint">Orders are placed by customers on the site — view and delete only, no editing.</p>
       )}
+      {KIDS_SHOP_TABLES.includes(table) && (
+        <KidsShopForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
+          onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} subject={KIDS_SUBJECTS[kidsSubjectOf(table)].label} folder={KIDS_SUBJECTS[kidsSubjectOf(table)].folder} />
+      )}
+      {KIDS_APPROVAL_TABLES.includes(table) && !detail && (
+        <p className="hint">Drafts schools uploaded for approval — open Details to review the content, then Approve to make it live. Deleting a school is done in Kids {KIDS_SUBJECTS[kidsSubjectOf(table)].label} Passes, not here.</p>
+      )}
+      {KIDS_APPROVAL_TABLES.includes(table) && detail && (
+        <div className="form-card">
+          <h3>{detail.name}</h3>
+          <p>Link: yently.com/{KIDS_SUBJECTS[kidsSubjectOf(table)].folder}?s={detail.slug} · Status: {detail.draft_status}</p>
+          <p>Draft content (what the school uploaded):</p>
+          <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{detail.draft_data ? JSON.stringify(detail.draft_data, null, 2) : 'No draft yet.'}</pre>
+          <div className="store-actions">
+            {detail.draft_status === 'pending' && <button type="button" className="btn-primary" onClick={() => approveKids(detail)}>Approve</button>}
+            <button type="button" className="btn-soft" onClick={() => setDetail(null)}>Close</button>
+          </div>
+        </div>
+      )}
+      {KIDS_ORDER_TABLES.includes(table) && (
+        <p className="hint">Orders are placed by customers on the site — view and delete only, no editing.</p>
+      )}
       {table === 'upload_forms' && (
         <UploadFormForm draft={draft} setDraft={setDraft} onSubmit={save} submitLabel={submitLabel}
           onCancel={draft.id ? () => setDraft(blankDraft(table)) : null} />
@@ -1240,6 +1355,9 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
               {table === 'bodyshop_approvals' && <><th>Slug</th><th>Draft</th></>}
               {table === 'bodyshop_jobs' && <><th>Shop</th><th>Number</th><th>Customer</th><th>Vehicle</th><th>Total</th><th>Status</th></>}
               {table === 'bodyshop_orders' && <><th>Email</th><th>Phone</th><th>Plan</th><th>Price</th></>}
+              {KIDS_SHOP_TABLES.includes(table) && <><th>Slug</th><th>Username</th><th>Draft</th></>}
+              {KIDS_APPROVAL_TABLES.includes(table) && <><th>Slug</th><th>Draft</th></>}
+              {KIDS_ORDER_TABLES.includes(table) && <><th>Email</th><th>Phone</th><th>Plan</th><th>Price</th></>}
               {table === 'item_batches' && <><th>Store</th><th>Items</th><th>Status</th><th>Sent</th></>}
               {table === 'upload_forms' && <><th>Folder</th><th>Username</th></>}
               <th>Edit</th><th>Delete</th>
@@ -1310,6 +1428,9 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
             {table === 'bodyshop_approvals' && <><td>{r.slug}</td><td>{r.draft_status}</td></>}
             {table === 'bodyshop_jobs' && <><td>{bodyshopShopsList.find(x => x.id === r.shop_id)?.name || r.shop_id}</td><td>{r.number || '—'}</td><td>{r.customer || '—'}</td><td>{r.vehicle || '—'}</td><td>{money(r.total)}</td><td>{r.status}</td></>}
             {table === 'bodyshop_orders' && <><td>{r.customer_email || '—'}</td><td>{r.customer_phone || '—'}</td><td>{r.plan || '—'}</td><td>{money(r.price)}</td></>}
+            {KIDS_SHOP_TABLES.includes(table) && <><td>{r.slug}</td><td>{r.u}</td><td>{r.draft_status}</td></>}
+            {KIDS_APPROVAL_TABLES.includes(table) && <><td>{r.slug}</td><td>{r.draft_status}</td></>}
+            {KIDS_ORDER_TABLES.includes(table) && <><td>{r.customer_email || '—'}</td><td>{r.customer_phone || '—'}</td><td>{r.plan || '—'}</td><td>{money(r.price)}</td></>}
             {table === 'item_batches' && <><td>{r.batch_data?.provider_name || ('Provider ' + (r.batch_data?.provider_id ?? '—'))}</td><td>{(r.batch_data?.items || []).length}</td><td>{r.status}</td><td>{(r.created_at || '').slice(0, 10)}</td></>}
             {table === 'upload_forms' && <><td>{r.folder}</td><td>{r.u}</td></>}
                 <td>
@@ -1321,10 +1442,11 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
                   {table === 'dealer_approvals' && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.draft_status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveDealer(r)}>Approve</button>}{' '}</>}
                   {table === 'employee_approvals' && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.draft_status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveEmployee(r)}>Approve</button>}{' '}</>}
                   {table === 'bodyshop_approvals' && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.draft_status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveBodyshop(r)}>Approve</button>}{' '}</>}
+                  {KIDS_APPROVAL_TABLES.includes(table) && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.draft_status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveKids(r)}>Approve</button>}{' '}</>}
                   {table === 'item_batches' && <><button type="button" className="btn-mini" onClick={() => setDetail(r)}>Details</button>{' '}{r.status === 'pending' && <button type="button" className="btn-mini" onClick={() => approveItemBatch(r)}>Approve</button>}{' '}</>}
-                  {table !== 'barber_orders' && table !== 'restaurant_orders' && table !== 'intake_submissions' && table !== 'diner_approvals' && table !== 'diner_orders' && table !== 'barbershop_approvals' && table !== 'barbershop_bookings' && table !== 'barbershop_orders' && table !== 'pos_approvals' && table !== 'pos_sales' && table !== 'item_batches' && table !== 'pos_orders' && table !== 'dealer_approvals' && table !== 'dealer_testdrives' && table !== 'dealer_tradeins' && table !== 'dealer_orders' && table !== 'employee_approvals' && table !== 'employee_timelogs' && table !== 'employee_orders' && table !== 'bodyshop_approvals' && table !== 'bodyshop_jobs' && table !== 'bodyshop_orders' && table !== 'tv_gallery_orders' && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
+                  {table !== 'barber_orders' && table !== 'restaurant_orders' && table !== 'intake_submissions' && table !== 'diner_approvals' && table !== 'diner_orders' && table !== 'barbershop_approvals' && table !== 'barbershop_bookings' && table !== 'barbershop_orders' && table !== 'pos_approvals' && table !== 'pos_sales' && table !== 'item_batches' && table !== 'pos_orders' && table !== 'dealer_approvals' && table !== 'dealer_testdrives' && table !== 'dealer_tradeins' && table !== 'dealer_orders' && table !== 'employee_approvals' && table !== 'employee_timelogs' && table !== 'employee_orders' && table !== 'bodyshop_approvals' && table !== 'bodyshop_jobs' && table !== 'bodyshop_orders' && table !== 'tv_gallery_orders' && !KIDS_APPROVAL_TABLES.includes(table) && !KIDS_ORDER_TABLES.includes(table) && <button type="button" className="btn-mini" onClick={() => table === 'items' ? editItem(r) : table === 'passes' ? editPass(r) : setDraft({...r})}>Edit</button>}
                 </td>
-                <td>{table !== 'diner_approvals' && table !== 'barbershop_approvals' && table !== 'pos_approvals' && table !== 'dealer_approvals' && table !== 'employee_approvals' && table !== 'bodyshop_approvals' && <button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button>}</td>
+                <td>{table !== 'diner_approvals' && table !== 'barbershop_approvals' && table !== 'pos_approvals' && table !== 'dealer_approvals' && table !== 'employee_approvals' && table !== 'bodyshop_approvals' && !KIDS_APPROVAL_TABLES.includes(table) && <button type="button" className="btn-mini" onClick={() => remove(r)}>Delete</button>}</td>
               </tr>
             ))}
             {rows && filtered.length === 0 && <tr><td colSpan="12">Nothing here yet.</td></tr>}

@@ -45,7 +45,7 @@ export default function BooksForKidsPage({ go }) {
             <li>Picture books for the youngest readers</li>
             <li>Early readers for children learning to read on their own</li>
             <li>Story books for bedtime and the classroom</li>
-            <li>Books in English and Arabic to start, more languages to follow</li>
+            <li>Books in English Spanish and Arabic to start, more languages to follow</li>
           </ul>
         </div>
         <p className="hint">Delivery starts in the US first. Leave your name and email below and we'll tell you as soon as it launches near you.</p>

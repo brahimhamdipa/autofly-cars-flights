@@ -37,6 +37,8 @@
     });
   } catch (e) {}
   var SLUG = String(params.s || '').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
+  var SLUG_FROM_PATH = false;
+  var slugResolved = false;
   if (!SLUG) {
     // Clean link (yently.com/<slug>): the middleware rewrites the
     // page server-side, so location.search is empty in the browser.
@@ -45,7 +47,24 @@
     // shows "not found" by design.
     var segs = location.pathname.split('/').filter(function (s) { return s; });
     var lastSeg = (segs[segs.length - 1] || '').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
-    if (lastSeg && lastSeg !== 'kids-reading') SLUG = lastSeg;
+    if (lastSeg && lastSeg !== 'kids-reading') { SLUG = lastSeg; SLUG_FROM_PATH = true; }
+  }
+  // Clean link (yently.com/<slug>): the name in the link is the CLEAN
+  // name, which usually differs from the shop's own slug (e.g.
+  // yently.com/testlink opens the Demo POS shop, slug demo-pos).
+  // The middleware rewrites the page, but the browser address stays
+  // clean, so look the clean name up in clean_links (public read)
+  // and use the real shop slug. Only runs when the slug came from
+  // the path (no ?s=/?r=/... query). Fails open: any error keeps
+  // the path slug, and the shop just shows "not found" as before.
+  function resolveSlug() {
+    if (!SLUG_FROM_PATH || slugResolved || !SLUG) return Promise.resolve();
+    slugResolved = true;
+    return fetch(SUPABASE_URL + '/rest/v1/clean_links?slug=eq.' + encodeURIComponent(SLUG) + '&select=shop_slug', {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: 'Bearer ' + SUPABASE_ANON_KEY }
+    }).then(function (res) { return res.ok ? res.json() : []; }).then(function (rows) {
+      if (rows && rows[0] && rows[0].shop_slug) SLUG = String(rows[0].shop_slug).toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
+    }).catch(function () {});
   }
   var STUDENT_KEY = 'kids-reading-student-' + SLUG;
   var FINISHED_KEY = 'kids-reading-finished-' + SLUG;
@@ -574,7 +593,7 @@
     $('site-name').textContent = 'Reading page not found';
     $('view-play').innerHTML = '<div class="error">This link doesn\'t point to a school yet. Check the link and try again — ask Yently for your reading link.</div>';
   } else {
-    rpc('get_kids_reading_live', { p_slug: SLUG }).then(function (json) {
+    resolveSlug().then(function () { return rpc('get_kids_reading_live', { p_slug: SLUG }); }).then(function (json) {
       if (!json || !json.name) throw new Error('not found');
       data = json;
       data.students = data.students || [];

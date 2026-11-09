@@ -35,6 +35,16 @@
     });
   } catch (e) {}
   var SLUG = String(params.s || '').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
+  if (!SLUG) {
+    // Clean link (yently.com/<slug>): the middleware rewrites the
+    // page server-side, so location.search is empty in the browser.
+    // The shop slug is then the last path segment. Ignore this
+    // system's own folder name, so a bare /kids-coding visit still
+    // shows "not found" by design.
+    var segs = location.pathname.split('/').filter(function (s) { return s; });
+    var lastSeg = (segs[segs.length - 1] || '').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
+    if (lastSeg && lastSeg !== 'kids-coding') SLUG = lastSeg;
+  }
   var STUDENT_KEY = 'kids-coding-student-' + SLUG;
   var SOLVED_KEY = 'kids-coding-solved-' + SLUG;
 

@@ -49,6 +49,9 @@ export default function BusinessMenu({ go }) {
           {addonsOpen && (
             <a href="/demo-live-chat" style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', textDecoration: 'none', borderTop: '1px solid #f1f2f5' }}>Live Chat</a>
           )}
+          {addonsOpen && (
+            <button onClick={() => pick('clean-link')}>Clean Link</button>
+          )}
         </div>
       )}
     </div>

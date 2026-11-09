@@ -21,6 +21,7 @@ const SYSTEMS = [
 const ADDONS = [
   { name: 'TV Gallery', price: 2, blurb: 'Your pictures on the big screen — slideshow and one-picture display.', tab: 'tv-gallery' },
   { name: 'Live Chat', price: 3, blurb: 'A chat bubble on your website — every message to your email.', tab: 'live-chat' },
+  { name: 'Clean Link', price: 2, blurb: 'Your shop at a clean address — yently.com/your-name.', tab: 'clean-link' },
 ]
 
 function SystemRow({ item, first, go }) {

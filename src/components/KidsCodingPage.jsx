@@ -94,7 +94,7 @@ export default function KidsCodingPage({ go }) {
 
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Try the demo school</h3>
-        <p>See the Kids Coding page working before you ask for one — the demo school is live, with the login <b>demo</b>.</p>
+        <p>See the Kids Coding page working before you ask for one — tap below and we'll send you the demo link.</p>
         <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
 

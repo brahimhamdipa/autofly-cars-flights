@@ -93,7 +93,6 @@ export default function UploadFormPage({ slug, goBack, go }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [menuAddonsOpen, setMenuAddonsOpen] = useState(false)
   const menuRef = useRef(null)
-  const pageMenuRef = useRef(null)
   const menuOpenRef = useRef(false)
   const fileRef = useRef(null)
   const replaceRef = useRef(null)
@@ -189,6 +188,14 @@ export default function UploadFormPage({ slug, goBack, go }) {
     setViewIndex(null)
     setMenuOpen(false)
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {})
+  }
+
+  // In demo mode the X leaves the demo entirely (back to the TV
+  // Gallery ad page); on a real customer's form it just closes the
+  // fullscreen and returns to their upload page.
+  const closeGalleryToAd = () => {
+    closeGallery()
+    if (demoMode && go) go('tv-gallery')
   }
 
   const loadPics = async (fld, removed = removedPics) => {
@@ -361,7 +368,7 @@ export default function UploadFormPage({ slug, goBack, go }) {
   useEffect(() => {
     if (!menuOpen) return
     const onDown = (e) => {
-      const inMenu = [menuRef.current, pageMenuRef.current].some(r => r && r.contains(e.target))
+      const inMenu = menuRef.current && menuRef.current.contains(e.target)
       if (!inMenu) { setMenuOpen(false); pokeControls() }
     }
     window.addEventListener('pointerdown', onDown)
@@ -397,11 +404,6 @@ export default function UploadFormPage({ slug, goBack, go }) {
   return (
     <div className="upload-form-page">
       <style>{`.upload-form-page button:focus-visible, .upload-form-page input:focus-visible { outline: 3px solid #f5a623; outline-offset: 2px; }`}</style>
-      {demoMode && viewIndex === null && (
-        <div style={{ position: 'fixed', top: 12, left: 12, zIndex: 10 }} onClick={e => e.stopPropagation()}>
-          {menuBox(pageMenuRef)}
-        </div>
-      )}
       <div className="hero-card">
         {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
         <h2>📷 Picture upload</h2>
@@ -477,17 +479,17 @@ export default function UploadFormPage({ slug, goBack, go }) {
 
       {viewIndex !== null && pics.length > 0 && (
         <div ref={galleryRef} tabIndex={-1} className="gallery-remote" style={{ position: 'fixed', inset: 0, background: '#000', zIndex: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', outline: 'none' }} onClick={closeGallery}>
-          <style>{`@keyframes pos-ticker-scroll { from { transform: translateX(100%); } to { transform: translateX(-100%); } } .pos-ticker { animation: pos-ticker-scroll 36s linear infinite; } .gallery-remote button:focus { outline: 3px solid #f5a623; outline-offset: 3px; }`}</style>
+          <style>{`@keyframes pos-ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } } .pos-ticker { animation: pos-ticker-scroll 30s linear infinite; } .gallery-remote button:focus { outline: 3px solid #f5a623; outline-offset: 3px; }`}</style>
           <img src={pics[viewIndex].url} alt={pics[viewIndex].name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} onClick={e => { e.stopPropagation(); toggleControls() }} />
           {demoMode && (
             <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 5, opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }} onClick={e => e.stopPropagation()}>
               {menuBox(menuRef)}
             </div>
           )}
-          <button type="button" className="car-submenu-btn" aria-label="Close gallery" onClick={e => { e.stopPropagation(); closeGallery() }} style={{ position: 'absolute', top: 12, right: 12, zIndex: 5, fontSize: 22, color: '#374151', opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }}>✕</button>
+          <button type="button" className="car-submenu-btn" aria-label="Close gallery" onClick={e => { e.stopPropagation(); closeGalleryToAd() }} style={{ position: 'absolute', top: 12, right: 12, zIndex: 5, fontSize: 22, color: '#374151', opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }}>✕</button>
           {message.trim() && (
-            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: '#dc2626', color: '#fff', overflow: 'hidden', padding: '10px 0', zIndex: 2 }}>
-              <span className="pos-ticker" style={{ display: 'inline-block', whiteSpace: 'nowrap', fontWeight: 800, fontSize: 22 }}>{message} &nbsp;•&nbsp; {message}</span>
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: '#dc2626', color: '#fff', overflow: 'hidden', padding: '10px 0', zIndex: 2 }} onClick={e => e.stopPropagation()}>
+              <span className="pos-ticker" style={{ display: 'inline-block', whiteSpace: 'nowrap', fontWeight: 800, fontSize: 22 }}>{message} &nbsp;•&nbsp; {message} &nbsp;•&nbsp;</span>
             </div>
           )}
           <div style={{ position: 'absolute', bottom: message.trim() ? 64 : 16, left: 0, right: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, color: '#fff', opacity: controlsVisible ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: controlsVisible ? 'auto' : 'none' }}>

@@ -3,7 +3,6 @@ import { submitAndNotify } from '../lib/notify'
 import { useBusinessCart, TV_PLAN_KEY, TV_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { BusinessTopBar } from './BusinessMenu'
 import FloatingAddToCart from './FloatingAddToCart'
-import DemoInterestPopup from './DemoInterestPopup'
 
 // Sales page for the TV gallery (reached from More ▾ → Business
 // Systems → Add-ons → TV Gallery). One product only: a fullscreen
@@ -27,7 +26,6 @@ export default function TvGalleryPage({ go }) {
   const [form, setForm] = useState({ name: '', business: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
-  const [demoOpen, setDemoOpen] = useState(false)
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value })
 
   const handleSubmit = async (e) => {
@@ -99,11 +97,9 @@ export default function TvGalleryPage({ go }) {
 
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Try the demo gallery</h3>
-        <p>See the TV gallery working before you ask for one — tap below and we'll send you the demo link.</p>
-        <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
+        <p>See the TV gallery working — tap below to view the gallery.</p>
+        <button type="button" onClick={() => go && go('provider-form', 'demo-tv-gallery')}>View the Gallery</button>
       </div>
-
-      {demoOpen && <DemoInterestPopup systemName="TV Gallery page" onClose={() => setDemoOpen(false)} />}
 
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your TV gallery</h3>

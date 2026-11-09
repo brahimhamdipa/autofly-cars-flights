@@ -60,13 +60,13 @@ export default function App() {
   const [tab, setTab] = useState(() => {
     const path = window.location.pathname.replace(/\/$/, '')
     if (path === '/admin') return 'admin'
-    if (path === '/demo-live-chat') return 'demo-live-chat'
+    if (path === '/demo-live-chat' || path === '/demo-chat') return 'demo-live-chat'
     if (path !== '' && path !== '/') return 'provider-form'
     return 'business-hub'
   })
   const [formSlug, setFormSlug] = useState(() => {
     const path = window.location.pathname.replace(/\/$/, '')
-    if (path !== '' && path !== '/' && path !== '/admin' && path !== '/demo-live-chat') return decodeURIComponent(path.slice(1))
+    if (path !== '' && path !== '/' && path !== '/admin' && path !== '/demo-live-chat' && path !== '/demo-chat') return decodeURIComponent(path.slice(1))
     return null
   })
   const [providerId, setProviderId] = useState(null)
@@ -105,7 +105,7 @@ export default function App() {
     // any of them returns to /.
     const path = window.location.pathname.replace(/\/$/, '')
     const onAdmin = path === '/admin'
-    const onDemo = path === '/demo-live-chat'
+    const onDemo = path === '/demo-live-chat' || path === '/demo-chat'
     const onForm = path !== '' && path !== '/' && !onAdmin && !onDemo
     if (t === 'admin' && !onAdmin) window.history.replaceState(null, '', '/admin')
     else if (t === 'demo-live-chat' && !onDemo) window.history.replaceState(null, '', '/demo-live-chat')

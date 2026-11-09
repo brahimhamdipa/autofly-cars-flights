@@ -1246,7 +1246,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
           <p>Store: {(detail.batch_data && detail.batch_data.provider_name) || '—'} · Items: {((detail.batch_data && detail.batch_data.items) || []).length} · Status: {detail.status} · Sent: {(detail.created_at || '').slice(0, 10)}</p>
           <p>Items in this batch:</p>
           {((detail.batch_data && detail.batch_data.items) || []).map((it, i) => (
-            <p key={i}>{it.name || ('Item ' + (i + 1))}{it.price !== undefined && it.price !== '' ? ' — $' + it.price : ''}{it.description ? ' — ' + it.description : ''}</p>
+            <p key={i}>{it.name || ('Item ' + (i + 1))}{it.price !== undefined && it.price !== '' ? ' — $' + it.price : ''}{it.description ? ' — ' + it.description : ''}{it.barCode ? ' — Barcode: ' + it.barCode : ''}</p>
           ))}
           <p>Full list (as uploaded):</p>
           <pre style={{ whiteSpace: 'pre-wrap', fontSize: '13px' }}>{detail.batch_data ? JSON.stringify(detail.batch_data, null, 2) : 'No items yet.'}</pre>
@@ -1304,7 +1304,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
             <tr>
               <th>ID</th><th>{table === 'forms' ? 'Store' : 'Name'}</th>
               {table === 'items' &&
-                <><th>Price</th><th>Provider</th><th>Delivery</th><th>Pickup</th><th>Shown</th><th>Stock</th></>}
+                <><th>Price</th><th>Provider</th><th>Delivery</th><th>Pickup</th><th>Shown</th><th>Stock</th><th>Barcode</th></>}
               {table === 'providers' && <><th>City</th><th>Country</th><th>Photos</th><th>Hold orders</th><th>Pay orders</th></>}
               {table === 'forms' && <><th>Form address</th><th>Username</th><th>Comment</th></>}
               {table === 'fromdel' && <><th>Address</th><th>City</th><th>State</th><th>Zip</th><th>Country</th></>}
@@ -1376,6 +1376,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
                     <td>{r.pickup ? 'Yes' : 'No'}</td>
                     <td>{r.pending_approval ? 'Pending' : r.is_active ? 'Yes' : 'Hidden'}</td>
                     <td>{r.stock === null || r.stock === undefined ? '—' : r.stock}</td>
+                    <td>{r.barCode || '—'}</td>
                   </>
                 )}
                 {table === 'providers' && <><td>{r.city}</td><td>{r.country}</td><td>{(r.pics || []).length}</td><td>{r.holdorder ? 'Yes' : 'No'}</td><td>{r.payorder !== false ? 'Yes' : 'No'}</td></>}

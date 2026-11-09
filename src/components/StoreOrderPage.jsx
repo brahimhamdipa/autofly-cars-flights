@@ -8,7 +8,7 @@ import { useCart } from '../lib/CartContext'
 
 import { loadProvider, loadItems, loadSubCategories, loadItemVariants, money } from '../lib/storeData'
 
-import { StockLine, useVariantAdd } from './StoreBits'
+import { StockLine, VariantMatrix } from './StoreBits'
 import FilterPopup from './FilterPopup'
 import ScrollTopButton from './ScrollTopButton'
 
@@ -21,17 +21,31 @@ import ScrollTopButton from './ScrollTopButton'
 // This fixes the old dead end where an item found on a category page
 // vanished here because only "Store products" were listed.
 
-function ItemCard({ item, onAdd, onOpen }) {
+function ItemCard({ item, rows, onAdded, onOpen }) {
 
   const [idx, setIdx] = useState(0)
 
   const [zoom, setZoom] = useState(false)
+
+  // The variant this card's matrix has matched (a subCategory row, or
+  // null while the choice is incomplete). Add to cart stays disabled
+  // until the matrix has matched one (for items with 2+ variants);
+  // items with 0 or 1 variant add straight.
+  const [picked, setPicked] = useState(null)
+  const { addStore } = useCart()
 
   const images = item.pics || []
 
   const n = images.length
 
   const out = item.stock !== null && item.stock !== undefined && item.stock <= 0
+  const variantRows = rows || []
+  const complete = variantRows.length < 2 || picked !== null
+  const handleAdd = () => {
+    const variant = picked || (variantRows.length === 1 ? variantRows[0] : null)
+    addStore(item, 1, variant)
+    if (onAdded) onAdded(item)
+  }
 
   return (
     <div className="card">
@@ -59,8 +73,11 @@ function ItemCard({ item, onAdd, onOpen }) {
           {item.delivery && <span className="badge">🚚 Delivery</span>}
           {item.pickup && <span className="badge">🏪 Pickup</span>}
         </p>
+        {variantRows.length >= 2 && (
+          <VariantMatrix rows={variantRows} onChange={setPicked} />
+        )}
         <div className="item-actions">
-          <button disabled={out} onClick={() => onAdd(item)}>{out ? 'Out of stock' : 'Add to cart'}</button>
+          <button disabled={out || !complete} onClick={handleAdd}>{out ? 'Out of stock' : 'Add to cart'}</button>
           <button className="btn-soft" onClick={onOpen}>View details →</button>
         </div>
       </div>
@@ -90,8 +107,6 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
   const [justAdded, setJustAdded] = useState('')
 
   const { count } = useCart()
-
-  const { requestAdd, variantPopup } = useVariantAdd()
 
   useEffect(() => {
   setProvider(null); setItems(null); setError(''); setSelCats([]); setSelSubs([]); setFilterOpen(false); setJustAdded('')
@@ -123,7 +138,7 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
     return items.filter(i =>
       (selCats.length === 0 || (i.categories || []).some(c => selCats.includes(c.id))) &&
       (selSubs.length === 0 || !itemVariants || (itemVariants[i.id] || []).some(v => selSubs.includes(v.id))) &&
-      (!needle || [i.name, i.description, String(i.price), ...(i.categories || []).map(c => c.label)].join(' ').toLowerCase().includes(needle))
+      (!needle || [i.name, i.description, String(i.price), ...(i.categories || []).map(c => c.label), i.barCode || ''].join(' ').toLowerCase().includes(needle))
   )
   }, [items, query, selCats, selSubs, itemVariants])
   const toggle = (list, setList, id) =>
@@ -132,11 +147,9 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
   const toggleSub = (id) => toggle(selSubs, setSelSubs, id)
     const clearFilters = () => { setSelCats([]); setSelSubs([])}
   const activeFilterCount = selCats.length + selSubs.length
-      const addToCart = (item) => {
-    requestAdd(item, () => {
-      setJustAdded(item.name)
-      setTimeout(() => setJustAdded(''), 4000)
-    })
+      const onItemAdded = (item) => {
+    setJustAdded(item.name)
+    setTimeout(() => setJustAdded(''), 4000)
   }
 
   return (
@@ -156,7 +169,7 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M3 5h18" /><path d="M7 12h10" /><path d="M10 19h4" /></svg>
               {activeFilterCount > 0 && <span> ({activeFilterCount})</span>}
             </button>
-          <input placeholder="Search items (e.g. bread, 8.50)" value={query} onChange={e => setQuery(e.target.value)} />
+          <input placeholder="Search items (e.g. bread, 8.50, barcode)" value={query} onChange={e => setQuery(e.target.value)} />
         </div>
         {items && <p className="hint">{filtered.length} item{filtered.length === 1 ? '' : 's'}</p>}
       </div>
@@ -174,13 +187,13 @@ export default function StoreOrderPage({ providerId, go, goBack }) {
           <ItemCard
             key={item.id}
             item={item}
-            onAdd={addToCart}
+            rows={(itemVariants?.[item.id]) || []}
+            onAdded={onItemAdded}
             onOpen={() => go('item-detail', item.id)}
           />
         ))}
       </div>
 
-      {variantPopup}
       {filterOpen && (
         <FilterPopup
             title="Filter items"

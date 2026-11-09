@@ -6,9 +6,9 @@ import { GroceryTopBar } from './GroceryMenu'
 
 import { useCart } from '../lib/CartContext'
 
-import { loadItem, money } from '../lib/storeData'
+import { loadItem, loadItemVariants, money } from '../lib/storeData'
 
-import { StockLine, useVariantAdd } from './StoreBits'
+import { StockLine, VariantMatrix } from './StoreBits'
 
 // Item detail page: tapping any store item anywhere on the site lands
 // here. Laid out like the store page (ProviderPage): ONE section with
@@ -30,14 +30,28 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
 
   const [added, setAdded] = useState(false)
 
-  const { count } = useCart()
+  // The item's variants and the one this page's matrix has matched (a
+  // subCategory row, or null while the choice is incomplete). Add to
+  // cart stays disabled until the matrix has matched one (for items
+  // with 2+ variants); items with 0 or 1 variant add straight.
+  const [itemVariants, setItemVariants] = useState(null)
+  const [picked, setPicked] = useState(null)
 
-  const { requestAdd, variantPopup } = useVariantAdd()
+  const { count, addStore } = useCart()
 
   useEffect(() => {
-    setItem(null); setError(''); setAdded(false)
+    setItem(null); setError(''); setAdded(false); setPicked(null)
     loadItem(itemId).then(setItem).catch(e => setError(e.message))
+    loadItemVariants([itemId]).then(v => setItemVariants(v[itemId] || [])).catch(() => setItemVariants([]))
   }, [itemId])
+
+  const rows = itemVariants || []
+  const complete = rows.length < 2 || picked !== null
+  const handleAdd = () => {
+    const variant = picked || (rows.length === 1 ? rows[0] : null)
+    addStore(item, 1, variant)
+    setAdded(true)
+  }
 
   const images = item?.pics || []
 
@@ -101,10 +115,13 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
                   {item.provider.phone ? ` · ${item.provider.phone}` : ''}
                 </p>
               )}
+            {rows.length >= 2 && (
+              <VariantMatrix rows={rows} onChange={setPicked} />
+            )}
             <div className="item-actions">
               <button
-                disabled={out}
-                onClick={() => requestAdd(item, () => setAdded(true))}
+                disabled={out || !complete}
+                onClick={handleAdd}
               >
                 {out ? 'Out of stock' : '🛒 Add to cart'}
               </button>
@@ -122,7 +139,6 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
         </div>
       )}
 
-      {variantPopup}
     </div>
   )
 

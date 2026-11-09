@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { GroceryTopBar } from './GroceryMenu'
 import { useCart } from '../lib/CartContext'
-import { loadItems, loadItemCategories, loadSubCategories, loadItemVariants, money, formatVariant } from '../lib/storeData'
-import { StockLine, CardSlideshow, useVariantAdd } from './StoreBits'
+import { loadItems, loadItemCategories, loadSubCategories, loadItemVariants, money } from '../lib/storeData'
+import { StockLine, CardSlideshow, VariantMatrix, BarcodeScanner } from './StoreBits'
 import FilterPopup from './FilterPopup'
 import ScrollTopButton from './ScrollTopButton'
 
@@ -25,8 +25,13 @@ export default function ProductsPage({ go }) {
   const [filterOpen, setFilterOpen] = useState(false)
   const [selCats, setSelCats] = useState([])
   const [selSubs, setSelSubs] = useState([])
-  const { count } = useCart()
-  const { requestAdd, variantPopup } = useVariantAdd()
+  const { count, addStore } = useCart()
+  // The variant each item's matrix has matched (item id -> subCategory
+  // row, or null while the choice is incomplete). Add to cart stays
+  // disabled until the matrix has matched one (for items with 2+
+  // variants); items with 0 or 1 variant add straight.
+  const [picked, setPicked] = useState({})
+  const [scanStatus, setScanStatus] = useState('')
 
   useEffect(() => {
     loadItems({}).then(setItems).catch(e => setError(e.message))
@@ -64,7 +69,7 @@ return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
     const needle = query.trim().toLowerCase()
     
     return items.filter(i => {
-      if (needle && ![i.name, i.description, String(i.price), i.provider?.name].join(' ').toLowerCase().includes(needle)) return false
+      if (needle && ![i.name, i.description, String(i.price), i.provider?.name, i.barCode || ''].join(' ').toLowerCase().includes(needle)) return false
       const cats = i.categories || []
       if (selCats.length > 0 && !cats.some(c => selCats.includes(c.id))) return false
       if (selSubs.length > 0 && itemVariants && !(itemVariants[i.id] || []).some(v => selSubs.includes(v.id))) return false
@@ -79,10 +84,25 @@ return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
   const activeFilterCount = selCats.length + selSubs.length
 
   const addToCart = (item) => {
-    requestAdd(item, () => {
-      setJustAdded(item.name)
-      setTimeout(() => setJustAdded(''), 4000)
-    })
+    const rows = (itemVariants?.[item.id]) || []
+    const variant = picked[item.id] || (rows.length === 1 ? rows[0] : null)
+    addStore(item, 1, variant)
+    setJustAdded(item.name)
+    setTimeout(() => setJustAdded(''), 4000)
+  }
+
+  // A scanned barcode opens the matching item's detail page; when no
+  // item has that barcode, the code goes into the search box so the
+  // customer sees the empty result and the reason.
+  const onScan = (code) => {
+    const found = (items || []).find(i => (i.barCode || '').trim() === code)
+    if (found) {
+      setScanStatus('')
+      go('item-detail', found.id)
+    } else {
+      setQuery(code)
+      setScanStatus('No item found with barcode ' + code + '.')
+    }
   }
 
   return (
@@ -100,8 +120,10 @@ return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M3 5h18" /><path d="M7 12h10" /><path d="M10 19h4" /></svg>
             {activeFilterCount > 0 && <span> ({activeFilterCount})</span>}
           </button>
-          <input placeholder="Search products (e.g. bread, 8.50, Paris)" value={query} onChange={e => setQuery(e.target.value)} />
+          <input placeholder="Search products (e.g. bread, 8.50, Paris, barcode)" value={query} onChange={e => setQuery(e.target.value)} />
+          <BarcodeScanner onScan={onScan} />
         </div>
+        {scanStatus && <p className="status">{scanStatus}</p>}
         {items && <p className="hint">{filtered.length} item{filtered.length === 1 ? '' : 's'}</p>}
       </div>
 
@@ -117,6 +139,8 @@ return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
         {filtered.map(item => {
           const images = item.pics || []
           const out = item.stock !== null && item.stock !== undefined && item.stock <= 0
+          const rows = (itemVariants?.[item.id]) || []
+          const complete = rows.length < 2 || !!picked[item.id]
           return (
             <div className="card" key={item.id}>
               <CardSlideshow images={images} name={item.name} />
@@ -131,8 +155,11 @@ return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
                   {item.delivery && <span className="badge">🚚 Delivery</span>}
                   {item.pickup && <span className="badge">🏪 Pickup</span>}
                 </p>
+                {rows.length >= 2 && (
+                  <VariantMatrix rows={rows} onChange={(row) => setPicked(prev => ({ ...prev, [item.id]: row }))} />
+                )}
                 <div className="item-actions">
-                  <button disabled={out} onClick={() => addToCart(item)}>{out ? 'Out of stock' : 'Add to cart'}</button>
+                  <button disabled={out || !complete} onClick={() => addToCart(item)}>{out ? 'Out of stock' : 'Add to cart'}</button>
                   <button className="btn-soft" onClick={() => go('item-detail', item.id)}>View details →</button>
                 </div>
               </div>
@@ -141,7 +168,6 @@ return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
         })}
       </div>
 
-      {variantPopup}
             <ScrollTopButton />
 
       {filterOpen && (

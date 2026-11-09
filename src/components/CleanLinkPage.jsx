@@ -130,6 +130,12 @@ export default function CleanLinkPage({ go }) {
         )}
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>Try a demo</h3>
+        <p>See a Yently page working — tap below to open the live chat demo.</p>
+        <a href="/demo-live-chat" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: '#f5c542', color: '#111827', padding: '12px 22px', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Open the live chat demo</a>
+      </div>
+
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your clean link</h3>
         <div className="row">

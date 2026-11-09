@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 // Shared submenu for the whole Cars area — shown at the top-left of the
-// Cars listings page and of the Rent / Sell / Test drive / Contact pages.
+// Cars listings page and of the Sell / Test drive / Contact pages.
 export default function CarsMenu({ go }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -23,7 +23,6 @@ export default function CarsMenu({ go }) {
       {open && (
         <div className="car-submenu">
           <button onClick={() => pick('cars')}>Buy a Car</button>
-          <button onClick={() => pick('rent')}>Rent a Car</button>
           <button onClick={() => pick('sell')}>Sell a Car</button>
           <button onClick={() => pick('testdrive')}>Info/Test drive a Car</button>
           <button onClick={() => pick('contact')}>Contact Us</button>

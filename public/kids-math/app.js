@@ -249,6 +249,8 @@
         var picked = Number(btn.getAttribute('data-choice'));
         var correct = picked === q.answer;
         if (correct) playScore++;
+        var prog = el.querySelector('.progress');
+        if (prog) prog.innerHTML = 'Question ' + (playIdx + 1) + ' of ' + total + ' &nbsp;·&nbsp; ⭐ ' + playScore + ' correct';
         el.querySelectorAll('[data-choice]').forEach(function (b) {
           var v = Number(b.getAttribute('data-choice'));
           if (v === q.answer) b.classList.add('correct');

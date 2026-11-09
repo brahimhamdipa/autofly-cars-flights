@@ -131,9 +131,9 @@ export default function CleanLinkPage({ go }) {
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>
-        <h3>Try a demo</h3>
-        <p>See a Yently page working — tap below to open the live chat demo.</p>
-        <a href="/demo-live-chat" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: '#f5c542', color: '#111827', padding: '12px 22px', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Open the live chat demo</a>
+        <h3>Try a clean link</h3>
+        <p>See one working — tap below to open the demo at its clean link.</p>
+        <a href="/demo-chat" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: '#f5c542', color: '#111827', padding: '12px 22px', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Open yently.com/demo-chat</a>
       </div>
 
       <form className="form-card wide" onSubmit={handleSubmit}>
@@ -151,7 +151,7 @@ export default function CleanLinkPage({ go }) {
             <option value="">Which system is your shop on?</option>
             {SYSTEMS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
-          <input required placeholder="Your shop's current slug (the part after ?s=, ?r= … e.g. demo-pos)" value={form.shop_slug} onChange={set('shop_slug')} />
+          <input required placeholder="Your shop's current slug (the part after ?s=, ?r= … e.g. your-shop)" value={form.shop_slug} onChange={set('shop_slug')} />
         </div>
         <div className="row">
           <input required placeholder="The clean name you want (e.g. myrestaurant)" value={form.clean_slug} onChange={set('clean_slug')} />

@@ -228,6 +228,8 @@
         var picked = r.choices[Number(btn.getAttribute('data-choice'))];
         var correct = picked === r.answer;
         if (correct) playScore++;
+        var sl = el.querySelector('.score-line');
+        if (sl) sl.textContent = '⭐ ' + playStudent + ' · Score: ' + playScore;
         el.querySelectorAll('[data-choice]').forEach(function (b) {
           var v = r.choices[Number(b.getAttribute('data-choice'))];
           if (v === r.answer) b.classList.add('correct');

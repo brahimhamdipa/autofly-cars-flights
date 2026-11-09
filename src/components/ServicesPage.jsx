@@ -146,7 +146,7 @@ export default function ServicesPage({ go }) {
       <ServicesMenu go={go} />
       <div className="hero-card">
         <h2>Custom Coding</h2>
-        <p><b>You talk, we listen.</b> Tell us the plan in your head — from a simple, personal website to a complicated system for a big business. From just a part of a code, in any language, to the whole system: we're here to help you achieve it.</p>
+        <p><b>You talk, we listen.</b> Tell us the plan in your head — From a simple, personal website to a complete system for a small or medium business. From just a part of a code, in any language, to the whole system: we're here to help you achieve it.</p>
       </div>
 
       <div className="form-card wide">

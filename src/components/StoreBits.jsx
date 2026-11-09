@@ -155,6 +155,116 @@ export function VariantMatrix({ rows, onChange }) {
   )
 }
 
+// Admin variant matrix: the store owner ticks the versions of an item
+// they carry, grouped by dimension (Flavor, Color, Pack, ...) exactly
+// like the Shop matrix — instead of one long flat list of combinations.
+// Ticking a value in a dimension means "this item comes in that value";
+// a version (subCategory row) is selected when every dimension that
+// has at least one tick matches one of its ticked values, so ticking
+// Flavor {Original, Ultra White} and Pack {1, 8} selects the Original
+// and Ultra White rows in packs 1 and 8. A dimension with nothing
+// ticked does not filter (so ticking only a flavor selects all its
+// packs); ticking nothing at all selects no versions. A value is
+// DISABLED when no row can combine it with the values already ticked
+// in the other dimensions. onChange receives the selected
+// subCategory row ids.
+export function AdminVariantMatrix({ rows, selectedIds, onChange }) {
+  const list = rows || []
+  const rowsKey = list.map(r => r.id).join(',')
+  const dims = useMemo(() => {
+    return VARIANT_DIMS.map(d => {
+      const values = [...new Set(list.map(r => dimValue(r, d.key)).filter(v => v !== null))]
+      return { key: d.key, label: d.label, values }
+    }).filter(d => d.values.length > 0)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowsKey])
+  // Ticked values per dimension, derived from the selected row ids.
+  const tickedFromIds = (ids) => {
+    const t = {}
+    for (const d of dims) {
+      const set = new Set()
+      for (const r of list) {
+        if ((ids || []).includes(r.id)) {
+          const v = dimValue(r, d.key)
+          if (v !== null) set.add(v)
+        }
+      }
+      if (set.size > 0) t[d.key] = set
+    }
+    return t
+  }
+  const [ticked, setTicked] = useState(() => tickedFromIds(selectedIds))
+  // Start over when the rows change (new category): nothing ticked.
+  // The ref skips the first run, so a pre-filled selection is not
+  // wiped on mount.
+  const prevRowsKey = useRef(rowsKey)
+  useEffect(() => {
+    if (prevRowsKey.current === rowsKey) return
+    prevRowsKey.current = rowsKey
+    setTicked({})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rowsKey])
+  // The row ids matching the ticked values: a row is selected when
+  // every dimension that has at least one tick matches one of its
+  // ticked values. Nothing ticked anywhere selects nothing.
+  const idsFromTicked = (t) => {
+    const keys = Object.keys(t).filter(k => t[k] && t[k].size > 0)
+    if (keys.length === 0) return []
+    return list.filter(r => keys.every(k => {
+      const v = dimValue(r, k)
+      return v !== null && t[k].has(v)
+    })).map(r => r.id)
+  }
+  // A value is available when some row has it AND matches the ticked
+  // values in the other dimensions.
+  const isAvailable = (dimKey, value) => {
+    return list.some(r => {
+      if (dimValue(r, dimKey) !== value) return false
+      return dims.every(d => {
+        if (d.key === dimKey) return true
+        const s = ticked[d.key]
+        if (!s || s.size === 0) return true
+        const v = dimValue(r, d.key)
+        return v !== null && s.has(v)
+      })
+    })
+  }
+  const toggle = (dimKey, value) => {
+    const next = {}
+    for (const k of Object.keys(ticked)) next[k] = new Set(ticked[k])
+    if (!next[dimKey]) next[dimKey] = new Set()
+    if (next[dimKey].has(value)) next[dimKey].delete(value)
+    else next[dimKey].add(value)
+    if (next[dimKey].size === 0) delete next[dimKey]
+    setTicked(next)
+    if (onChange) onChange(idsFromTicked(next))
+  }
+  const selectedCount = (selectedIds || []).length
+  if (list.length === 0) return null
+  return (
+    <div className="variant-matrix">
+      {dims.map(d => (
+        <div key={d.key} className="variant-dim">
+          <span className="variant-dim-label">{d.label}</span>
+          <div className="variant-options">
+            {d.values.map(v => {
+              const picked = ticked[d.key] && ticked[d.key].has(v)
+              const disabled = !picked && !isAvailable(d.key, v)
+              return (
+                <label key={v} className={'variant-opt' + (picked ? ' picked' : '') + (disabled ? ' disabled' : '')}>
+                  <input type="checkbox" checked={!!picked} disabled={disabled} onChange={() => toggle(d.key, v)} />
+                  <span>{v}</span>
+                </label>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+      <p className="hint">{selectedCount === 0 ? 'No versions ticked — the item will have no versions.' : `${selectedCount} version${selectedCount === 1 ? '' : 's'} selected.`}</p>
+    </div>
+  )
+}
+
 // Loads the vendored html5-qrcode library (the same file the POS
 // register uses, served at /pos/html5-qrcode.min.js) once, then
 // resolves with the Html5Qrcode constructor.

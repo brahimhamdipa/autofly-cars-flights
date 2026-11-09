@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 
 import { supabase, NOTIFY_EMAIL } from '../lib/supabaseClient'
 
-import { loadItemCategories, loadSubCategories, formatVariant } from '../lib/storeData'
+import { loadItemCategories, loadSubCategories } from '../lib/storeData'
+import { AdminVariantMatrix } from './StoreBits'
 import { loadBarberDomain } from '../lib/barberData'
 import BarberTemplatePage from './BarberTemplatePage'
 
@@ -102,15 +103,7 @@ function ItemFields({ item, setItem, categories, subcats, storeName }) {
         <span className="field-label">Variants <Help text={HELP.variants} /></span>
         {visibleSubcats.length === 0
           ? <p className="hint" style={{ margin: 0 }}>Pick a category first — its versions show here to tick.</p>
-          : visibleSubcats.map(s => (
-            <label key={s.id} className="check">
-              <input
-                type="checkbox"
-                checked={(item.subcategoryIds || []).includes(s.id)}
-                onChange={() => setItem(prev => ({ ...prev, subcategoryIds: (prev.subcategoryIds || []).includes(s.id) ? prev.subcategoryIds.filter(x => x !== s.id) : [...prev.subcategoryIds, s.id] }))}
-              /> {formatVariant(s)}
-            </label>
-          ))}
+          : <AdminVariantMatrix rows={visibleSubcats} selectedIds={item.subcategoryIds || []} onChange={ids => set({ subcategoryIds: ids })} />}
       </div>
       <div className="field">
         <span className="field-label">Item name <Help text={HELP.name} /></span>
@@ -426,36 +419,39 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
             <p className="hint">Faster when you have a lot of items. Fill in items one by one — they are kept in a list in this browser, so you can take your time — then send the whole list for approval at once. The list stays saved in this browser even if you close the page and come back.</p>
             <form onSubmit={addBulkItem} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <ItemFields item={bulkItem} setItem={setBulkItem} categories={categories} subcats={subcats} storeName={authed.providerName} />
-              <div className="field-row" style={{ marginTop: 10 }}>
-                <button type="submit">Add an Item</button>
-                <Help text={HELP.addBulk} />
+              {batchItems.length > 0 && (
+                <div>
+                  <p><b>Items in this list ({batchItems.length}):</b> <Help text={HELP.batchList} /></p>
+                  {batchItems.map((it, i) => (
+                    <p key={i}>{it.name} — ${it.price} <button type="button" className="btn-mini" onClick={() => setBatchItems(batchItems.filter((_, j) => j !== i))}>Remove</button></p>
+                  ))}
+                </div>
+              )}
+              <div style={{ border: '1px solid #e5e7eb', borderRadius: 12, padding: 12, background: '#f9fafb', marginTop: 10 }}>
+                <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: 14 }}>List actions</p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span className="field-row">
+                    <button type="submit">Add an Item</button>
+                    <Help text={HELP.addBulk} />
+                  </span>
+                  <span className="field-row">
+                    <button type="button" onClick={downloadBatch} disabled={batchItems.length === 0}>Download data.json</button>
+                    <Help text={HELP.download} />
+                  </span>
+                  <span className="field-row">
+                    <label className="btn-soft" style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 16px', borderRadius: 10, cursor: 'pointer' }}>
+                      Load a data.json file
+                      <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={loadBatchFile} />
+                    </label>
+                    <Help text={HELP.loadFile} />
+                  </span>
+                  <span className="field-row">
+                    <button type="button" onClick={submitBatch} disabled={batchBusy || batchItems.length === 0}>{batchBusy ? 'Sending...' : 'Upload for approval'}</button>
+                    <Help text={HELP.uploadBatch} />
+                  </span>
+                </div>
               </div>
             </form>
-            {batchItems.length > 0 && (
-              <div>
-                <p><b>Items in this list ({batchItems.length}):</b> <Help text={HELP.batchList} /></p>
-                {batchItems.map((it, i) => (
-                  <p key={i}>{it.name} — ${it.price} <button type="button" className="btn-mini" onClick={() => setBatchItems(batchItems.filter((_, j) => j !== i))}>Remove</button></p>
-                ))}
-              </div>
-            )}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8, alignItems: 'center' }}>
-              <span className="field-row">
-                <button type="button" onClick={downloadBatch} disabled={batchItems.length === 0}>Download data.json</button>
-                <Help text={HELP.download} />
-              </span>
-              <span className="field-row">
-                <label className="btn-soft" style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 16px', borderRadius: 10, cursor: 'pointer' }}>
-                  Load a data.json file
-                  <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={loadBatchFile} />
-                </label>
-                <Help text={HELP.loadFile} />
-              </span>
-              <span className="field-row">
-                <button type="button" onClick={submitBatch} disabled={batchBusy || batchItems.length === 0}>{batchBusy ? 'Sending...' : 'Upload for approval'}</button>
-                <Help text={HELP.uploadBatch} />
-              </span>
-            </div>
             {batchStatus && <p className="status">{batchStatus}</p>}
           </div>
         </>

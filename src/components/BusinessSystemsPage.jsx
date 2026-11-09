@@ -2,15 +2,15 @@ import { BusinessTopBar } from './BusinessMenu'
 
 // Business Systems hub page — the first nav button and the default
 // tab. Every system and add-on in one place, each row linking to its
-// own ad page. Prices match the ad pages exactly (Restaurant $20,
-// POS $29, Barber $15, Dealer $20, Employee $20, Bodyshop $20,
+// own ad page. Prices match the ad pages exactly (Restaurant $40,
+// POS $50, Barber $15, Dealer $20, Employee $20, Bodyshop $20,
 // Sample Website $10, TV Gallery $2, Live Chat $3 — all per month,
 // first month free). No Add to cart here on purpose: each ad page
 // has its own. Bundle tiers (2 plans 10% off, 3 plans 15% off, 4+
 // plans 20% off) apply automatically in My Cart.
 const SYSTEMS = [
-  { name: 'Restaurant', price: 20, blurb: 'Your own ordering page — menu, live kitchen, and orders.', tab: 'restaurants' },
-  { name: 'POS', price: 29, blurb: 'Your own register — stock, sales, and receipts.', tab: 'pos' },
+  { name: 'Restaurant', price: 40, blurb: 'Your own ordering page — menu, live kitchen, and orders.', tab: 'restaurants' },
+  { name: 'POS', price: 50, blurb: 'Your own register — stock, sales, and receipts.', tab: 'pos' },
   { name: 'Barber', price: 15, blurb: 'Your own booking page — live queue and a stopwatch for every cut.', tab: 'barbers' },
   { name: 'Dealer', price: 20, blurb: 'Your own dealer page — vehicles, test drives, and trade-ins.', tab: 'dealer' },
   { name: 'Employee', price: 20, blurb: 'Your own employee time page — log time and keep records.', tab: 'employee' },

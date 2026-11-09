@@ -7,7 +7,7 @@ import FloatingAddToCart from './FloatingAddToCart'
 
 // Sales page for restaurant ordering (reached from More ▾ → Restaurants).
 // One product only: a restaurant's own ordering page with a live
-// kitchen screen, for $20/month. No card payment is taken here —
+// kitchen screen, for $40/month. No card payment is taken here —
 // ordering puts the order in front of the owner (see the cart page),
 // who then creates the restaurant's link and login by hand.
 // Nothing on this page promises instant signup: the owner sets the
@@ -47,7 +47,7 @@ export default function RestaurantsPage({ go }) {
       <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>🍽️ Your restaurant, taking orders online</h2>
-        <p style={{ fontSize: 18, color: '#f5c542' }}>Your own ordering page for $20/month. No apps, no hardware, no commission.</p>
+        <p style={{ fontSize: 18, color: '#f5c542' }}>Your own ordering page for $40/month. No apps, no hardware, no commission.</p>
         <p>Guests see the menu on their phones — but they can't order. Ordering is for your staff, with one shared employee password. Orders appear in your kitchen as they come — on every phone at once.</p>
       </div>
 
@@ -74,7 +74,7 @@ export default function RestaurantsPage({ go }) {
 
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
-        <p><b>$20/month.</b> That's it — your page, your live kitchen, and your menu changes. No setup fee, no commission on your orders. First month free, cancel anytime.</p>
+        <p><b>$40/month.</b> That's it — your page, your live kitchen, and your menu changes. No setup fee, no commission on your orders. First month free, cancel anytime.</p>
         <p className="hint">Send your request below and Yently will be in touch to set up your restaurant.</p>
       </div>
 

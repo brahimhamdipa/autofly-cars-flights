@@ -7,7 +7,7 @@ import FloatingAddToCart from './FloatingAddToCart'
 
 // Sales page for the point of sale (reached from More ▾ → Restaurants
 // → POS). One product only: a store's own register page with live
-// stock and receipts, for $29/month. No card payment is taken here —
+// stock and receipts, for $50/month. No card payment is taken here —
 // the request form emails the owner, who then creates the store's
 // link and login by hand, and the Add to cart card puts a pos_order
 // row in front of the owner the same way (shared Business cart,
@@ -47,7 +47,7 @@ export default function PosPage({ go }) {
       <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>🧾 Your store's point of sale</h2>
-        <p style={{ fontSize: 18, color: '#f5c542' }}>Your own register for $29/month. No apps, no hardware, no commission.</p>
+        <p style={{ fontSize: 18, color: '#f5c542' }}>Your own register for $50/month. No apps, no hardware, no commission.</p>
         <p>Ring up sales from any phone. Stock drops by itself, receipts are kept, and the till works on the phones you already have.</p>
       </div>
 
@@ -74,7 +74,7 @@ export default function PosPage({ go }) {
 
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
-        <p><b>$29/month.</b> That's it — your register, your stock, and your receipts. No setup fee, no commission on your sales. First month free, cancel anytime.</p>
+        <p><b>$50/month.</b> That's it — your register, your stock, and your receipts. No setup fee, no commission on your sales. First month free, cancel anytime.</p>
         <p className="hint">Send your request below and Yently will be in touch to set up your point of sale.</p>
       </div>
 

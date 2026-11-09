@@ -7,8 +7,8 @@ import { useBusinessCart } from '../lib/BusinessCartContext'
 // business-cart count), Business Systems (the hub page), Restaurant,
 // POS, Barber, Dealer, Employee, Bodyshop, then Sample Website, and
 // an Add-ons branch that opens
-// in place (like the Admin menu branches) with the TV Gallery and
-// Live Chat links. One cart and one submenu for the whole area,
+// in place (like the Admin menu branches) with the TV Gallery,
+// Live Chat and Clean Link links, indented like sub-items. One cart and one submenu for the whole area,
 // because every page here sells the same kind of product: a website
 // page Yently builds for a business.
 export default function BusinessMenu({ go }) {
@@ -50,7 +50,7 @@ export default function BusinessMenu({ go }) {
             <a href="/demo-live-chat" style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', textDecoration: 'none', borderTop: '1px solid #f1f2f5' }}>Live Chat</a>
           )}
           {addonsOpen && (
-            <button onClick={() => pick('clean-link')}>Clean Link</button>
+            <button onClick={() => pick('clean-link')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', borderTop: '1px solid #f1f2f5' }}>Clean Link</button>
           )}
         </div>
       )}

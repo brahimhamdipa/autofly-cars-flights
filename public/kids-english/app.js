@@ -316,6 +316,8 @@
     var out = $('round-out');
     if (typed && typed === right) {
       score++;
+      var rl = el.querySelector('.round-line');
+      if (rl) rl.innerHTML = 'Round ' + (round + 1) + ' of ' + questions.length + ' &nbsp;·&nbsp; ' + esc(player) + ' &nbsp;·&nbsp; ⭐ ' + score;
       out.innerHTML = '<p class="good">' + praise() + ' "' + esc(q.word) + '" is right! ⭐</p>' + nextButtonHtml();
     } else {
       out.innerHTML = '<p class="try-again">Good try! The word is <strong>' + esc(q.word) + '</strong>. You will get the next one! 💪</p>' + nextButtonHtml();
@@ -333,6 +335,8 @@
     el.querySelectorAll('[data-choice]').forEach(function (b) { b.disabled = true; });
     if (correct) {
       score++;
+      var rl = el.querySelector('.round-line');
+      if (rl) rl.innerHTML = 'Round ' + (round + 1) + ' of ' + questions.length + ' &nbsp;·&nbsp; ' + esc(player) + ' &nbsp;·&nbsp; ⭐ ' + score;
       btn.classList.add('correct');
       out.innerHTML = '<p class="good">' + praise() + '</p>' + nextButtonHtml();
     } else {

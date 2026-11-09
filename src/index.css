@@ -271,19 +271,24 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 /* Hero slogan on the Business Systems hub: "Everything you need,
    gently in one place." The g and y share one slot and swap
    every ~6s, so the word reads "gently" one moment and "yently" the
-   next, while "ently" never moves. The two letters never overlap:
-   one fades fully out before the other fades in, so the word never
-   reads "gyently". On narrow screens the line shrinks so it stays
-   on one line with the other words. */
+   next, while "ently" never moves. The word is an inline grid: g
+   and y stack in the same cell, "ently" sits in the next cell, so
+   the letters flow in the sentence, on the same line and baseline
+   as the other words. (The earlier absolute-position version hung
+   below the line: its slot had no height, so top: 0 anchored the
+   letters at the baseline instead of on it.) The two letters never
+   overlap: one fades fully out before the other fades in, so the
+   word never reads "gyently". On narrow screens the line shrinks
+   so it stays on one line. */
 .hero-slogan { font-size: 18px; }
 @media (max-width: 520px) {
   .hero-slogan { font-size: 15px; }
 }
-.slogan-word { display: inline-block; position: relative; width: 3.1em; white-space: nowrap; }
-.slogan-g, .slogan-y { position: absolute; left: 0; top: 0; }
+.slogan-word { display: inline-grid; white-space: nowrap; }
+.slogan-g, .slogan-y { grid-area: 1 / 1; }
+.slogan-ently { grid-area: 1 / 2; color: #fff; }
 .slogan-g { color: #f5c542; animation: slogan-g 6s ease-in-out infinite; }
 .slogan-y { color: #7dd3fc; animation: slogan-y 6s ease-in-out infinite; }
-.slogan-ently { position: absolute; left: 0.62em; top: 0; color: #fff; }
 @keyframes slogan-g {
   0%, 44% { opacity: 1; }
   48%, 96% { opacity: 0; }

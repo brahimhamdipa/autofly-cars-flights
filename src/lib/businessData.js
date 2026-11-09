@@ -7,6 +7,7 @@ import { insertBodyshopOrder } from './bodyshopData'
 import { insertBarberOrder } from './barberData'
 import { insertTvGalleryOrder } from './tvGalleryData'
 import { insertLiveChatOrder } from './liveChatData'
+import { insertCleanLinkOrder } from './cleanLinkData'
 import { insertKidsMathOrder } from './kidsMathData'
 import { insertKidsEnglishOrder } from './kidsEnglishData'
 import { insertKidsArabicOrder } from './kidsArabicData'
@@ -43,7 +44,7 @@ import {
 // did, only now the items share one cart. The per-plan tables stay
 // separate (restaurant_order, pos_order, barbershop_order,
 // dealer_order, employee_order, bodyshop_order, barber_order,
-// tv_gallery_order, live_chat_order, kids_math_order,
+// tv_gallery_order, live_chat_order, clean_link_order, kids_math_order,
 // kids_english_order, kids_arabic_order, kids_french_order,
 // kids_spanish_order, kids_science_order, kids_geography_order,
 // kids_coding_order, kids_reading_order),
@@ -59,6 +60,7 @@ const INSERT_BY_KEY = {
   [SAMPLE_PLAN_KEY]: insertBarberOrder,
   [TV_PLAN_KEY]: insertTvGalleryOrder,
   [CHAT_PLAN_KEY]: insertLiveChatOrder,
+  [CLEAN_PLAN_KEY]: insertCleanLinkOrder,
   [KIDS_MATH_PLAN_KEY]: insertKidsMathOrder,
   [KIDS_ENGLISH_PLAN_KEY]: insertKidsEnglishOrder,
   [KIDS_ARABIC_PLAN_KEY]: insertKidsArabicOrder,

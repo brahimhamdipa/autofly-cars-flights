@@ -411,6 +411,14 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
   const [employeeShopsList, setEmployeeShopsList] = useState([])
   const [bodyshopShopsList, setBodyshopShopsList] = useState([])
 
+  // Clean links: the live yently.com/<slug> links (clean_links table).
+  // Shown on the Clean Link Orders page, with a form to add one by
+  // hand — a customer asking for "xname" gets a link here directly,
+  // no order needed. Activate on an order inserts the same row.
+  const [cleanLinks, setCleanLinks] = useState([])
+  const [newLink, setNewLink] = useState({ slug: '', system: '', shopSlug: '' })
+  const [linkBusy, setLinkBusy] = useState(false)
+
   const [query, setQuery] = useState('')
 
   const [draft, setDraft] = useState(() => blankDraft('providers'))
@@ -424,6 +432,59 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
   const tableName = TABLES.find(t => t[0] === table)[2]
 
   const tableLabel = TABLES.find(t => t[0] === table)[1]
+
+  // Clean links: the systems a clean link can open — the same list the
+  // Clean Link ad page offers (system values match the middleware).
+  const CLEAN_LINK_SYSTEMS = [
+    { label: 'Restaurant', value: 'diner' },
+    { label: 'POS', value: 'pos' },
+    { label: 'Barbershop', value: 'barbers' },
+    { label: 'Dealer', value: 'dealer' },
+    { label: 'Employee', value: 'employee' },
+    { label: 'Bodyshop', value: 'bodyshop' },
+    { label: 'Kids — Math', value: 'kids-math' },
+    { label: 'Kids — English', value: 'kids-english' },
+    { label: 'Kids — Arabic', value: 'kids-arabic' },
+    { label: 'Kids — French', value: 'kids-french' },
+    { label: 'Kids — Spanish', value: 'kids-spanish' },
+    { label: 'Kids — Science', value: 'kids-science' },
+    { label: 'Kids — Geography', value: 'kids-geography' },
+    { label: 'Kids — Coding', value: 'kids-coding' },
+    { label: 'Kids — Reading', value: 'kids-reading' },
+  ]
+
+  const loadCleanLinks = async () => {
+    const { data } = await supabase.from('clean_links').select('id, slug, system, shop_slug').order('slug')
+    setCleanLinks(data || [])
+  }
+
+  // Add a clean link by hand: clean name + system + the shop's own
+  // slug. Same slug rules as activate_clean_link (lowercase, only
+  // small letters, numbers and dashes). A taken name fails here with
+  // a plain message — the live list below shows what is taken.
+  const addCleanLink = async () => {
+    const slug = (newLink.slug || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    const shopSlug = (newLink.shopSlug || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    if (!slug) { setStatus('Error: the clean link name has to contain a letter or number.'); return }
+    if (slug === 'admin') { setStatus('Error: "admin" is reserved — pick another clean link name.'); return }
+    if (!newLink.system) { setStatus('Error: pick the system the link opens.'); return }
+    if (!shopSlug) { setStatus("Error: type the shop's own name (its slug)."); return }
+    setLinkBusy(true)
+    const { error } = await supabase.from('clean_links').insert({ slug, system: newLink.system, shop_slug: shopSlug })
+    setLinkBusy(false)
+    if (error) { setStatus('Cannot add: ' + error.message); return }
+    setStatus(`✓ Clean link live — yently.com/${slug} now opens the ${newLink.system} shop "${shopSlug}".`)
+    setNewLink({ slug: '', system: '', shopSlug: '' })
+    loadCleanLinks()
+  }
+
+  const deleteCleanLink = async (link) => {
+    if (!window.confirm(`Delete the clean link yently.com/${link.slug}? The shop stays — only the short link stops working.`)) return
+    const { error } = await supabase.from('clean_links').delete().eq('id', link.id)
+    if (error) { setStatus('Cannot delete: ' + error.message); return }
+    setStatus(`✓ Deleted yently.com/${link.slug}.`)
+    loadCleanLinks()
+  }
 
   const reload = () => {
     setRows(null)
@@ -499,6 +560,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
     supabase.from('dealer_shops').select('id,slug,name').order('name').then(({ data }) => setDealerShopsList(data || [])).catch(() => {})
     supabase.from('employee_shops').select('id,slug,name').order('name').then(({ data }) => setEmployeeShopsList(data || [])).catch(() => {})
     supabase.from('bodyshop_shops').select('id,slug,name').order('name').then(({ data }) => setBodyshopShopsList(data || [])).catch(() => {})
+    if (table === 'clean_link_orders') loadCleanLinks()
   }
 
   useEffect(reload, [table])
@@ -513,6 +575,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
     setDraft(blankDraft(table))
     setDetail(null)
     setStatus('')
+    setNewLink({ slug: '', system: '', shopSlug: '' })
   }, [table])
 
   // Outside tap closes the table submenu (same pattern as the website menus).
@@ -591,6 +654,7 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
     if (error) { setStatus('Cannot activate: ' + error.message); return }
     setStatus(`✓ Clean link live — yently.com/${data?.slug || row.clean_slug} now opens the ${data?.system || row.system} shop.`)
     reload()
+    loadCleanLinks()
   }
 
   // Intake approval: one tap builds the whole shop (store, location,
@@ -1308,6 +1372,27 @@ export default function AdminStoreManage({ table: tableProp, onTableChange }) {
             {detail.status === 'pending' && <button type="button" onClick={() => approveSubmission(detail)}>Approve</button>}
             <button type="button" className="btn-soft" onClick={() => setDetail(null)}>Close</button>
           </div>
+        </div>
+      )}
+
+      {table === 'clean_link_orders' && (
+        <div className="form-card">
+          <h3>Add a clean link</h3>
+          <p className="hint">A customer asks for a short link — type the name, pick the system, type the shop's own name (its slug). The link goes live right away, no order needed. Orders below still work the same: Activate on a pending order adds the same kind of link.</p>
+          <input placeholder="Clean link name — e.g. xname" value={newLink.slug} onChange={e => setNewLink({ ...newLink, slug: e.target.value })} />
+          <select value={newLink.system} onChange={e => setNewLink({ ...newLink, system: e.target.value })}>
+            <option value="">— System —</option>
+            {CLEAN_LINK_SYSTEMS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+          </select>
+          <input placeholder="Shop name (its slug) — e.g. demo-pos" value={newLink.shopSlug} onChange={e => setNewLink({ ...newLink, shopSlug: e.target.value })} />
+          <div className="store-actions">
+            <button type="button" className="btn-primary" onClick={addCleanLink} disabled={linkBusy}>Add clean link</button>
+          </div>
+          <h3 style={{ marginTop: 16 }}>Live clean links ({cleanLinks.length})</h3>
+          {cleanLinks.length === 0 && <p className="hint">No clean links yet.</p>}
+          {cleanLinks.map(l => (
+            <p key={l.id}><a href={'/' + l.slug} target="_blank" rel="noreferrer">yently.com/{l.slug}</a> — {l.system} · {l.shop_slug} <button type="button" className="btn-mini" onClick={() => deleteCleanLink(l)}>Delete</button></p>
+          ))}
         </div>
       )}
 

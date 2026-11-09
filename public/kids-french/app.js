@@ -254,6 +254,8 @@
         var right = norm(typed) === norm(w.word);
         if (right) {
           score++;
+          var prog = el.querySelector('.progress');
+          if (prog) prog.innerHTML = 'Round ' + (roundIdx + 1) + ' of ' + rounds.length + ' &nbsp;•&nbsp; ⭐ ' + score;
           out.innerHTML = '<p class="correct">✅ ' + CHEERS[Math.floor(Math.random() * CHEERS.length)] + ' "' + esc(w.word) + '" is right!</p>';
         } else {
           out.innerHTML = '<p class="wrong">Not quite — "' + esc(w.word) + '" means "' + esc(w.meaning) + '". You will get the next one! 💪</p>';
@@ -284,6 +286,8 @@
           });
           if (right) {
             score++;
+            var prog = el.querySelector('.progress');
+            if (prog) prog.innerHTML = 'Round ' + (roundIdx + 1) + ' of ' + rounds.length + ' &nbsp;•&nbsp; ⭐ ' + score;
             out.innerHTML = '<p class="correct">✅ ' + CHEERS[Math.floor(Math.random() * CHEERS.length)] + '</p>';
           } else {
             out.innerHTML = '<p class="wrong">Not quite — the right answer is "' + esc(game === 'pick' ? w.word : w.meaning) + '". You will get the next one! 💪</p>';

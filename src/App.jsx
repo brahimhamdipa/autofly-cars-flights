@@ -38,6 +38,17 @@ import LiveChatPage from './components/LiveChatPage'
 import LiveChatDemo from './components/LiveChatDemo'
 import BusinessCartPage from './components/BusinessCartPage'
 import BusinessSystemsPage from './components/BusinessSystemsPage'
+import KidsHubPage from './components/KidsHubPage'
+import KidsMathPage from './components/KidsMathPage'
+import KidsEnglishPage from './components/KidsEnglishPage'
+import KidsArabicPage from './components/KidsArabicPage'
+import KidsFrenchPage from './components/KidsFrenchPage'
+import KidsSpanishPage from './components/KidsSpanishPage'
+import KidsSciencePage from './components/KidsSciencePage'
+import KidsGeographyPage from './components/KidsGeographyPage'
+import KidsCodingPage from './components/KidsCodingPage'
+import KidsReadingPage from './components/KidsReadingPage'
+import BooksForKidsPage from './components/BooksForKidsPage'
 import logoUrl from './assets/logo.webp'
 import './index.css'
 
@@ -116,7 +127,8 @@ export default function App() {
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
   const BUSINESS_TABS = ['business-hub', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'demo-live-chat', 'business-cart']
-  const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes'].includes(tab)
+  const KIDS_TABS = ['kids-hub', 'kids-math', 'kids-english', 'kids-arabic', 'kids-french', 'kids-spanish', 'kids-science', 'kids-geography', 'kids-coding', 'kids-reading', 'kids-books']
+  const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes'].includes(tab) || KIDS_TABS.includes(tab)
   const inBusiness = BUSINESS_TABS.includes(tab)
   const inCars = ['cars', 'rent', 'sell', 'testdrive', 'contact'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
@@ -139,6 +151,7 @@ export default function App() {
               <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
               {moreOpen && (
                 <span className="dropdown-menu">
+                  <a onClick={() => go('kids-hub')}>Yently Kids</a>
                   <a onClick={() => go('services')}>Services</a>
                   <a onClick={() => go('about')}>About Us</a>
                 </span>
@@ -204,6 +217,21 @@ export default function App() {
             {tab === 'live-chat' && <LiveChatPage go={go} />}
             {tab === 'demo-live-chat' && <LiveChatDemo go={go} />}
             {tab === 'business-cart' && <BusinessCartPage go={go} />}
+          </BusinessCartProvider>
+        )}
+        {KIDS_TABS.includes(tab) && (
+          <BusinessCartProvider>
+            {tab === 'kids-hub' && <KidsHubPage go={go} />}
+            {tab === 'kids-math' && <KidsMathPage go={go} />}
+            {tab === 'kids-english' && <KidsEnglishPage go={go} />}
+            {tab === 'kids-arabic' && <KidsArabicPage go={go} />}
+            {tab === 'kids-french' && <KidsFrenchPage go={go} />}
+            {tab === 'kids-spanish' && <KidsSpanishPage go={go} />}
+            {tab === 'kids-science' && <KidsSciencePage go={go} />}
+            {tab === 'kids-geography' && <KidsGeographyPage go={go} />}
+            {tab === 'kids-coding' && <KidsCodingPage go={go} />}
+            {tab === 'kids-reading' && <KidsReadingPage go={go} />}
+            {tab === 'kids-books' && <BooksForKidsPage go={go} />}
           </BusinessCartProvider>
         )}
         {tab === 'clothes' && <ClothesPage />}

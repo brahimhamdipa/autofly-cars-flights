@@ -26,7 +26,7 @@ const blankItem = () => ({
 
   delivery_address: '', pickup_address: '',
 
-  delivery: true, pickup: true, stock: '', pics: [], subcategoryIds: []
+  delivery: true, pickup: true, stock: '', barCode: '', pics: [], subcategoryIds: []
 
 })
 
@@ -47,6 +47,7 @@ const HELP = {
   delivery: 'Ticked means you deliver this item to the customer. Untick it if this item is pickup only.',
   pickup: 'Ticked means the customer can come and collect this item. Untick it if this item is delivery only.',
   stock: 'How many of this item you have right now. Leave it empty if you do not count stock — the item will always show as available. If you put a number, the item shows as out of stock when it reaches 0.',
+  barcode: 'The barcode number printed on the product — the number under the black bars. Type it exactly as it is printed. Leave it empty if the product has no barcode. It shows on the item in the shop, so customers and staff can match the product to it.',
   pictures: 'Tap Upload pictures and pick photos from your phone or computer — you can pick more than one at once. The first picture is the main one customers see. Clear, bright photos sell better. Tap the ✕ next to a picture to remove it.',
   addBulk: 'Adds the item above to your list. It is not sent yet — it just joins the list below. Fill in the next item the same way.',
   batchList: 'Everything in the list so far. Tap Remove next to an item to take it out of the list.',
@@ -142,6 +143,10 @@ function ItemFields({ item, setItem, categories, subcats, storeName }) {
       <div className="field">
         <span className="field-label">Stock <Help text={HELP.stock} /></span>
         <input placeholder="Stock (how many available — leave empty if not tracked)" type="number" min="0" value={item.stock} onChange={e => set({ stock: e.target.value })} />
+      </div>
+      <div className="field">
+        <span className="field-label">Barcode <Help text={HELP.barcode} /></span>
+        <input placeholder="Barcode (optional — the number under the bars)" value={item.barCode || ''} onChange={e => set({ barCode: e.target.value })} />
       </div>
       <div className="field">
         <span className="field-label">Pictures <Help text={HELP.pictures} /></span>
@@ -285,6 +290,7 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
     delivery: !!it.delivery,
     pickup: !!it.pickup,
     stock: it.stock === '' || it.stock === null || it.stock === undefined ? null : Number(it.stock),
+    barCode: (it.barCode || '').trim(),
     pics: it.pics || [],
     subcategoryIds: (it.subcategoryIds || []).map(Number),
   })

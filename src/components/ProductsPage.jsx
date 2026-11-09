@@ -126,6 +126,7 @@ return Object.values(map).sort((a, b) => a.label.localeCompare(b.label))
                 <StockLine stock={item.stock} />
                 {item.description && <p className="car-desc desc-clamp">{item.description}</p>}
                 {item.provider && <p className="hint">🏬 {item.provider.name}{item.provider.country ? ` · ${item.provider.country}` : ''}</p>}
+                {item.barCode && <p className="hint">Barcode: {item.barCode}</p>}
                 <p className="item-badges">
                   {item.delivery && <span className="badge">🚚 Delivery</span>}
                   {item.pickup && <span className="badge">🏪 Pickup</span>}

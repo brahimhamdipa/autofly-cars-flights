@@ -69,7 +69,7 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
             {headerLine && <p className="hint">{headerLine}</p>}
           </div>
 
-          <div className="form-card wide store-info">
+          <div className="form-card wide store-info item-detail-card">
             <div className="slideshow store-photos">
                 {n > 0 ? (
                   <img src={images[idx]} alt={item.name} onClick={() => setZoom(true)} title="Click to enlarge" />
@@ -85,9 +85,11 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
                 )}
             </div>
 
+            <div className="card-body">
             <p className="g-price">{money(item.price)}</p>
               <StockLine stock={item.stock} />
               {item.description && <p>{item.description}</p>}
+              {item.barCode && <p className="hint">Barcode: {item.barCode}</p>}
               <p className="item-badges">
                 {item.delivery && <span className="badge">🚚 Delivery</span>}
                 {item.pickup && <span className="badge">🏪 Pickup</span>}
@@ -113,6 +115,7 @@ export default function ItemDetailPage({ itemId, go, goBack }) {
                 ✓ Added to your cart. <button type="button" className="link-btn" onClick={() => go('grocery-cart')}>View My Cart ({count})</button>
               </p>
             )}
+            </div>
           </div>
 
           {zoom && n > 0 && <Lightbox images={images} start={idx} onClose={() => setZoom(false)} />}

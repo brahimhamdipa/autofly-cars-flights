@@ -131,10 +131,14 @@ export async function loadItemVariants(itemIds) {
           const seen = new Set()
           const list = []
           for (const catId of catsOfItem[id] || []) {
+                  // Only the subcategories EXPLICITLY linked to this item
+                  // count as its variants. An item with no links has no
+                  // variants — it must NOT inherit the whole category
+                  // (that put the Monster flavors on the Orange Juice).
                   const explicit = explicitByItemCat[id + ':' + catId]
-                  const pool = explicit && explicit.size > 0
+                  const pool = explicit
                     ? (rowsByCat[catId] || []).filter(r => explicit.has(r.id))
-                            : (rowsByCat[catId] || [])
+                    : []
                   for (const row of pool) {
                             if (seen.has(row.id)) continue
                             seen.add(row.id)

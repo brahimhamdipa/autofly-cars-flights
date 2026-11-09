@@ -130,12 +130,6 @@ export default function CleanLinkPage({ go }) {
         )}
       </div>
 
-      <div className="hero-card" style={{ textAlign: 'center' }}>
-        <h3>Try a clean link</h3>
-        <p>See one working — tap below to open the demo shop at its clean link.</p>
-        <a href="/demo-pos" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: '#f5c542', color: '#111827', padding: '12px 22px', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Open yently.com/demo-pos</a>
-      </div>
-
       <form className="form-card wide" onSubmit={handleSubmit}>
         <h3>Get your clean link</h3>
         <div className="row">

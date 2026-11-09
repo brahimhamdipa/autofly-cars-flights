@@ -33,6 +33,16 @@
     });
   } catch (e) {}
   var SLUG = String(params.r || '').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
+  if (!SLUG) {
+    // Clean link (yently.com/<slug>): the middleware rewrites the
+    // page server-side, so location.search is empty in the browser.
+    // The shop slug is then the last path segment. Ignore this
+    // system's own folder name, so a bare /diner visit still
+    // shows "not found" by design.
+    var segs = location.pathname.split('/').filter(function (s) { return s; });
+    var lastSeg = (segs[segs.length - 1] || '').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '');
+    if (lastSeg && lastSeg !== 'diner') SLUG = lastSeg;
+  }
   var MYORDERS_KEY = 'diner-myorders-' + SLUG;
 
   /* Public by design: the same publishable key the main AutoFly site ships

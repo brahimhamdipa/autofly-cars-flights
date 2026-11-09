@@ -2,7 +2,9 @@
 // When someone opens a single-segment path that is a paid clean link,
 // rewrite (server-side, the browser URL stays clean) to the shop's
 // real page: /<system>?<param>=<shop_slug> (e.g. /demo-pos ->
-// /pos?s=demo-pos). A clean link's own files (style.css, app.js,
+// /pos?s=demo-pos). The one exception is the live-chat demo:
+// /demo-chat -> /demo-live-chat, the public chat demo page (no shop
+// folder, no query param). A clean link's own files (style.css, app.js,
 // html5-qrcode.min.js, …) are rewritten the same way:
 // /<slug>/<file> -> /<system>/<file>, because the shop app's
 // bootstrap loads its files relative to the URL it was opened at.
@@ -73,7 +75,7 @@ function paramFor(system) {
 }
 
 function isKnownSystem(system) {
-  return Boolean(PARAM_BY_SYSTEM[system]) || system.startsWith('kids-')
+  return Boolean(PARAM_BY_SYSTEM[system]) || system.startsWith('kids-') || system === 'live-chat'
 }
 
 export default async function middleware(request) {
@@ -108,6 +110,11 @@ export default async function middleware(request) {
     if (!row.system || !row.shop_slug || !isKnownSystem(row.system)) return next()
 
     if (parts.length === 1) {
+      // Live-chat demo: /demo-chat -> /demo-live-chat (the public
+      // chat demo page — no shop folder, no query param).
+      if (row.system === 'live-chat') {
+        return rewrite(new URL('/demo-live-chat', request.url))
+      }
       // Clean-link page: /<slug> -> /<system>?<param>=<shop_slug>.
       const param = paramFor(row.system)
       if (!param) return next()
@@ -115,6 +122,9 @@ export default async function middleware(request) {
       target.search = `?${param}=${encodeURIComponent(row.shop_slug)}`
       return rewrite(target)
     }
+
+    // The live-chat demo has no files of its own — nothing to rewrite.
+    if (row.system === 'live-chat') return next()
 
     // Clean-link file: /<slug>/<rest...> -> /<system>/<rest...>.
     // The shop app's bootstrap loads style.css, app.js and the

@@ -95,7 +95,7 @@ export default function DealerPage({ go }) {
 
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Try the demo dealership</h3>
-        <p>See the dealer page working before you ask for one — the demo dealership is live, with the employee password <b>demo</b>.</p>
+        <p>See the dealer page working before you ask for one — tap below and we'll send you the demo link.</p>
         <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
 

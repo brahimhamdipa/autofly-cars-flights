@@ -182,8 +182,12 @@ export default function UploadFormPage({ slug, goBack, go }) {
     return () => window.removeEventListener('keydown', onKey)
   }, [viewIndex, pics.length, controlsVisible, menuOpen])
 
+  // Closing the gallery also closes the submenu: the menu is the same
+  // one on the page behind the gallery, so leaving it open would leave
+  // it hanging over the header after the fullscreen goes away.
   const closeGallery = () => {
     setViewIndex(null)
+    setMenuOpen(false)
     if (document.fullscreenElement) document.exitFullscreen?.().catch(() => {})
   }
 
@@ -294,6 +298,8 @@ export default function UploadFormPage({ slug, goBack, go }) {
 
   const openGallery = (i) => {
     setViewIndex(i)
+    // Same as closing: the menu must not hang over the picture.
+    setMenuOpen(false)
     // The controls show when the gallery opens, then hide on their
     // own after a few seconds.
     pokeControls()

@@ -96,7 +96,7 @@ export default function BodyshopPage({ go }) {
 
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Try the demo shop</h3>
-        <p>See the bodyshop page working before you ask for one — the demo shop is live, with the employee password <b>demo</b>.</p>
+        <p>See the bodyshop page working before you ask for one — tap below and we'll send you the demo link.</p>
         <button type="button" onClick={() => setDemoOpen(true)}>Interested in a demo?</button>
       </div>
 

@@ -35,6 +35,7 @@ import EmployeePage from './components/EmployeePage'
 import BodyshopPage from './components/BodyshopPage'
 import TvGalleryPage from './components/TvGalleryPage'
 import LiveChatPage from './components/LiveChatPage'
+import CleanLinkPage from './components/CleanLinkPage'
 import LiveChatDemo from './components/LiveChatDemo'
 import BusinessCartPage from './components/BusinessCartPage'
 import BusinessSystemsPage from './components/BusinessSystemsPage'
@@ -126,7 +127,7 @@ export default function App() {
   }, [])
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
-  const BUSINESS_TABS = ['business-hub', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'demo-live-chat', 'business-cart']
+  const BUSINESS_TABS = ['business-hub', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'clean-link', 'demo-live-chat', 'business-cart']
   const KIDS_TABS = ['kids-hub', 'kids-math', 'kids-english', 'kids-arabic', 'kids-french', 'kids-spanish', 'kids-science', 'kids-geography', 'kids-coding', 'kids-reading', 'kids-books']
   const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes'].includes(tab) || KIDS_TABS.includes(tab)
   const inBusiness = BUSINESS_TABS.includes(tab)
@@ -215,6 +216,7 @@ export default function App() {
             {tab === 'simple-barbershop' && <SimpleBarbershopPage go={go} />}
             {tab === 'tv-gallery' && <TvGalleryPage go={go} />}
             {tab === 'live-chat' && <LiveChatPage go={go} />}
+            {tab === 'clean-link' && <CleanLinkPage go={go} />}
             {tab === 'demo-live-chat' && <LiveChatDemo go={go} />}
             {tab === 'business-cart' && <BusinessCartPage go={go} />}
           </BusinessCartProvider>

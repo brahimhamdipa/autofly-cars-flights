@@ -31,11 +31,11 @@ const STORAGE_KEY = 'autofly-business-cart'
 
 export const RESTAURANT_PLAN_KEY = 'r:website'
 export const RESTAURANT_PLAN_NAME = 'Restaurant ordering page'
-export const RESTAURANT_PLAN_PRICE = 20
+export const RESTAURANT_PLAN_PRICE = 40
 
 export const POS_PLAN_KEY = 'p:website'
 export const POS_PLAN_NAME = 'Point of sale page'
-export const POS_PLAN_PRICE = 29
+export const POS_PLAN_PRICE = 50
 
 export const BARBERSHOP_PLAN_KEY = 'bb:website'
 export const BARBERSHOP_PLAN_NAME = 'Barbershop booking page'

@@ -228,6 +228,22 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
    text below lives in a padded body. */
 .item-detail-card { padding: 0; overflow: hidden; gap: 0; }
 .item-detail-card .slideshow { border-radius: 0; }
+
+/* Variant matrix: one row per dimension (Flavor / Color / Pack ...),
+   each option a check box. Picked = blue, unavailable = greyed out. */
+.variant-matrix { display: flex; flex-direction: column; gap: 10px; margin: 10px 0; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+.variant-dim-label { font-size: 13px; font-weight: 700; color: #374151; display: block; margin-bottom: 4px; }
+.variant-options { display: flex; flex-wrap: wrap; gap: 6px; }
+.variant-opt { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1.5px solid #d1d5db; border-radius: 8px; background: #fff; font-size: 13px; cursor: pointer; }
+.variant-opt.picked { border-color: #2563eb; background: #dbeafe; font-weight: 700; }
+.variant-opt.disabled { opacity: 0.45; cursor: not-allowed; background: #f3f4f6; }
+.variant-opt input { accent-color: #2563eb; margin: 0; }
+
+/* Barcode scanner overlay: fullscreen camera view + Close. */
+.scan-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.scan-box { background: #fff; border-radius: 12px; padding: 16px; max-width: 420px; width: 100%; }
+.scan-view { width: 100%; }
+.scan-view video { width: 100%; border-radius: 8px; }
 .store-info p { margin: 8px 0; }
 .store-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 .store-btn { display: inline-block; background: #2563eb; color: white; padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: 14px; text-decoration: none; }

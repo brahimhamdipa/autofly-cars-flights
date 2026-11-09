@@ -320,8 +320,8 @@ function KidsShopForm({ draft, setDraft, onSubmit, submitLabel, onCancel, subjec
     <form className="form-card" onSubmit={onSubmit}>
       <h3>{submitLabel}</h3>
       <input required placeholder="School name" value={draft.name || ''} onChange={e => setDraft({ ...draft, name: e.target.value })} />
-      <input required placeholder="Slug — the word in the school's private link" value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
-      <p className="hint">The customer shares their own private link with their students. New schools start with the demo {subject} content.</p>
+      <input required placeholder={`Slug — the word in yently.com/${folder}?s=slug`} value={draft.slug || ''} onChange={e => setDraft({ ...draft, slug: e.target.value })} />
+      <p className="hint">The customer shares yently.com/{folder}?s={(draft.slug || 'slug').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')} with their students. New schools start with the demo {subject} content.</p>
       <input required placeholder="Username for the school" value={draft.u || ''} onChange={e => setDraft({ ...draft, u: e.target.value })} />
       <input required placeholder="Password for the school" value={draft.p || ''} onChange={e => setDraft({ ...draft, p: e.target.value })} />
       <p className="hint">This login is what you sell — use a throwaway password you invent for this school, never your own password. Only you can see it here.</p>

@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabaseClient'
 // All Passes: every login the admin has handed out, in one place —
 // the link, the username, the password, who uses it, and the note.
 // Grouped by area (Stores, Diner, POS, Dealer, Employee, Bodyshop,
-// Barbers, Websites, Chat), with a search box over everything.
+// Yently Kids, Barbers, Websites, Chat), with a search box over everything.
 // Passwords show readable here BY DESIGN, like everywhere else in
 // Admin — this page is owner-only, and the whole point of it is that
 // the admin can see what he gave out.
@@ -25,8 +25,9 @@ import { supabase } from '../../lib/supabaseClient'
 //     popup — those are ignored on the live site). Deleting a shop
 //     removes the whole shop; deleting an upload form removes its
 //     picture folder too.
-//   - APPROVE DRAFT: only on the six dynamic shop rows (Diner, POS,
-//     Dealer, Employee, Bodyshop, Barbers) and only while that shop's
+//   - APPROVE DRAFT: only on the dynamic shop rows (Diner, POS,
+//     Dealer, Employee, Bodyshop, Barbers, and the nine Yently Kids
+//     subjects) and only while that shop's
 //     draft is pending — one tap makes the draft live, through the
 //     same approve RPC AdminStoreManage uses. Any other draft state
 //     shows as small "Draft: ..." text instead of a button.
@@ -44,17 +45,21 @@ const GROUPS = [
   { key: 'dealer', title: 'Dealer' },
   { key: 'employee', title: 'Employee' },
   { key: 'bodyshop', title: 'Bodyshop' },
+  { key: 'kids', title: 'Yently Kids' },
   { key: 'barbers', title: 'Barbers' },
   { key: 'websites', title: 'Websites' },
   { key: 'chat', title: 'Chat' },
 ]
 
-// The six dynamic shop tables — the only rows that carry a draft and
+// The dynamic shop tables — the only rows that carry a draft and
 // can be approved, and the only rows with a team/employee password.
-const SHOP_TABLES = ['diner_restaurants', 'barbershop_shops', 'pos_stores', 'dealer_shops', 'employee_shops', 'bodyshop_shops']
+// The nine Kids tables work exactly like the other six: a school has
+// a slug, a login, a teacher password (epass) and a draft.
+const SHOP_TABLES = ['diner_restaurants', 'barbershop_shops', 'pos_stores', 'dealer_shops', 'employee_shops', 'bodyshop_shops', 'kids_math_shops', 'kids_english_shops', 'kids_arabic_shops', 'kids_french_shops', 'kids_spanish_shops', 'kids_science_shops', 'kids_geography_shops', 'kids_coding_shops', 'kids_reading_shops']
 
 // Approve RPCs, copied exactly from AdminStoreManage: diner takes
-// p_restaurant_id, POS takes p_store_id, the other four take p_shop_id.
+// p_restaurant_id, POS takes p_store_id, the other four — and all
+// nine Kids subjects — take p_shop_id.
 const APPROVE_RPC = {
   diner_restaurants: { rpc: 'approve_diner_draft', param: 'p_restaurant_id' },
   barbershop_shops: { rpc: 'approve_barbershop_draft', param: 'p_shop_id' },
@@ -62,6 +67,33 @@ const APPROVE_RPC = {
   dealer_shops: { rpc: 'approve_dealer_draft', param: 'p_shop_id' },
   employee_shops: { rpc: 'approve_employee_draft', param: 'p_shop_id' },
   bodyshop_shops: { rpc: 'approve_bodyshop_draft', param: 'p_shop_id' },
+  kids_math_shops: { rpc: 'approve_kids_math_draft', param: 'p_shop_id' },
+  kids_english_shops: { rpc: 'approve_kids_english_draft', param: 'p_shop_id' },
+  kids_arabic_shops: { rpc: 'approve_kids_arabic_draft', param: 'p_shop_id' },
+  kids_french_shops: { rpc: 'approve_kids_french_draft', param: 'p_shop_id' },
+  kids_spanish_shops: { rpc: 'approve_kids_spanish_draft', param: 'p_shop_id' },
+  kids_science_shops: { rpc: 'approve_kids_science_draft', param: 'p_shop_id' },
+  kids_geography_shops: { rpc: 'approve_kids_geography_draft', param: 'p_shop_id' },
+  kids_coding_shops: { rpc: 'approve_kids_coding_draft', param: 'p_shop_id' },
+  kids_reading_shops: { rpc: 'approve_kids_reading_draft', param: 'p_shop_id' },
+}
+
+// Yently Kids: nine subjects, one shop table each. The folder is the
+// public/ folder the school's link uses: yently.com/kids-math?s=slug.
+const KIDS_SUBJECTS = {
+  math: { label: 'Math', folder: 'kids-math' },
+  english: { label: 'English', folder: 'kids-english' },
+  arabic: { label: 'Arabic', folder: 'kids-arabic' },
+  french: { label: 'French', folder: 'kids-french' },
+  spanish: { label: 'Spanish', folder: 'kids-spanish' },
+  science: { label: 'Science', folder: 'kids-science' },
+  geography: { label: 'Geography', folder: 'kids-geography' },
+  coding: { label: 'Coding', folder: 'kids-coding' },
+  reading: { label: 'Reading', folder: 'kids-reading' },
+}
+const kidsOf = (table) => {
+  const m = /^kids_(.+)_shops$/.exec(table || '')
+  return m ? m[1] : null
 }
 
 // Every system a pass can be added to, in the page's group order.
@@ -72,6 +104,15 @@ const CREATE_SYSTEMS = [
   { value: 'dealer_shops', group: 'Dealer', label: 'Dealer' },
   { value: 'employee_shops', group: 'Employee', label: 'Employee team' },
   { value: 'bodyshop_shops', group: 'Bodyshop', label: 'Bodyshop' },
+  { value: 'kids_math_shops', group: 'Yently Kids', label: 'Kids Math school' },
+  { value: 'kids_english_shops', group: 'Yently Kids', label: 'Kids English school' },
+  { value: 'kids_arabic_shops', group: 'Yently Kids', label: 'Kids Arabic school' },
+  { value: 'kids_french_shops', group: 'Yently Kids', label: 'Kids French school' },
+  { value: 'kids_spanish_shops', group: 'Yently Kids', label: 'Kids Spanish school' },
+  { value: 'kids_science_shops', group: 'Yently Kids', label: 'Kids Science school' },
+  { value: 'kids_geography_shops', group: 'Yently Kids', label: 'Kids Geography school' },
+  { value: 'kids_coding_shops', group: 'Yently Kids', label: 'Kids Coding school' },
+  { value: 'kids_reading_shops', group: 'Yently Kids', label: 'Kids Reading school' },
   { value: 'barbershop_shops', group: 'Barbers', label: 'Barbershop' },
   { value: 'barber_intake_forms', group: 'Websites', label: 'Barber intake form' },
   { value: 'upload_forms', group: 'Websites', label: 'Picture upload form' },
@@ -149,7 +190,7 @@ export default function AdminAllPasses() {
       if (error) { failedGroups.push(key); return [] }
       return data || []
     }
-    const [providers, formRows, employees, passRows, intakeRows, dinerRows, shopRows, uploadRows, folderRows, posRows, dealerRows, employeeRows, bodyshopRows] = await Promise.all([
+    const [providers, formRows, employees, passRows, intakeRows, dinerRows, shopRows, uploadRows, folderRows, posRows, dealerRows, employeeRows, bodyshopRows, kidsMathRows, kidsEnglishRows, kidsArabicRows, kidsFrenchRows, kidsSpanishRows, kidsScienceRows, kidsGeographyRows, kidsCodingRows, kidsReadingRows] = await Promise.all([
       grab('stores', supabase.from('store_providers').select('id, name')),
       grab('stores', supabase.from('providersForm').select('id, provider_id, f, u, p, comment').order('f')),
       grab('chat', supabase.from('employees').select('id, firstName, lastName')),
@@ -163,6 +204,15 @@ export default function AdminAllPasses() {
       grab('dealer', supabase.from('dealer_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
       grab('employee', supabase.from('employee_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
       grab('bodyshop', supabase.from('bodyshop_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('kids', supabase.from('kids_math_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('kids', supabase.from('kids_english_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('kids', supabase.from('kids_arabic_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('kids', supabase.from('kids_french_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('kids', supabase.from('kids_spanish_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('kids', supabase.from('kids_science_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('kids', supabase.from('kids_geography_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('kids', supabase.from('kids_coding_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('kids', supabase.from('kids_reading_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
     ])
     setStoreList(providers)
     setEmployeeList(employees)
@@ -176,7 +226,7 @@ export default function AdminAllPasses() {
       key: prefix + '-' + r.id, group, kind,
       table, id: r.id,
       link: linkPrefix + r.slug, linkText: 'yently.com' + linkPrefix + r.slug,
-      user: r.u, pass: r.p, epass: r.epass || '', passExtra: r.epass ? 'Team: ' + r.epass : '',
+      user: r.u, pass: r.p, epass: r.epass || '', passExtra: r.epass ? (group === 'kids' ? 'Teacher: ' + r.epass : 'Team: ' + r.epass) : '',
       customer: r.name || '—', note: r.note || '', draftStatus: r.draft_status || 'editing',
     })
     const all = [
@@ -191,6 +241,15 @@ export default function AdminAllPasses() {
       ...dealerRows.map(r => shopRow('dealer', 'dealer', 'Dealer pass', 'dealer_shops', '/dealer?d=', r)),
       ...employeeRows.map(r => shopRow('employee', 'employee', 'Employee pass', 'employee_shops', '/employee?e=', r)),
       ...bodyshopRows.map(r => shopRow('bodyshop', 'bodyshop', 'Bodyshop pass', 'bodyshop_shops', '/bodyshop?b=', r)),
+      ...kidsMathRows.map(r => shopRow('kids-math', 'kids', 'Kids Math pass', 'kids_math_shops', '/kids-math?s=', r)),
+      ...kidsEnglishRows.map(r => shopRow('kids-english', 'kids', 'Kids English pass', 'kids_english_shops', '/kids-english?s=', r)),
+      ...kidsArabicRows.map(r => shopRow('kids-arabic', 'kids', 'Kids Arabic pass', 'kids_arabic_shops', '/kids-arabic?s=', r)),
+      ...kidsFrenchRows.map(r => shopRow('kids-french', 'kids', 'Kids French pass', 'kids_french_shops', '/kids-french?s=', r)),
+      ...kidsSpanishRows.map(r => shopRow('kids-spanish', 'kids', 'Kids Spanish pass', 'kids_spanish_shops', '/kids-spanish?s=', r)),
+      ...kidsScienceRows.map(r => shopRow('kids-science', 'kids', 'Kids Science pass', 'kids_science_shops', '/kids-science?s=', r)),
+      ...kidsGeographyRows.map(r => shopRow('kids-geography', 'kids', 'Kids Geography pass', 'kids_geography_shops', '/kids-geography?s=', r)),
+      ...kidsCodingRows.map(r => shopRow('kids-coding', 'kids', 'Kids Coding pass', 'kids_coding_shops', '/kids-coding?s=', r)),
+      ...kidsReadingRows.map(r => shopRow('kids-reading', 'kids', 'Kids Reading pass', 'kids_reading_shops', '/kids-reading?s=', r)),
       ...shopRows.map(r => shopRow('barber', 'barbers', 'Barber pass', 'barbershop_shops', '/barbers?s=', r)),
       ...intakeRows.map(r => ({
         key: 'intake-' + r.id, group: 'websites', kind: 'Intake form',
@@ -462,6 +521,8 @@ export default function AdminAllPasses() {
   }
 
   const createHint = () => {
+    const kid = kidsOf(createSystem)
+    if (kid) return 'The customer shares yently.com/' + KIDS_SUBJECTS[kid].folder + '?s=' + (slugify(create.slug) || 'slug') + ' with their students. New schools start with the demo ' + KIDS_SUBJECTS[kid].label + ' content.'
     if (createSystem === 'diner_restaurants') return 'The customer shares yently.com/diner?r=' + (slugify(create.slug) || 'slug') + ' with their own customers. New restaurants start with the demo menu.'
     if (createSystem === 'barbershop_shops') return 'The customer shares yently.com/barbers?s=' + (slugify(create.slug) || 'slug') + ' with their own customers. New shops start with the demo services.'
     if (createSystem === 'pos_stores') return 'The customer shares yently.com/pos?s=' + (slugify(create.slug) || 'slug') + ' with their staff. New stores start empty — the owner adds items in Setup.'
@@ -510,10 +571,10 @@ export default function AdminAllPasses() {
           {createSystem && <p className="hint">{createHint()}</p>}
           {SHOP_TABLES.includes(createSystem) && (<>
             <input required placeholder="Slug — the word in the link" value={create.slug || ''} onChange={e => setCreate({ ...create, slug: e.target.value })} />
-            <input required placeholder={createSystem === 'employee_shops' ? 'Team name' : createSystem === 'dealer_shops' ? 'Dealer name' : createSystem === 'bodyshop_shops' ? 'Bodyshop name' : createSystem === 'pos_stores' ? 'Store name' : createSystem === 'barbershop_shops' ? 'Shop name' : 'Restaurant name'} value={create.name || ''} onChange={e => setCreate({ ...create, name: e.target.value })} />
+            <input required placeholder={kidsOf(createSystem) ? 'School name' : createSystem === 'employee_shops' ? 'Team name' : createSystem === 'dealer_shops' ? 'Dealer name' : createSystem === 'bodyshop_shops' ? 'Bodyshop name' : createSystem === 'pos_stores' ? 'Store name' : createSystem === 'barbershop_shops' ? 'Shop name' : 'Restaurant name'} value={create.name || ''} onChange={e => setCreate({ ...create, name: e.target.value })} />
             <input required placeholder="Username" value={create.u || ''} onChange={e => setCreate({ ...create, u: e.target.value })} />
             <input required placeholder="Password" value={create.p || ''} onChange={e => setCreate({ ...create, p: e.target.value })} />
-            <input placeholder="Employee password (optional — one shared team password)" value={create.epass || ''} onChange={e => setCreate({ ...create, epass: e.target.value })} />
+            <input placeholder={kidsOf(createSystem) ? 'Teacher password (optional — one shared password for the Teacher area)' : 'Employee password (optional — one shared team password)'} value={create.epass || ''} onChange={e => setCreate({ ...create, epass: e.target.value })} />
             <input placeholder="Note for yourself (optional — not shown to the shop)" value={create.note || ''} onChange={e => setCreate({ ...create, note: e.target.value })} />
           </>)}
           {createSystem === 'providersForm' && (<>
@@ -609,7 +670,7 @@ export default function AdminAllPasses() {
                             {editing ? (
                               <>
                                 <input style={{ width: '100%' }} value={edit.pass} onChange={e => setEdit({ ...edit, pass: e.target.value })} />
-                                {isShop(r) && <><br /><input style={{ width: '100%' }} placeholder="Team password" value={edit.epass} onChange={e => setEdit({ ...edit, epass: e.target.value })} /></>}
+                                {isShop(r) && <><br /><input style={{ width: '100%' }} placeholder={r.group === 'kids' ? 'Teacher password' : 'Team password'} value={edit.epass} onChange={e => setEdit({ ...edit, epass: e.target.value })} /></>}
                               </>
                             ) : (
                               <>{r.pass}{r.passExtra && <><br /><span className="hint">{r.passExtra}</span></>}</>

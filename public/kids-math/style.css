@@ -1,0 +1,84 @@
+/* Kids Math style — the Yently site style, on purpose: same navy header,
+   blue buttons, cards, and background as yently.com, so a visitor
+   moving from the main site to a school page feels no style change.
+   Buttons and text are bigger than the other folder apps, because
+   children tap them: large rounded buttons, large question text,
+   and bright colours for right and wrong answers. */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #f6f7fb; color: #1a1d26; }
+#site-header { background: #161d44; color: #fff; padding: 16px; position: sticky; top: 0; z-index: 10; }
+.brand { display: flex; gap: 14px; align-items: center; max-width: 960px; margin: 0 auto; }
+.brand img { width: 56px; height: 56px; object-fit: cover; border-radius: 12px; }
+.brand h1 { margin: 0; font-size: 30px; }
+.brand p { margin: 4px 0 0; color: #d7e0f5; font-size: 16px; }
+#tabs { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; max-width: 960px; margin: 14px auto 0; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 3px; width: fit-content; }
+#tabs button { border: 0; background: transparent; color: #d7e0f5; padding: 8px 18px; border-radius: 999px; cursor: pointer; font-size: 17px; font-weight: 700; }
+#tabs button.active { background: #2563eb; color: #fff; box-shadow: 0 2px 8px rgba(37,99,235,.5); }
+main { max-width: 960px; margin: 0 auto; padding: 16px; }
+h2 { font-size: 24px; margin: 20px 0 10px; }
+h3 { margin: 0 0 4px; font-size: 20px; }
+.card { background: #fff; border-radius: 16px; padding: 18px; margin-bottom: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.info { color: #4b5563; font-size: 17px; line-height: 1.6; }
+.info p { margin: 4px 0; }
+.info.big { font-size: 19px; }
+button, select, input, textarea { font-size: 18px; }
+button { background: #2563eb; color: #fff; border: 0; border-radius: 14px; padding: 14px 22px; cursor: pointer; font-weight: 700; }
+button:hover { background: #1d4ed8; }
+button.secondary { background: #e5e7eb; color: #1a1d26; }
+button.secondary:hover { background: #d1d5db; }
+button.danger { background: #b91c1c; }
+button:disabled { opacity: 0.45; cursor: default; }
+button.small { padding: 8px 14px; font-size: 15px; }
+button.big-btn { font-size: 22px; padding: 16px 28px; border-radius: 16px; }
+select, input[type="text"], input[type="number"], input[type="email"], input[type="password"], textarea { width: 100%; padding: 12px; border: 1px solid #d6d3d1; border-radius: 10px; margin: 4px 0 12px; }
+label { font-weight: 700; font-size: 16px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.note { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; font-size: 16px; line-height: 1.5; }
+.error { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 12px; padding: 12px 14px; font-size: 16px; }
+.progress { font-size: 18px; font-weight: 700; color: #4b5563; margin: 8px 0 12px; }
+/* Student picker: big friendly name buttons. */
+.student-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.student-btn { background: #fff; color: #1a1d26; border: 3px solid #bfdbfe; border-radius: 16px; padding: 18px 10px; font-size: 20px; }
+.student-btn:hover { background: #eff6ff; border-color: #2563eb; }
+.student-btn.selected { background: #2563eb; color: #fff; border-color: #2563eb; }
+/* Level picker: a card-like button with a name and a blurb. */
+.level-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.level-btn { background: #fff; color: #1a1d26; border: 3px solid #bfdbfe; border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.level-btn:hover { background: #eff6ff; border-color: #2563eb; }
+.level-btn.selected { background: #2563eb; color: #fff; border-color: #2563eb; }
+.level-btn.selected .level-blurb { color: #dbeafe; }
+.level-name { font-size: 22px; font-weight: 800; }
+.level-blurb { font-size: 15px; font-weight: 400; color: #4b5563; line-height: 1.4; }
+/* Game picker: four big buttons. */
+.game-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.game-btn { background: #fff7e0; color: #1a1d26; border: 3px solid #fcd34d; border-radius: 16px; padding: 18px 10px; font-size: 20px; }
+.game-btn:hover { background: #fef3c7; border-color: #f59e0b; }
+.game-btn.selected { background: #f59e0b; color: #fff; border-color: #f59e0b; }
+/* One question: huge question text, four big answer buttons. */
+.question-card { text-align: center; }
+.question-text { font-size: 52px; font-weight: 800; margin: 10px 0 20px; }
+.choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.choice-btn { font-size: 30px; padding: 20px 10px; border-radius: 16px; }
+.choice-btn.correct { background: #16a34a; }
+.choice-btn.correct:hover { background: #16a34a; }
+.choice-btn.wrong { background: #dc2626; }
+.choice-btn.wrong:hover { background: #dc2626; }
+.cheer { font-size: 22px; font-weight: 800; color: #16a34a; }
+/* Result: the score, very big. */
+.result-card { text-align: center; }
+.score-big { font-size: 72px; font-weight: 800; color: #2563eb; margin: 8px 0; }
+/* Teacher scores tables. */
+.scores-table { width: 100%; border-collapse: collapse; font-size: 17px; }
+.scores-table th, .scores-table td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #f5f5f4; }
+.scores-table th { color: #4b5563; font-size: 15px; }
+/* Setup student list rows. */
+.student-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f5f5f4; font-size: 18px; }
+#site-footer { max-width: 960px; margin: 0 auto; padding: 0 16px 24px; color: #6b7280; font-size: 14px; text-align: center; line-height: 1.8; }
+.to-top { position: fixed; left: 12px; bottom: 12px; z-index: 55; background: #111827; color: #fff; border-radius: 999px; padding: 10px 16px; box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+.to-top:hover { background: #111827; }
+#print-area { display: none; }
+@media (max-width: 480px) {
+  .question-text { font-size: 40px; }
+  .choice-btn { font-size: 24px; }
+  .score-big { font-size: 56px; }
+}

@@ -257,6 +257,11 @@
     return h;
   }
   function paintFeedback() {
+    var bar = $('view-play').querySelector('.score-bar');
+    if (bar) {
+      var spans = bar.querySelectorAll('span');
+      if (spans[1]) spans[1].textContent = '⭐ ' + score + ' correct';
+    }
     var out = $('round-out');
     if (!out) return;
     out.innerHTML = feedbackHtml();

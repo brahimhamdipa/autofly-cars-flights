@@ -78,6 +78,53 @@ const MENUS = [
       { label: 'Bodyshop Jobs', table: 'bodyshop_jobs' },
       { label: 'Bodyshop Orders', table: 'bodyshop_orders' },
     ] },
+    { label: 'Yently Kids', children: [
+      { label: 'Math', children: [
+        { label: 'Kids Math Passes', table: 'kids_math_shops' },
+        { label: 'Kids Math Approvals', table: 'kids_math_approvals' },
+        { label: 'Kids Math Orders', table: 'kids_math_orders' },
+      ] },
+      { label: 'English', children: [
+        { label: 'Kids English Passes', table: 'kids_english_shops' },
+        { label: 'Kids English Approvals', table: 'kids_english_approvals' },
+        { label: 'Kids English Orders', table: 'kids_english_orders' },
+      ] },
+      { label: 'Arabic', children: [
+        { label: 'Kids Arabic Passes', table: 'kids_arabic_shops' },
+        { label: 'Kids Arabic Approvals', table: 'kids_arabic_approvals' },
+        { label: 'Kids Arabic Orders', table: 'kids_arabic_orders' },
+      ] },
+      { label: 'French', children: [
+        { label: 'Kids French Passes', table: 'kids_french_shops' },
+        { label: 'Kids French Approvals', table: 'kids_french_approvals' },
+        { label: 'Kids French Orders', table: 'kids_french_orders' },
+      ] },
+      { label: 'Spanish', children: [
+        { label: 'Kids Spanish Passes', table: 'kids_spanish_shops' },
+        { label: 'Kids Spanish Approvals', table: 'kids_spanish_approvals' },
+        { label: 'Kids Spanish Orders', table: 'kids_spanish_orders' },
+      ] },
+      { label: 'Science', children: [
+        { label: 'Kids Science Passes', table: 'kids_science_shops' },
+        { label: 'Kids Science Approvals', table: 'kids_science_approvals' },
+        { label: 'Kids Science Orders', table: 'kids_science_orders' },
+      ] },
+      { label: 'Geography', children: [
+        { label: 'Kids Geography Passes', table: 'kids_geography_shops' },
+        { label: 'Kids Geography Approvals', table: 'kids_geography_approvals' },
+        { label: 'Kids Geography Orders', table: 'kids_geography_orders' },
+      ] },
+      { label: 'Coding', children: [
+        { label: 'Kids Coding Passes', table: 'kids_coding_shops' },
+        { label: 'Kids Coding Approvals', table: 'kids_coding_approvals' },
+        { label: 'Kids Coding Orders', table: 'kids_coding_orders' },
+      ] },
+      { label: 'Reading', children: [
+        { label: 'Kids Reading Passes', table: 'kids_reading_shops' },
+        { label: 'Kids Reading Approvals', table: 'kids_reading_approvals' },
+        { label: 'Kids Reading Orders', table: 'kids_reading_orders' },
+      ] },
+    ] },
     { label: 'Add-ons', children: [
       { label: 'TV Gallery Orders', table: 'tv_gallery_orders' },
       { label: 'Live Chat Orders', table: 'live_chat_orders' },

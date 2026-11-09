@@ -1,6 +1,6 @@
 # AutoFly — Cars Selling + Flights Reservations
 
-Simple React site combining ideas from Carvana (cars) and CheapFareGuru (flights).
+Simple React site for selling cars and booking flights.
 
 ## Features
 - **Cars tab**: browse sample inventory, filter by make/price, "Sell your car" instant-offer form, "Request a car" inquiry form

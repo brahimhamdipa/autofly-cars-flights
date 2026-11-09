@@ -80,9 +80,13 @@ export default async function middleware(request) {
   try {
     const url = new URL(request.url)
     const path = url.pathname.replace(/^\/+|\/+$/g, '')
-    // Root, or a file at the root (favicon, robots, …).
-    if (!path || path.includes('.')) return next()
+    if (!path) return next()
     const parts = path.split('/')
+    // A file at the root (favicon.ico, robots.txt, …) — not a clean
+    // link. Only checked for single-segment paths: a clean link's
+    // own files (/demo-pos/app.js) always contain a dot in the file
+    // name, so they must not be skipped here.
+    if (parts.length === 1 && parts[0].includes('.')) return next()
     const first = parts[0].toLowerCase()
     if (KNOWN.has(first)) return next()
     const slug = first.replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '')

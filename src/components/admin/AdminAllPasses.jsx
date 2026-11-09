@@ -5,7 +5,7 @@ import { supabase } from '../../lib/supabaseClient'
 // All Passes: every login the admin has handed out, in one place —
 // the link, the username, the password, who uses it, and the note.
 // Grouped by area (Stores, Diner, POS, Dealer, Employee, Bodyshop,
-// Yently Kids, Barbers, Websites, Chat), with a search box over everything.
+// Yently Kids, Barbers, Websites, Chat, Clean Links), with a search box over everything.
 // Passwords show readable here BY DESIGN, like everywhere else in
 // Admin — this page is owner-only, and the whole point of it is that
 // the admin can see what he gave out.
@@ -37,7 +37,10 @@ import { supabase } from '../../lib/supabaseClient'
 // is created. A completely NEW kind of pass (a new system with its own
 // table) needs one small addition here: one more map in the `all`
 // array below, one more entry in CREATE_SYSTEMS, and a group above
-// if it is a new group.
+// if it is a new group. Clean links are the exception: they carry no
+// username or password, so they are listed here read-only (delete
+// only) and are created from Admin → Clean Link Orders, not from
+// Add a pass.
 const GROUPS = [
   { key: 'stores', title: 'Stores' },
   { key: 'diner', title: 'Diner' },
@@ -49,6 +52,7 @@ const GROUPS = [
   { key: 'barbers', title: 'Barbers' },
   { key: 'websites', title: 'Websites' },
   { key: 'chat', title: 'Chat' },
+  { key: 'cleanlinks', title: 'Clean Links' },
 ]
 
 // The dynamic shop tables — the only rows that carry a draft and
@@ -190,7 +194,7 @@ export default function AdminAllPasses() {
       if (error) { failedGroups.push(key); return [] }
       return data || []
     }
-    const [providers, formRows, employees, passRows, intakeRows, dinerRows, shopRows, uploadRows, folderRows, posRows, dealerRows, employeeRows, bodyshopRows, kidsMathRows, kidsEnglishRows, kidsArabicRows, kidsFrenchRows, kidsSpanishRows, kidsScienceRows, kidsGeographyRows, kidsCodingRows, kidsReadingRows] = await Promise.all([
+    const [providers, formRows, employees, passRows, intakeRows, dinerRows, shopRows, uploadRows, folderRows, posRows, dealerRows, employeeRows, bodyshopRows, kidsMathRows, kidsEnglishRows, kidsArabicRows, kidsFrenchRows, kidsSpanishRows, kidsScienceRows, kidsGeographyRows, kidsCodingRows, kidsReadingRows, cleanLinkRows] = await Promise.all([
       grab('stores', supabase.from('store_providers').select('id, name')),
       grab('stores', supabase.from('providersForm').select('id, provider_id, f, u, p, comment').order('f')),
       grab('chat', supabase.from('employees').select('id, firstName, lastName')),
@@ -213,6 +217,7 @@ export default function AdminAllPasses() {
       grab('kids', supabase.from('kids_geography_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
       grab('kids', supabase.from('kids_coding_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
       grab('kids', supabase.from('kids_reading_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('cleanlinks', supabase.from('clean_links').select('id, slug, system, shop_slug').order('slug')),
     ])
     setStoreList(providers)
     setEmployeeList(employees)
@@ -274,6 +279,15 @@ export default function AdminAllPasses() {
         table: 'fPasses', id: r.id,
         link: '/' + r.formName, linkText: 'yently.com/' + r.formName,
         user: r.u, pass: r.p, passExtra: '', customer: employeeName(r.employee_id), note: r.note || '',
+      })),
+      // Clean links have no login — the link itself is the thing.
+      // Customer shows where the link points (system — shop slug).
+      // Read-only here: no edit (nothing to edit), delete only.
+      ...cleanLinkRows.map(r => ({
+        key: 'cleanlink-' + r.id, group: 'cleanlinks', kind: 'Clean Link',
+        table: 'clean_links', id: r.id,
+        link: '/' + r.slug, linkText: 'yently.com/' + r.slug,
+        user: '—', pass: '—', passExtra: '', customer: (r.system || '') + ' — ' + (r.shop_slug || ''), note: '',
       })),
     ]
     setRows(all)
@@ -548,7 +562,7 @@ export default function AdminAllPasses() {
     <div>
       <div className="hero-card">
         <h2>🔑 All Passes {total > 0 && `(${total})`}</h2>
-        <p>Every login you have handed out — the link, the username, the password, who uses it, and your note. Grouped by area; use the search to find one fast. Add, edit, delete and approve passes right here — no need to open their own tables.</p>
+        <p>Every login you have handed out — the link, the username, the password, who uses it, and your note. Grouped by area; use the search to find one fast. Add, edit, delete and approve passes right here — no need to open their own tables. Live clean links are listed under Clean Links below (view and delete only — add one from Admin → Clean Link Orders).</p>
       </div>
       <div className="form-card">
         <input placeholder="Search link, username, customer, note..." value={search} onChange={e => setSearch(e.target.value)} />
@@ -636,7 +650,8 @@ export default function AdminAllPasses() {
           <p>Delete “{deleteLabel(confirmDelete)}”?</p>
           {isShop(confirmDelete) && <p className="hint">Deleting this shop removes the whole shop — its page, its orders and bookings, and everything in it. This cannot be undone.</p>}
           {confirmDelete.table === 'upload_forms' && confirmDelete.folder && <p className="hint">Its folder “{confirmDelete.folder}” and all the pictures in it will be deleted too. This cannot be undone.</p>}
-          {!isShop(confirmDelete) && confirmDelete.table !== 'upload_forms' && <p className="hint">This login will stop working. This cannot be undone.</p>}
+          {confirmDelete.table === 'clean_links' && <p className="hint">The short link will stop working. The shop itself stays — only the link is removed. This cannot be undone.</p>}
+          {!isShop(confirmDelete) && confirmDelete.table !== 'upload_forms' && confirmDelete.table !== 'clean_links' && <p className="hint">This login will stop working. This cannot be undone.</p>}
           <div className="store-actions">
             <button type="button" className="btn-primary" onClick={doDelete} disabled={deleting}>Delete</button>
             <button type="button" className="btn-soft" onClick={() => { setConfirmDelete(null); setDeleteError('') }}>Cancel</button>
@@ -687,7 +702,7 @@ export default function AdminAllPasses() {
                               </>
                             ) : (
                               <>
-                                <button type="button" className="btn-mini" onClick={() => startEdit(r)}>✏️ Edit</button>{' '}
+                                {r.table !== 'clean_links' && (<><button type="button" className="btn-mini" onClick={() => startEdit(r)}>✏️ Edit</button>{' '}</>)}
                                 <button type="button" className="btn-mini" onClick={() => { setConfirmDelete(r); setDeleteError('') }}>🗑 Delete</button>
                                 {isShop(r) && (
                                   r.draftStatus === 'pending'

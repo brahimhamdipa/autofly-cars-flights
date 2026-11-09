@@ -143,7 +143,7 @@ export default function App() {
         </div>
         <div className="header-right">
           <nav>
-            <button className={inBusiness ? 'active' : ''} onClick={() => go('business-hub')}>Business Systems</button>
+            <button className={inBusiness ? 'active' : ''} onClick={() => go('business-hub')}>Systems</button>
             <button className={GROCERY_TABS.includes(tab) ? 'active' : ''} onClick={() => go('products')}>Shop</button>
             <button className={inCars ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
             <button className={inFlights ? 'active' : ''} onClick={() => go('flights')}>Flights</button>

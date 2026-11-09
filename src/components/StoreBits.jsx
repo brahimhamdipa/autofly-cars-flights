@@ -149,7 +149,7 @@ export function VariantMatrix({ rows, onChange }) {
         </div>
       ))}
       {missing.length > 0 && (
-        <p className="hint">Pick a {missing.join(' and ')} above to add this to your cart.</p>
+        <p className="hint">{'Pick a ' + missing.join(' and ') + ' above to add this to your cart.'}</p>
       )}
     </div>
   )

@@ -62,7 +62,7 @@ export default function KidsHubPage({ go }) {
 
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Bundle &amp; save</h3>
-        <p>2 subjects 10% off, 3 subjects 15% off, 4+ subjects 20% off — applied automatically in My Cart, no code needed. Kids subjects count together with Business Systems plans.</p>
+        <p>2 subjects 10% off, 3 subjects 15% off, 4+ subjects 20% off — your saving is applied automatically, no code needed. Kids subjects count together with Business Systems plans.</p>
         <button onClick={() => go && go('business-cart')}>Go to My Cart</button>
       </div>
     </div>

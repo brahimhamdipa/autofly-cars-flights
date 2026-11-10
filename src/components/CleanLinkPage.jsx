@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useBusinessCart, CLEAN_PLAN_KEY, CLEAN_PLAN_PRICE } from '../lib/BusinessCartContext'
 import { insertCleanLinkOrder, saveCleanLinkMeta } from '../lib/cleanLinkData'
 import { BusinessTopBar } from './BusinessMenu'
@@ -39,6 +39,38 @@ const SYSTEMS = [
 
 function normSlug(v) {
   return String(v || '').toLowerCase().replace(/[^a-z0-9-]+/g, '').replace(/^-+|-+$/g, '')
+}
+
+// Tiny "?" help buttons beside each field, same as the Store Setup and
+// Direct Upload pages: tap to open a short explanation under the field,
+// tap again or anywhere else to close. The popups never show link
+// patterns or code names — they say "the word Yently gave you".
+const HELP = {
+  name: 'Your own name — the person asking for a clean link. Yently uses it to know who the request is from.',
+  business: 'The name of your store, restaurant, school or business — the name customers know you by.',
+  email: 'Your email address — the one you actually read. Yently sends the answer here: whether your clean link is ready, or what to fix if the name you want is taken.',
+  phone: 'Your phone number, so Yently can reach you quickly if something about your request needs a word.',
+  system: 'Pick the kind of page your clean link is for. Restaurant is your restaurant page, POS is your till page, Barbershop your barber page, Dealer, Employee and Bodyshop the same idea — and Kids is one of the nine school subjects, pick the subject.',
+  shopSlug: 'The word Yently gave you for your page — it is in the email with your page link. For Cars, type your seller username instead. Small letters only, no spaces — capitals and spaces are removed for you.',
+  cleanSlug: 'The short name you want in your new clean link — the word after yently.com/. Small letters only, no spaces, and it must not be a name somebody else already has. If it is taken, Yently will tell you and you can pick another.',
+  message: 'Anything else that helps — you can leave it empty. For example your shop’s current link, or a second choice of name if your first one is taken.',
+}
+
+function Help({ text }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [open])
+  return (
+    <span className="help" ref={ref}>
+      <button type="button" className="help-btn" aria-label="Help" onClick={() => setOpen((o) => !o)}>?</button>
+      {open && <span className="help-pop">{text}</span>}
+    </span>
+  )
 }
 
 export default function CleanLinkPage({ go }) {
@@ -136,27 +168,51 @@ export default function CleanLinkPage({ go }) {
         <a href="/demo-chat" target="_blank" rel="noreferrer" style={{ display: 'inline-block', background: '#2563eb', color: '#fff', padding: '12px 22px', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Open yently.com/demo-chat</a>
       </div>
 
-      <form className="form-card wide" onSubmit={handleSubmit}>
+      <form className="form-card wide direct-help" onSubmit={handleSubmit}>
         <h3>Get your clean link</h3>
         <div className="row">
-          <input required placeholder="Your name" value={form.name} onChange={set('name')} />
-          <input required placeholder="Business name" value={form.business} onChange={set('business')} />
+          <div className="field">
+            <span className="field-label">Your name <Help text={HELP.name} /></span>
+            <input required placeholder="Your name" value={form.name} onChange={set('name')} />
+          </div>
+          <div className="field">
+            <span className="field-label">Business name <Help text={HELP.business} /></span>
+            <input required placeholder="Business name" value={form.business} onChange={set('business')} />
+          </div>
         </div>
         <div className="row">
-          <input required placeholder="Email" type="email" value={form.email} onChange={set('email')} />
-          <input required placeholder="Phone" value={form.phone} onChange={set('phone')} />
+          <div className="field">
+            <span className="field-label">Email <Help text={HELP.email} /></span>
+            <input required placeholder="Email" type="email" value={form.email} onChange={set('email')} />
+          </div>
+          <div className="field">
+            <span className="field-label">Phone <Help text={HELP.phone} /></span>
+            <input required placeholder="Phone" value={form.phone} onChange={set('phone')} />
+          </div>
         </div>
         <div className="row">
-          <select required value={form.system} onChange={set('system')}>
-            <option value="">Which system is your shop on?</option>
-            {SYSTEMS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
-          </select>
-          <input required placeholder="Your page name on Yently (e.g. your-shop)" value={form.shop_slug} onChange={set('shop_slug')} />
+          <div className="field">
+            <span className="field-label">Which system is your page on? <Help text={HELP.system} /></span>
+            <select required value={form.system} onChange={set('system')}>
+              <option value="">Which system is your page on?</option>
+              {SYSTEMS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
+            </select>
+          </div>
+          <div className="field">
+            <span className="field-label">Your page name on Yently <Help text={HELP.shopSlug} /></span>
+            <input required placeholder="Your page name on Yently (e.g. your-shop)" value={form.shop_slug} onChange={set('shop_slug')} />
+          </div>
         </div>
         <div className="row">
-          <input required placeholder="The clean name you want (e.g. myrestaurant)" value={form.clean_slug} onChange={set('clean_slug')} />
+          <div className="field">
+            <span className="field-label">The clean name you want <Help text={HELP.cleanSlug} /></span>
+            <input required placeholder="The clean name you want (e.g. myrestaurant)" value={form.clean_slug} onChange={set('clean_slug')} />
+          </div>
         </div>
-        <textarea className="big-message" placeholder="Anything else that helps (optional) — your shop's current link, a second choice of name, anything" value={form.message} onChange={set('message')} />
+        <div className="field">
+          <span className="field-label">Message (optional) <Help text={HELP.message} /></span>
+          <textarea className="big-message" placeholder="Anything else that helps (optional) — your shop's current link, a second choice of name, anything" value={form.message} onChange={set('message')} />
+        </div>
         <button type="submit" disabled={busy}>Send request</button>
         {status && <p className="status">{status}</p>}
       </form>

@@ -69,6 +69,10 @@ export const CLEAN_PLAN_KEY = 'clean:website'
 export const CLEAN_PLAN_NAME = 'Clean Link'
 export const CLEAN_PLAN_PRICE = 2
 
+export const DIRECT_PLAN_KEY = 'direct:website'
+export const DIRECT_PLAN_NAME = 'Direct Upload'
+export const DIRECT_PLAN_PRICE = 5
+
 export const KIDS_MATH_PLAN_KEY = 'kids-math'
 export const KIDS_MATH_PLAN_NAME = 'Kids Math page'
 export const KIDS_MATH_PLAN_PRICE = 10
@@ -105,7 +109,7 @@ export const KIDS_READING_PLAN_KEY = 'kids-reading'
 export const KIDS_READING_PLAN_NAME = 'Kids Reading page'
 export const KIDS_READING_PLAN_PRICE = 10
 
-// Single source of truth for the nineteen plans, keyed by plan key.
+// Single source of truth for the twenty plans, keyed by plan key.
 export const BUSINESS_PLANS = {
   [RESTAURANT_PLAN_KEY]: { key: RESTAURANT_PLAN_KEY, name: RESTAURANT_PLAN_NAME, price: RESTAURANT_PLAN_PRICE },
   [POS_PLAN_KEY]: { key: POS_PLAN_KEY, name: POS_PLAN_NAME, price: POS_PLAN_PRICE },
@@ -117,6 +121,7 @@ export const BUSINESS_PLANS = {
   [TV_PLAN_KEY]: { key: TV_PLAN_KEY, name: TV_PLAN_NAME, price: TV_PLAN_PRICE },
   [CHAT_PLAN_KEY]: { key: CHAT_PLAN_KEY, name: CHAT_PLAN_NAME, price: CHAT_PLAN_PRICE },
   [CLEAN_PLAN_KEY]: { key: CLEAN_PLAN_KEY, name: CLEAN_PLAN_NAME, price: CLEAN_PLAN_PRICE },
+  [DIRECT_PLAN_KEY]: { key: DIRECT_PLAN_KEY, name: DIRECT_PLAN_NAME, price: DIRECT_PLAN_PRICE },
   [KIDS_MATH_PLAN_KEY]: { key: KIDS_MATH_PLAN_KEY, name: KIDS_MATH_PLAN_NAME, price: KIDS_MATH_PLAN_PRICE },
   [KIDS_ENGLISH_PLAN_KEY]: { key: KIDS_ENGLISH_PLAN_KEY, name: KIDS_ENGLISH_PLAN_NAME, price: KIDS_ENGLISH_PLAN_PRICE },
   [KIDS_ARABIC_PLAN_KEY]: { key: KIDS_ARABIC_PLAN_KEY, name: KIDS_ARABIC_PLAN_NAME, price: KIDS_ARABIC_PLAN_PRICE },
@@ -128,7 +133,7 @@ export const BUSINESS_PLANS = {
   [KIDS_READING_PLAN_KEY]: { key: KIDS_READING_PLAN_KEY, name: KIDS_READING_PLAN_NAME, price: KIDS_READING_PLAN_PRICE },
 }
 
-// Bundle discount — pure math, no new state. All nineteen plans count:
+// Bundle discount — pure math, no new state. All twenty plans count:
 // 2 plans in the cart = 10% off the monthly total, 3 plans = 15%,
 // 4 or more = 20%. The discount is cart-level display only: each
 // order row still keeps its plan's list price (see businessData.js),

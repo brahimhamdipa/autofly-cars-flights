@@ -182,6 +182,11 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
   // flow), a row = render the public template page instead.
   const [barberDomain, setBarberDomain] = useState(null)
   const [uploadForm, setUploadForm] = useState(false)
+  // Does a store form exist for this word? null = unknown (or the check
+  // failed) — fail open to the login, so a bad connection never locks a
+  // real store owner out. false = no such form, show the Yently
+  // not-found page instead of the Store Setup login.
+  const [providerForm, setProviderForm] = useState(null)
   const [slugChecking, setSlugChecking] = useState(true)
 
   const [status, setStatus] = useState('')
@@ -192,12 +197,14 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
     Promise.all([
       loadBarberDomain(slug).catch(() => null),
       supabase.rpc('upload_form_exists', { p_f: slug }).then(({ data }) => !!data).catch(() => false),
-    ]).then(([d, isUpload]) => {
+      supabase.rpc('provider_form_exists', { p_f: slug }).then(({ data }) => !!data).catch(() => null),
+    ]).then(([d, isUpload, isProvider]) => {
       setBarberDomain(d)
       setUploadForm(isUpload)
+      setProviderForm(isProvider)
       // The template and upload pages need no categories — skip those
       // loads when this slug is one of them.
-      if (!d && !isUpload) {
+      if (!d && !isUpload && isProvider !== false) {
         loadItemCategories().then(setCategories).catch(() => {})
         loadSubCategories().then(setSubcats).catch(() => {})
       }
@@ -369,6 +376,23 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
   }
   if (uploadForm) {
     return <UploadFormPage slug={slug} goBack={goBack} go={go} />
+  }
+  // No barber page, no upload form, no store form for this word — the
+  // link itself doesn't exist. Say so plainly, as Yently, instead of
+  // showing a Store Setup login for a form that was never made.
+  if (providerForm === false) {
+    return (
+      <div>
+        <div className="hero-card" style={{ textAlign: 'center' }}>
+          {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
+          <h2>This link doesn't exist</h2>
+          <p>We couldn't find anything at <b>yently.com/{slug}</b>. The link may have been typed wrong, or the page may have been removed.</p>
+          <p>If a business sent you this link, ask them to check it and send it again.</p>
+          <button onClick={() => { window.location.href = '/' }}>Go to Yently home</button>
+          <p className="hint" style={{ marginTop: 16 }}>Yently — Everything you need, gently in one place.</p>
+        </div>
+      </div>
+    )
   }
   if (authed?.kind === 'employee') {
     return <EmployeeChatView creds={authed.creds} employee={authed.employee} goBack={goBack} />

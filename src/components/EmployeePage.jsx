@@ -53,6 +53,12 @@ export default function EmployeePage({ go }) {
         <p>Your employees log their time from any phone — clock in, clock out, and every hour is recorded for the whole team to see.</p>
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>🎥 Watch how it works — 2 minutes</h3>
+        <p>See what you get, how to get it, and how to use it — a quick video guide for team owners.</p>
+        <video controls preload="metadata" poster="/videos/employee-guide-poster.jpg" src="/videos/employee-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+      </div>
+
       <div className="hero-card">
         <h3>What your team gets</h3>
         <ul>

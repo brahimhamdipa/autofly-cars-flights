@@ -57,6 +57,7 @@ export default function BodyshopPage({ go }) {
         <h3>🎥 Watch how it works — 2 minutes</h3>
         <p>See what you get, how to get it, and how to use it — a quick video guide for bodyshop owners.</p>
         <video controls preload="metadata" poster="/videos/bodyshop-guide-poster.jpg" src="/videos/bodyshop-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+        <p style={{ marginTop: 10 }}>Prefer to read it? <a href="/guides/bodyshop-guide.pdf" target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontWeight: 700 }}>Download the step-by-step guide (PDF)</a> — from buying it to your first estimate.</p>
       </div>
 
       <div className="hero-card">

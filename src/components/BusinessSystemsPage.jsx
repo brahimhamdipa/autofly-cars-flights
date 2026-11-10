@@ -64,6 +64,7 @@ export default function BusinessSystemsPage({ go }) {
         <h4 style={{ margin: '14px 0 6px' }}>🎥 What are Add-Ons? — 2 minutes</h4>
         <p className="hint" style={{ margin: '0 0 10px' }}>A quick video guide — the add-ons explained, with TV Gallery and the others as examples.</p>
         <video controls preload="metadata" poster="/videos/addons-guide-poster.jpg" src="/videos/addons-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+        <p style={{ marginTop: 10 }}>Prefer to read it? <a href="/guides/addons-guide.pdf" target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontWeight: 700 }}>Download the step-by-step guide (PDF)</a> — TV Gallery, Live Chat and Clean Link, explained.</p>
         {ADDONS.map((s, i) => (
           <SystemRow key={s.tab} item={s} first={i === 0} go={go} />
         ))}

@@ -238,6 +238,14 @@ label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-w
 .variant-opt.picked { border-color: #2563eb; background: #dbeafe; font-weight: 700; }
 .variant-opt.disabled { opacity: 0.45; cursor: not-allowed; background: #f3f4f6; }
 .variant-opt input { accent-color: #2563eb; margin: 0; }
+/* Compact shop matrix: small thin check boxes, no gaps — the whole
+   section stays slim on the item page (admin matrix untouched). */
+.variant-matrix.variant-compact { gap: 4px; margin: 4px 0 2px; padding: 6px 8px; }
+.variant-matrix.variant-compact .variant-dim-label { font-size: 12px; margin-bottom: 2px; }
+.variant-matrix.variant-compact .variant-options { gap: 4px; }
+.variant-matrix.variant-compact .variant-opt { padding: 2px 7px; border-width: 1px; border-radius: 6px; font-size: 12px; gap: 4px; }
+.variant-matrix.variant-compact .variant-opt input { width: 13px; height: 13px; }
+.variant-matrix.variant-compact .hint { margin: 2px 0 0; font-size: 12px; }
 
 /* Barcode scanner overlay: fullscreen camera view + Close. */
 .scan-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 300; display: flex; align-items: center; justify-content: center; padding: 16px; }

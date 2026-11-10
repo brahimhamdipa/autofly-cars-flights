@@ -9,7 +9,7 @@ import { BusinessTopBar } from './BusinessMenu'
 // has its own. Bundle tiers (2 plans 10% off, 3 plans 15% off, 4+
 // plans 20% off) apply automatically in My Cart.
 const SYSTEMS = [
-  { name: 'Restaurant', price: 40, blurb: 'Your own ordering page — menu, live kitchen, and orders.', tab: 'restaurants' },
+  { name: 'Restaurant', price: 40, blurb: 'Your own ordering page — menu, live kitchen, and orders.', tab: 'restaurants', video: true },
   { name: 'POS', price: 50, blurb: 'Your own register — stock, sales, and receipts.', tab: 'pos' },
   { name: 'Barber', price: 15, blurb: 'Your own booking page — live queue and a stopwatch for every cut.', tab: 'barbers' },
   { name: 'Dealer', price: 20, blurb: 'Your own dealer page — vehicles, test drives, and trade-ins.', tab: 'dealer' },
@@ -30,6 +30,11 @@ function SystemRow({ item, first, go }) {
       <div>
         <b>{item.name} — ${item.price}/month</b>
         <p style={{ margin: '4px 0 0' }}>{item.blurb}</p>
+        {item.video && (
+          <p style={{ margin: '6px 0 0' }}>
+            <a href="#" onClick={(e) => { e.preventDefault(); if (go) go('restaurants') }} style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>▶ Watch the video — 2 min</a>
+          </p>
+        )}
       </div>
       <button type="button" onClick={() => go && go(item.tab)} style={{ flexShrink: 0 }}>See it →</button>
     </div>

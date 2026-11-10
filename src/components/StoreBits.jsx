@@ -130,7 +130,7 @@ export function VariantMatrix({ rows, onChange }) {
   const missing = dims.filter(d => picks[d.key] === undefined || picks[d.key] === null).map(d => d.label.toLowerCase())
   if (list.length < 2) return null
   return (
-    <div className="variant-matrix">
+    <div className="variant-matrix variant-compact">
       {dims.map(d => (
         <div key={d.key} className="variant-dim">
           <span className="variant-dim-label">{d.label}</span>

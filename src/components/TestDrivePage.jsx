@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import CarsMenu from './CarsMenu'
 import { loadCars, fmtNum, submitCarInquiry } from './CarSection'
 
@@ -71,9 +71,19 @@ function CarPicker({ cars, value, onChange }) {
 }
 
 export default function TestDrivePage({ go }) {
-  const cars = useMemo(loadCars, [])
+  const [cars, setCars] = useState([])
   const [form, setForm] = useState({ car_name: '', name: '', email: '', phone: '', message: '' })
   const [status, setStatus] = useState('')
+
+  // Car names now come from the database (loadCars is async since the
+  // 2026-11-09 rebuild); the picker simply stays empty until they arrive.
+  useEffect(() => {
+    let alive = true
+    loadCars()
+      .then(list => { if (alive) setCars(list) })
+      .catch(() => { if (alive) setCars([]) })
+    return () => { alive = false }
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()

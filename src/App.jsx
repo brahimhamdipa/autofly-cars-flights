@@ -3,6 +3,7 @@ import CarSection from './components/CarSection'
 import FlightSection from './components/FlightSection'
 import AboutPage from './components/AboutPage'
 import SellPage from './components/SellPage'
+import CarSellerFormPage from './components/CarSellerFormPage'
 import TestDrivePage from './components/TestDrivePage'
 import ContactPage from './components/ContactPage'
 import FlightReservationPage from './components/FlightReservationPage'
@@ -130,7 +131,7 @@ export default function App() {
   const KIDS_TABS = ['kids-hub', 'kids-math', 'kids-english', 'kids-arabic', 'kids-french', 'kids-spanish', 'kids-science', 'kids-geography', 'kids-coding', 'kids-reading', 'kids-books']
   const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes'].includes(tab) || KIDS_TABS.includes(tab)
   const inBusiness = BUSINESS_TABS.includes(tab)
-  const inCars = ['cars', 'sell', 'testdrive', 'contact'].includes(tab)
+  const inCars = ['cars', 'sell', 'testdrive', 'contact', 'car-seller'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
   return (
@@ -175,6 +176,7 @@ export default function App() {
       <main className="main">
         {tab === 'cars' && <CarSection go={go} />}
         {tab === 'sell' && <SellPage go={go} />}
+        {tab === 'car-seller' && <CarSellerFormPage go={go} />}
         {tab === 'testdrive' && <TestDrivePage go={go} />}
         {tab === 'contact' && <ContactPage go={go} />}
         {tab === 'flights' && <FlightSection go={go} />}

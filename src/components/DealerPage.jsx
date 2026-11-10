@@ -53,6 +53,12 @@ export default function DealerPage({ go }) {
         <p>Customers browse your cars, book a test drive, and offer their own car — all from any phone. You see every request the moment it comes in.</p>
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>🎥 Watch how it works — 2 minutes</h3>
+        <p>See what you get, how to get it, and how to use it — a quick video guide for dealers.</p>
+        <video controls preload="metadata" poster="/videos/dealer-guide-poster.jpg" src="/videos/dealer-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+      </div>
+
       <div className="hero-card">
         <h3>What your dealership gets</h3>
         <ul>

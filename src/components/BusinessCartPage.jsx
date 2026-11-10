@@ -22,6 +22,8 @@ const PLAN_HINTS = {
   'b:website': 'Your own sample website, for your business.',
   'tv:website': 'Your own TV gallery page + up to 7 pictures, for your screens.',
   'chat:website': 'Your own chat bubble + every message by email, for your website.',
+  'clean:website': 'A short, clean link for your system — your own yently.com address.',
+  'direct:website': 'Your uploads go live straight away — no waiting for approval.',
 }
 
 export default function BusinessCartPage({ go }) {

@@ -22,6 +22,7 @@ const ADDONS = [
   { name: 'TV Gallery', price: 2, blurb: 'Your pictures on the big screen — slideshow and one-picture display.', tab: 'tv-gallery' },
   { name: 'Live Chat', price: 3, blurb: 'A chat bubble on your website — every message to your email.', tab: 'live-chat' },
   { name: 'Clean Link', price: 2, blurb: 'Your shop at a clean address — yently.com/your-name.', tab: 'clean-link' },
+  { name: 'Direct Upload', price: 5, blurb: 'Your uploads go live straight away — no waiting for approval.', tab: 'direct-upload' },
 ]
 
 function SystemRow({ item, first, go }) {

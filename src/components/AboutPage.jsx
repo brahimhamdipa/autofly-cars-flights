@@ -16,7 +16,7 @@ export default function AboutPage() {
         <p>1. Pick what you need — a system for your business, a car, a flight, or something from a store.<br />
         2. Fill out one simple form.<br />
         3. We reply by email within 24 hours. Every message goes straight to a real person on our team.</p>
-        <p className="hint">Business Systems, Shop, Cars &amp; Flights — All in One Place. That's the promise, and we're just getting started.</p>
+        <p className="hint">Everything you need, gently in one place. That's the promise, and we're just getting started.</p>
       </div>
     </div>
   )

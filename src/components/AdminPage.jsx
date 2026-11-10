@@ -20,6 +20,7 @@ import AdminFolderPasses from './admin/AdminFolderPasses'
 import AdminRestaurantPages from './admin/AdminRestaurantPages'
 import AdminAllPasses from './admin/AdminAllPasses'
 import AdminCars from './admin/AdminCars'
+import AdminDirectUpload from './admin/AdminDirectUpload'
 
 // Five numbered menus, top left. A leaf has a section (an AdminPage
 // section) or a table (a Manage table, opened inside the Manage
@@ -132,6 +133,8 @@ const MENUS = [
       { label: 'TV Gallery Orders', table: 'tv_gallery_orders' },
       { label: 'Live Chat Orders', table: 'live_chat_orders' },
       { label: 'Clean Link Orders', table: 'clean_link_orders' },
+      { label: 'Direct Upload Orders', table: 'direct_upload_orders' },
+      { label: 'Direct Upload', section: 'direct-upload' },
     ] },
     { label: 'Barbers', children: [
       { label: 'Barber Passes', table: 'barbershop_shops' },
@@ -352,6 +355,7 @@ export default function AdminPage() {
       </div>
       {section === 'products' && <AdminProducts />}
       {section === 'cars' && <AdminCars />}
+      {section === 'direct-upload' && <AdminDirectUpload />}
       {section === 'orders' && <AdminOrders />}
       {section === 'submissions' && <AdminSubmissions />}
       {section === 'store-add' && <AdminStoreAdd />}

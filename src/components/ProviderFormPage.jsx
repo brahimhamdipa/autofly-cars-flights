@@ -52,9 +52,9 @@ const HELP = {
   pictures: 'Tap Upload pictures and pick photos from your phone or computer — you can pick more than one at once. The first picture is the main one customers see. Clear, bright photos sell better. Tap the ✕ next to a picture to remove it.',
   addBulk: 'Adds the item above to your list. It is not sent yet — it just joins the list below. Fill in the next item the same way.',
   batchList: 'Everything in the list so far. Tap Remove next to an item to take it out of the list.',
-  download: 'Saves your list as a file (data.json) on your phone or computer — a copy to keep, or to send to someone else to finish.',
-  loadFile: 'Loads a list from a data.json file — for example one you downloaded before, or one someone made for you. It replaces the list you have now.',
-  uploadBatch: 'Sends the whole list to Yently for approval at once. The items show on your store once they are approved.',
+  download: 'Saves your list as a file on your phone or computer — a copy to keep, or to send to someone else to finish.',
+  loadFile: 'Loads a list from a list file — for example one you downloaded before, or one someone made for you. It replaces the list you have now.',
+  uploadBatch: 'Sends the whole list to Yently for approval at once. The items show on your store once they are approved — or straight away if your Direct Upload is on.',
 }
 
 // The "?" button next to a field label. Tap once to open the
@@ -254,6 +254,7 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
       p_pickup: item.pickup,
       p_stock: item.stock === '' ? null : Number(item.stock),
       p_pics: item.pics,
+      p_barCode: (item.barCode || '').trim() || null,
     })
     setSubmitting(false)
     if (error) {
@@ -265,7 +266,7 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
       }
       return
     }
-    setStatus(`✓ Item sent for approval (id ${data.item_id}). It will appear on the store once Yently approves it. Submit another one below, or close this page when you are done.`)
+    setStatus(`✓ Item sent for approval (id ${data.item_id}). It will appear on the store once Yently approves it — or straight away if your Direct Upload is on. Submit another one below, or close this page when you are done.`)
     setItem(blankItem())
     try {
       await supabase.functions.invoke('send-notification', {
@@ -306,7 +307,7 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
     const blob = new Blob([JSON.stringify(batchItems, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
-    a.href = url; a.download = 'data.json'; a.click()
+    a.href = url; a.download = 'my-items.json'; a.click()
     URL.revokeObjectURL(url)
   }
 
@@ -346,7 +347,7 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
       return
     }
     setBatchItems([])
-    setBatchStatus(`✓ Sent ${data.items} item${data.items === 1 ? '' : 's'} for approval (batch #${data.batch_id}). They will appear on the store once Yently approves them.`)
+    setBatchStatus(`✓ Sent ${data.items} item${data.items === 1 ? '' : 's'} for approval (batch #${data.batch_id}). They will appear on the store once Yently approves them — or straight away if your Direct Upload is on.`)
     try {
       await supabase.functions.invoke('send-notification', {
         body: {
@@ -403,7 +404,7 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
         {goBack && <button className="link-btn" onClick={goBack}>← Back</button>}
         <h2>🏪 Store Setup</h2>
         {authed
-          ? <p>Add items for <b>{authed.providerName}</b> — each submit sends one item for approval; it appears on the store once Yently approves it.</p>
+          ? <p>Add items for <b>{authed.providerName}</b> — each submit sends one item for approval; it appears on the store once Yently approves it — or straight away if your Direct Upload is on.</p>
           : <p>Log in with the username and password Yently gave you for this form.</p>}
       </div>
 
@@ -432,7 +433,7 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
 
           <form onSubmit={submitItem} className="form-card" id="one-item" style={{ scrollMarginTop: 130 }}>
             <h3>1 — Add one item</h3>
-            <p className="hint">Fill in the item and tap Submit item. It goes to Yently for approval first, and shows on your store once it is approved. One submit = one item.</p>
+            <p className="hint">Fill in the item and tap Submit item. It goes to Yently for approval first, and shows on your store once it is approved — or straight away if your Direct Upload is on. One submit = one item.</p>
             <ItemFields item={item} setItem={setItem} categories={categories} subcats={subcats} storeName={authed.providerName} />
             <button type="submit" disabled={submitting}>{submitting ? 'Saving...' : 'Submit item'}</button>
             {status && <p className="status">{status}</p>}
@@ -440,7 +441,7 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
 
           <div className="form-card" id="bulk" style={{ scrollMarginTop: 130 }}>
             <h3>2 — Add many items at once</h3>
-            <p className="hint">Faster when you have a lot of items. Fill in items one by one — they are kept in a list in this browser, so you can take your time — then send the whole list for approval at once. The list stays saved in this browser even if you close the page and come back.</p>
+            <p className="hint">Faster when you have a lot of items. Fill in items one by one — they are kept in a list in this browser, so you can take your time — then send the whole list for approval at once (or straight away if your Direct Upload is on). The list stays saved in this browser even if you close the page and come back.</p>
             <form onSubmit={addBulkItem} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <ItemFields item={bulkItem} setItem={setBulkItem} categories={categories} subcats={subcats} storeName={authed.providerName} />
               {batchItems.length > 0 && (
@@ -459,12 +460,12 @@ export default function ProviderFormPage({ slug, goBack, onAuthedChange, go }) {
                     <Help text={HELP.addBulk} />
                   </span>
                   <span className="field-row">
-                    <button type="button" onClick={downloadBatch} disabled={batchItems.length === 0}>Download data.json</button>
+                    <button type="button" onClick={downloadBatch} disabled={batchItems.length === 0}>Download my list</button>
                     <Help text={HELP.download} />
                   </span>
                   <span className="field-row">
                     <label className="btn-soft" style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 16px', borderRadius: 10, cursor: 'pointer' }}>
-                      Load a data.json file
+                      Load a list file
                       <input type="file" accept=".json,application/json" style={{ display: 'none' }} onChange={loadBatchFile} />
                     </label>
                     <Help text={HELP.loadFile} />

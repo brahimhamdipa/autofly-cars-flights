@@ -3,16 +3,19 @@ import { useBusinessCart } from '../lib/BusinessCartContext'
 
 // Shared submenu for ALL Business Systems pages — same look and
 // behavior as the Shopping / Cars / Flights menus (white circular
-// button, plain list). Ten links: My Cart (with the live
+// button, plain list). Seven top rows: My Cart (with the live
 // business-cart count), Business Systems (the hub page), Restaurant,
-// POS, Barber, Dealer, Employee, Bodyshop, then Sample Website, and
-// an Add-ons branch that opens
-// in place (like the Admin menu branches) with the TV Gallery,
-// Live Chat and Clean Link links, indented like sub-items. One cart and one submenu for the whole area,
-// because every page here sells the same kind of product: a website
-// page Yently builds for a business.
+// POS, Barber, then two branches that open in place (like the Admin
+// menu branches): "More Systems" (Dealer, Employee, Bodyshop, Sample
+// Website) and "Add-ons" (TV Gallery, Live Chat, Clean Link, Direct
+// Upload). Each branch button shows a right arrow when closed and a
+// down arrow when open, and its links are indented like sub-items,
+// same size, same plain weight — none of them bold. One cart and one
+// submenu for the whole area, because every page here sells the same
+// kind of product: a website page Yently builds for a business.
 export default function BusinessMenu({ go }) {
   const [open, setOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
   const [addonsOpen, setAddonsOpen] = useState(false)
   const ref = useRef(null)
   const { count } = useBusinessCart()
@@ -38,10 +41,19 @@ export default function BusinessMenu({ go }) {
           <button onClick={() => pick('restaurants')}>Restaurant</button>
           <button onClick={() => pick('pos')}>POS</button>
           <button onClick={() => pick('barbers')}>Barber</button>
-          <button onClick={() => pick('dealer')}>Dealer</button>
-          <button onClick={() => pick('employee')}>Employee</button>
-          <button onClick={() => pick('bodyshop')}>Bodyshop</button>
-          <button onClick={() => pick('simple-barbershop')}>Sample Website</button>
+          <button onClick={() => setMoreOpen(o => !o)}>More Systems {moreOpen ? '▾' : '▸'}</button>
+          {moreOpen && (
+            <button onClick={() => pick('dealer')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Dealer</button>
+          )}
+          {moreOpen && (
+            <button onClick={() => pick('employee')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Employee</button>
+          )}
+          {moreOpen && (
+            <button onClick={() => pick('bodyshop')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Bodyshop</button>
+          )}
+          {moreOpen && (
+            <button onClick={() => pick('simple-barbershop')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Sample Website</button>
+          )}
           <button onClick={() => setAddonsOpen(o => !o)}>Add-ons {addonsOpen ? '▾' : '▸'}</button>
           {addonsOpen && (
             <a href="/demo-tv-gallery" style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', textDecoration: 'none', borderTop: '1px solid #f1f2f5' }}>TV Gallery</a>
@@ -51,6 +63,9 @@ export default function BusinessMenu({ go }) {
           )}
           {addonsOpen && (
             <button onClick={() => pick('clean-link')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Clean Link</button>
+          )}
+          {addonsOpen && (
+            <button onClick={() => pick('direct-upload')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Direct Upload</button>
           )}
         </div>
       )}

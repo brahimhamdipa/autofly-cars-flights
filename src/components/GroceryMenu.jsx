@@ -3,7 +3,7 @@ import { useCart } from '../lib/CartContext'
 
 // Shared submenu for the whole Shopping area — same look and behavior as
 // the Cars / Flights menus. "My Cart" carries the live cart item count.
-// Four links only: My Cart, Products, Stores, Contact Us.
+// Five links only: My Cart, Products, Stores, Contact Us, Seller login.
 export default function GroceryMenu({ go }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -29,6 +29,7 @@ export default function GroceryMenu({ go }) {
           <button onClick={() => pick('products')}>Products</button>
           <button onClick={() => pick('stores')}>Stores</button>
           <button onClick={() => pick('grocery-contact')}>Contact Us</button>
+          <button onClick={() => pick('shop-seller')}>Seller login</button>
         </div>
       )}
     </div>

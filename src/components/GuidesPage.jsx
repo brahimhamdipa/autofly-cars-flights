@@ -25,6 +25,7 @@ const PRICE_GROUPS = [
       { name: 'TV Gallery', blurb: 'Your pictures on a TV screen', price: 2, tab: 'tv-gallery' },
       { name: 'Live Chat', blurb: 'Live chat on your website', price: 3, tab: 'live-chat' },
       { name: 'Clean Link', blurb: 'A short, clean link for your system', price: 2, tab: 'clean-link' },
+      { name: 'Direct Upload', blurb: 'Your uploads go live straight away — no waiting for approval', price: 5, tab: 'direct-upload' },
     ],
   },
   {
@@ -44,6 +45,7 @@ const SYSTEM_GUIDES = [
   { name: 'Employee', tab: 'employee', video: '/videos/employee-guide.mp4', length: '2:07', pdf: '/guides/employee-guide.pdf' },
   { name: 'Bodyshop', tab: 'bodyshop', video: '/videos/bodyshop-guide.mp4', length: '2:09', pdf: '/guides/bodyshop-guide.pdf' },
   { name: 'Add-Ons', tab: 'business-hub', video: '/videos/addons-guide.mp4', length: '2:15', pdf: '/guides/addons-guide.pdf' },
+  { name: 'Direct Upload', tab: 'direct-upload', video: null, length: null, pdf: null },
 ]
 
 const KIDS_GUIDES = [

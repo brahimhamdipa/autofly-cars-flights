@@ -214,13 +214,13 @@ export default function CarSellerFormPage({ go }) {
     setBatchMsg('')
     try {
       const parsed = JSON.parse(await file.text())
-      if (!Array.isArray(parsed)) { setBatchMsg('That file is not a list — a data.json file holds a list of cars in [square brackets].'); return }
+      if (!Array.isArray(parsed)) { setBatchMsg('That file is not a list — a list file holds a list of cars in [square brackets].'); return }
       const bad = parsed.filter(c => !c || typeof c !== 'object' || !String(c.name || '').trim())
       if (bad.length > 0) { setBatchMsg(`${bad.length} row(s) have no car name — every car needs a name.`); return }
       setBatch(parsed)
       setBatchMsg(`${parsed.length} car(s) loaded from the file — tap "Upload for approval" to send them.`)
     } catch {
-      setBatchMsg('Could not read that file — it must be a data.json file with a list of cars.')
+      setBatchMsg('Could not read that file — it must be a list file with a list of cars.')
     }
   }
 
@@ -249,7 +249,7 @@ export default function CarSellerFormPage({ go }) {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'data.json'
+    a.download = 'my-cars.json'
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -260,7 +260,7 @@ export default function CarSellerFormPage({ go }) {
         <CarsMenu go={go} />
         <div className="hero-card">
           <h2>Sell your cars on Yently</h2>
-          <p>Log in with the username and password Yently gave you, then add your cars — one at a time, or many at once from a data.json file. Every car is checked by Yently before it shows on the Cars page.</p>
+          <p>Log in with the username and password Yently gave you, then add your cars — one at a time, or many at once from a list file. Every car is checked by Yently before it shows on the Cars page.</p>
         </div>
         <form className="form-card wide" onSubmit={handleLogin} autoComplete="off">
           <input required placeholder="Username" autoComplete="off" value={creds.username} onChange={e => setCreds({ ...creds, username: e.target.value })} />
@@ -268,6 +268,10 @@ export default function CarSellerFormPage({ go }) {
           <button type="submit" disabled={loggingIn}>{loggingIn ? 'Checking...' : 'Log in'}</button>
           {loginMsg && <p className="status">{loginMsg}</p>}
           <p className="hint">Don't have a username yet? Ask Yently for one — the admin creates it in Admin → menu 2 → Cars → Sellers.</p>
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            <button type="button" onClick={() => go('car-seller-soon')} style={{ background: '#f5c542', color: '#161d44', fontWeight: 700 }}>Become a Yently Car Seller</button>
+            <p className="hint">Seller logins open soon — tap to see what's coming.</p>
+          </div>
         </form>
       </div>
     )
@@ -329,12 +333,12 @@ export default function CarSellerFormPage({ go }) {
       )}
 
       <div className="form-card wide">
-        <h3>Add many cars at once (data.json)</h3>
-        <p className="hint">Make a list of cars in a data.json file — one entry per car, with year, make, model, name, mileage, price, description, phone, email, and photos (a list of picture links). Load the file here, check the list, then upload it for approval.</p>
+        <h3>Add many cars at once (from a list file)</h3>
+        <p className="hint">Make a list of cars in a list file — one entry per car, with year, make, model, name, mileage, price, description, phone, email, and photos (a list of picture links). Load the file here, check the list, then upload it for approval.</p>
         <div className="row">
-          <button type="button" onClick={downloadSample}>Download an example data.json</button>
+          <button type="button" onClick={downloadSample}>Download an example list file</button>
           <label className="hint" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            Load a data.json file
+            Load a list file
             <input type="file" accept=".json,application/json" onChange={e => { const f = e.target.files && e.target.files[0]; if (f) loadBatchFile(f); e.target.value = '' }} />
           </label>
         </div>

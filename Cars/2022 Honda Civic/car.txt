@@ -1,3 +1,0 @@
-mileage: 28750
-description: Blue Civic sedan, excellent condition, backup camera, Apple CarPlay. No accidents.
-price: 2500

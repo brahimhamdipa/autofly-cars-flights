@@ -170,7 +170,7 @@ export default function App() {
           </div>
         </div>
         </div>
-        <div className="announce-bar">Yently officially opens in 2027 — business systems, cars, flights, groceries &amp; services, all in one place</div>
+        <div className="announce-bar">Yently officially opens in 2027 | Everything you need, <span className="slogan-word"><span className="slogan-g">g</span><span className="slogan-y">y</span><span className="slogan-ently">ently</span></span> in one place — business systems, cars, flights, groceries &amp; services, all in one place</div>
       </header>
       <main className="main">
         {tab === 'cars' && <CarSection go={go} />}

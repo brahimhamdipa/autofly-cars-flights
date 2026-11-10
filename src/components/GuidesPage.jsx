@@ -36,7 +36,6 @@ const PRICE_GROUPS = [
 ]
 
 // video: path under /videos/ (null = no video yet). pdf: path under /guides/
-// (null = guide coming soon). length: the video's running time, as shown.
 const SYSTEM_GUIDES = [
   { name: 'Restaurant', tab: 'restaurants', video: '/videos/restaurant-guide.mp4', length: '2:19', pdf: '/guides/restaurant-guide.pdf' },
   { name: 'POS', tab: 'pos', video: '/videos/pos-guide.mp4', length: '2:04', pdf: '/guides/pos-guide.pdf' },
@@ -144,7 +143,7 @@ export default function GuidesPage({ go }) {
 
       <div className="form-card wide">
         <h3>Videos — Yently Kids</h3>
-        <p>One short video for every subject — about a minute each. Step-by-step guides for the schools are coming soon.</p>
+        <p>One short video for every subject — about a minute each. Every subject has its own step-by-step guide — download it below.</p>
         <div style={{ overflowX: 'auto' }}>
           <table style={tableStyle}>
             <thead>

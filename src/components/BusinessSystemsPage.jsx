@@ -48,7 +48,7 @@ export default function BusinessSystemsPage({ go }) {
       <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>🏢 Business Systems</h2>
-        <p className="hero-slogan" style={{ color: '#fff' }}>Everything you need, <span className="slogan-word"><span className="slogan-g">g</span><span className="slogan-y">y</span><span className="slogan-ently">ently</span></span> in one place.</p>
+        <p style={{ fontSize: 18, color: '#f5c542' }}>Everything your business runs on, in one place.</p>
         <p>We build it, host it, and keep it running — you just use it. First month free on every plan. No setup fee.</p>
       </div>
 

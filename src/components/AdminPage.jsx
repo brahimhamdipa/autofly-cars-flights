@@ -19,12 +19,13 @@ import AdminChat from './admin/AdminChat'
 import AdminFolderPasses from './admin/AdminFolderPasses'
 import AdminRestaurantPages from './admin/AdminRestaurantPages'
 import AdminAllPasses from './admin/AdminAllPasses'
+import AdminCars from './admin/AdminCars'
 
 // Five numbered menus, top left. A leaf has a section (an AdminPage
 // section) or a table (a Manage table, opened inside the Manage
 // section) or the signout action. A branch has children and opens in
-// place when tapped — the phone-friendly pattern, no flyouts. Menus 2
-// and 3 (Cars, Flights) are empty for now and will grow later.
+// place when tapped — the phone-friendly pattern, no flyouts. Menu 3
+// (Flights) is empty for now and will grow later.
 // Labels are the admin's own names for the tables, not the database
 // table names.
 const MENUS = [
@@ -45,7 +46,9 @@ const MENUS = [
     { label: 'Add', section: 'store-add' },
     { label: 'Sign out', action: 'signout' },
   ] },
-  { n: 2, name: 'Cars', items: [] },
+  { n: 2, name: 'Cars', items: [
+    { label: 'Cars', section: 'cars' },
+  ] },
   { n: 3, name: 'Flights', items: [] },
   { n: 4, name: 'Business Systems', items: [
     { label: 'Diner', children: [
@@ -348,6 +351,7 @@ export default function AdminPage() {
         </div>
       </div>
       {section === 'products' && <AdminProducts />}
+      {section === 'cars' && <AdminCars />}
       {section === 'orders' && <AdminOrders />}
       {section === 'submissions' && <AdminSubmissions />}
       {section === 'store-add' && <AdminStoreAdd />}

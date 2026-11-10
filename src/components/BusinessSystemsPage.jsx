@@ -71,7 +71,7 @@ export default function BusinessSystemsPage({ go }) {
 
       <div className="hero-card" style={{ textAlign: 'center' }}>
         <h3>Bundle &amp; save</h3>
-        <p>2 systems 10% off, 3 systems 15% off, 4+ systems 20% off — applied automatically in My Cart, no code needed.</p>
+        <p>2 systems 10% off, 3 systems 15% off, 4+ systems 20% off — your saving is applied automatically, no code needed.</p>
         <button onClick={() => go && go('business-cart')}>Go to My Cart</button>
       </div>
     </div>

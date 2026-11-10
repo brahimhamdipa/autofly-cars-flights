@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import CarSection from './components/CarSection'
 import FlightSection from './components/FlightSection'
 import AboutPage from './components/AboutPage'
+import GuidesPage from './components/GuidesPage'
 import SellPage from './components/SellPage'
 import CarSellerFormPage from './components/CarSellerFormPage'
 import ContactPage from './components/ContactPage'
@@ -128,7 +129,7 @@ export default function App() {
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
   const BUSINESS_TABS = ['business-hub', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'clean-link', 'demo-live-chat', 'business-cart']
   const KIDS_TABS = ['kids-hub', 'kids-math', 'kids-english', 'kids-arabic', 'kids-french', 'kids-spanish', 'kids-science', 'kids-geography', 'kids-coding', 'kids-reading', 'kids-books']
-  const inMore = ['services', 'services-home', 'services-contact', 'about', 'clothes'].includes(tab) || KIDS_TABS.includes(tab)
+  const inMore = ['services', 'services-home', 'services-contact', 'about', 'guides', 'clothes'].includes(tab) || KIDS_TABS.includes(tab)
   const inBusiness = BUSINESS_TABS.includes(tab)
   const inCars = ['cars', 'sell', 'contact', 'car-seller'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
@@ -153,6 +154,7 @@ export default function App() {
                 <span className="dropdown-menu">
                   <a onClick={() => go('kids-hub')}>Yently Kids</a>
                   <a onClick={() => go('services')}>Services</a>
+                  <a onClick={() => go('guides')}>Guides</a>
                   <a onClick={() => go('about')}>About Us</a>
                 </span>
               )}
@@ -243,6 +245,7 @@ export default function App() {
         )}
         {tab === 'services-contact' && <ServicesContactPage go={go} />}
         {tab === 'about' && <AboutPage />}
+        {tab === 'guides' && <GuidesPage go={go} />}
         {tab === 'admin' && <AdminPage />}
         {tab === 'provider-form' && <ProviderFormPage slug={formSlug} goBack={goBack} onAuthedChange={setFormAuthed} go={go} />}
       </main>

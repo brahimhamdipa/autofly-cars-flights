@@ -41,6 +41,7 @@ const KNOWN = new Set([
   'assets',
   'demo-live-chat',
   'demo-tv-gallery',
+  'direct-upload',
   'pos',
   'diner',
   'barbers',

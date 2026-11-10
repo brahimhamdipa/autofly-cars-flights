@@ -10,11 +10,11 @@ import { BusinessTopBar } from './BusinessMenu'
 // plans 20% off) apply automatically in My Cart.
 const SYSTEMS = [
   { name: 'Restaurant', price: 40, blurb: 'Your own ordering page — menu, live kitchen, and orders.', tab: 'restaurants', video: true },
-  { name: 'POS', price: 50, blurb: 'Your own register — stock, sales, and receipts.', tab: 'pos' },
-  { name: 'Barber', price: 15, blurb: 'Your own booking page — live queue and a stopwatch for every cut.', tab: 'barbers' },
-  { name: 'Dealer', price: 20, blurb: 'Your own dealer page — vehicles, test drives, and trade-ins.', tab: 'dealer' },
-  { name: 'Employee', price: 20, blurb: 'Your own employee time page — log time and keep records.', tab: 'employee' },
-  { name: 'Bodyshop', price: 20, blurb: 'Your own bodyshop page — estimates, jobs, and loan cars.', tab: 'bodyshop' },
+  { name: 'POS', price: 50, blurb: 'Your own register — stock, sales, and receipts.', tab: 'pos', video: true },
+  { name: 'Barber', price: 15, blurb: 'Your own booking page — live queue and a stopwatch for every cut.', tab: 'barbers', video: true },
+  { name: 'Dealer', price: 20, blurb: 'Your own dealer page — vehicles, test drives, and trade-ins.', tab: 'dealer', video: true },
+  { name: 'Employee', price: 20, blurb: 'Your own employee time page — log time and keep records.', tab: 'employee', video: true },
+  { name: 'Bodyshop', price: 20, blurb: 'Your own bodyshop page — estimates, jobs, and loan cars.', tab: 'bodyshop', video: true },
   { name: 'Sample Website', price: 10, blurb: 'Any website, built for you — your name, logo, services, and pictures.', tab: 'simple-barbershop' },
 ]
 
@@ -32,7 +32,7 @@ function SystemRow({ item, first, go }) {
         <p style={{ margin: '4px 0 0' }}>{item.blurb}</p>
         {item.video && (
           <p style={{ margin: '6px 0 0' }}>
-            <a href="#" onClick={(e) => { e.preventDefault(); if (go) go('restaurants') }} style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>▶ Watch the video — 2 min</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); if (go) go(item.tab) }} style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>▶ Watch the video — 2 min</a>
           </p>
         )}
       </div>
@@ -61,6 +61,9 @@ export default function BusinessSystemsPage({ go }) {
       <div className="hero-card">
         <h3>Add-ons</h3>
         <p className="hint">Add one to any system — or get one on its own.</p>
+        <h4 style={{ margin: '14px 0 6px' }}>🎥 What are Add-Ons? — 2 minutes</h4>
+        <p className="hint" style={{ margin: '0 0 10px' }}>A quick video guide — the add-ons explained, with TV Gallery and the others as examples.</p>
+        <video controls preload="metadata" poster="/videos/addons-guide-poster.jpg" src="/videos/addons-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
         {ADDONS.map((s, i) => (
           <SystemRow key={s.tab} item={s} first={i === 0} go={go} />
         ))}

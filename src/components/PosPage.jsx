@@ -51,6 +51,12 @@ export default function PosPage({ go }) {
         <p>Ring up sales from any phone. Stock drops by itself, receipts are kept, and the till works on the phones you already have.</p>
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>🎥 Watch how it works — 2 minutes</h3>
+        <p>See what you get, how to get it, and how to use it — a quick video guide for store owners.</p>
+        <video controls preload="metadata" poster="/videos/pos-guide-poster.jpg" src="/videos/pos-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+      </div>
+
       <div className="hero-card">
         <h3>What your store gets</h3>
         <ul>

@@ -53,6 +53,12 @@ export default function BodyshopPage({ go }) {
         <p>Customers request estimates online, you turn them into jobs, and you keep track of customers and loan cars — all from any phone.</p>
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>🎥 Watch how it works — 2 minutes</h3>
+        <p>See what you get, how to get it, and how to use it — a quick video guide for bodyshop owners.</p>
+        <video controls preload="metadata" poster="/videos/bodyshop-guide-poster.jpg" src="/videos/bodyshop-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+      </div>
+
       <div className="hero-card">
         <h3>What your shop gets</h3>
         <ul>

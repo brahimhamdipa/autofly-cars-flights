@@ -53,7 +53,7 @@ const HELP = {
   email: 'Your email address — the one you actually read. Yently sends the answer here: approved or not, and the link to add Direct Upload to your cart. Double-check the spelling — one wrong letter and the reply never reaches you.',
   phone: 'Your phone number, so Yently can reach you quickly if something about your request is unclear. Digits only is fine — spaces or dashes do no harm.',
   system: 'Pick the kind of page Direct Upload is for. Restaurant is your restaurant page, POS is your till page, Barbershop your barber page, Dealer, Employee and Bodyshop the same idea. Store is your own store page, where you sell your items. Cars is selling cars, and Kids is one of the nine school subjects — pick the subject.',
-  shopSlug: 'The word that identifies your page on Yently. It is the word after ?s= or ?r= in your page link — for example, if your link is yently.com/pos?s=demo-pos, the word is demo-pos. For Cars, type your seller username instead. Small letters only, no spaces — capitals and spaces are removed for you.',
+  shopSlug: 'The word Yently gave you for your page — it is in the email with your page link. For Cars, type your seller username instead. Small letters only, no spaces — capitals and spaces are removed for you.',
   message: 'Anything else that helps — you can leave it empty. For example what you upload most (new dishes, new items, new words), or how often you upload. The more Yently knows, the faster the approval.',
 }
 
@@ -121,7 +121,7 @@ export default function DirectUploadPage({ go }) {
         <p>$5/month. First month free, cancel anytime.</p>
       </div>
 
-      <form className="form-card wide" onSubmit={handleSubmit} style={{ border: '2px solid #f5c542' }}>
+      <form className="form-card wide direct-help" onSubmit={handleSubmit} style={{ border: '2px solid #f5c542' }}>
         <h3>Request Direct Upload</h3>
         <p>Fill this in — most requests are approved, and schools are always approved.</p>
         <div className="row">
@@ -154,7 +154,7 @@ export default function DirectUploadPage({ go }) {
           </div>
           <div className="field">
             <span className="field-label">Your page name on Yently <Help text={HELP.shopSlug} /></span>
-            <input required placeholder="The word after ?s= or ?r= in your link, or your seller username for Cars" value={form.shop_slug} onChange={set('shop_slug')} />
+            <input required placeholder="The word Yently gave you for your page, or your seller username for Cars" value={form.shop_slug} onChange={set('shop_slug')} />
           </div>
         </div>
         <div className="field">

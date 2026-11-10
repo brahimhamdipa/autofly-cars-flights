@@ -36,6 +36,10 @@ import BodyshopPage from './components/BodyshopPage'
 import TvGalleryPage from './components/TvGalleryPage'
 import LiveChatPage from './components/LiveChatPage'
 import CleanLinkPage from './components/CleanLinkPage'
+import DirectUploadPage from './components/DirectUploadPage'
+import CarSellerSoonPage from './components/CarSellerSoonPage'
+import ShopSellerFormPage from './components/ShopSellerFormPage'
+import ShopSellerSoonPage from './components/ShopSellerSoonPage'
 import LiveChatDemo from './components/LiveChatDemo'
 import BusinessCartPage from './components/BusinessCartPage'
 import BusinessSystemsPage from './components/BusinessSystemsPage'
@@ -50,7 +54,7 @@ import KidsGeographyPage from './components/KidsGeographyPage'
 import KidsCodingPage from './components/KidsCodingPage'
 import KidsReadingPage from './components/KidsReadingPage'
 import BooksForKidsPage from './components/BooksForKidsPage'
-import logoUrl from './assets/logo.webp'
+import logoUrl from './assets/logo-com.webp'
 import './index.css'
 
 export default function App() {
@@ -61,12 +65,13 @@ export default function App() {
     const path = window.location.pathname.replace(/\/$/, '')
     if (path === '/admin') return 'admin'
     if (path === '/demo-live-chat' || path === '/demo-chat') return 'demo-live-chat'
+    if (path === '/direct-upload') return 'direct-upload'
     if (path !== '' && path !== '/') return 'provider-form'
     return 'business-hub'
   })
   const [formSlug, setFormSlug] = useState(() => {
     const path = window.location.pathname.replace(/\/$/, '')
-    if (path !== '' && path !== '/' && path !== '/admin' && path !== '/demo-live-chat' && path !== '/demo-chat') return decodeURIComponent(path.slice(1))
+    if (path !== '' && path !== '/' && path !== '/admin' && path !== '/demo-live-chat' && path !== '/demo-chat' && path !== '/direct-upload') return decodeURIComponent(path.slice(1))
     return null
   })
   const [providerId, setProviderId] = useState(null)
@@ -106,11 +111,13 @@ export default function App() {
     const path = window.location.pathname.replace(/\/$/, '')
     const onAdmin = path === '/admin'
     const onDemo = path === '/demo-live-chat' || path === '/demo-chat'
-    const onForm = path !== '' && path !== '/' && !onAdmin && !onDemo
+    const onDirect = path === '/direct-upload'
+    const onForm = path !== '' && path !== '/' && !onAdmin && !onDemo && !onDirect
     if (t === 'admin' && !onAdmin) window.history.replaceState(null, '', '/admin')
     else if (t === 'demo-live-chat' && !onDemo) window.history.replaceState(null, '', '/demo-live-chat')
+    else if (t === 'direct-upload' && !onDirect) window.history.replaceState(null, '', '/direct-upload')
     else if (t === 'provider-form' && param && !onForm) window.history.replaceState(null, '', '/' + param)
-    else if (t !== 'admin' && t !== 'provider-form' && t !== 'demo-live-chat' && (onAdmin || onForm || onDemo)) window.history.replaceState(null, '', '/')
+    else if (t !== 'admin' && t !== 'provider-form' && t !== 'demo-live-chat' && t !== 'direct-upload' && (onAdmin || onForm || onDemo || onDirect)) window.history.replaceState(null, '', '/')
   }
   // Back to the page the customer actually came from (or nowhere on a
   // fresh load, in which case pages hide their back link).
@@ -126,12 +133,12 @@ export default function App() {
     if (m) { setProviderId(decodeURIComponent(m[1])); setTab('store-detail') }
   }, [])
 
-  const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail']
-  const BUSINESS_TABS = ['business-hub', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'clean-link', 'demo-live-chat', 'business-cart']
+  const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail', 'shop-seller', 'shop-seller-soon']
+  const BUSINESS_TABS = ['business-hub', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'simple-barbershop', 'tv-gallery', 'live-chat', 'clean-link', 'direct-upload', 'demo-live-chat', 'business-cart']
   const KIDS_TABS = ['kids-hub', 'kids-math', 'kids-english', 'kids-arabic', 'kids-french', 'kids-spanish', 'kids-science', 'kids-geography', 'kids-coding', 'kids-reading', 'kids-books']
   const inMore = ['services', 'services-home', 'services-contact', 'about', 'guides', 'clothes'].includes(tab) || KIDS_TABS.includes(tab)
   const inBusiness = BUSINESS_TABS.includes(tab)
-  const inCars = ['cars', 'sell', 'contact', 'car-seller'].includes(tab)
+  const inCars = ['cars', 'sell', 'contact', 'car-seller', 'car-seller-soon'].includes(tab)
   const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
 
   return (
@@ -140,7 +147,7 @@ export default function App() {
         <div className="header-row">
         <div className="brand">
           <img className="brand-logo" src={logoUrl} alt="Yently" />
-          <span className="tagline">Business Systems, Shop, Cars &amp; Flights — All in One Place</span>
+          <span className="tagline">Everything you need, <span className="slogan-word"><span className="slogan-g">g</span><span className="slogan-y">y</span><span className="slogan-ently">ently</span></span> in one place</span>
         </div>
         <div className="header-right">
           <nav>
@@ -178,6 +185,7 @@ export default function App() {
         {tab === 'cars' && <CarSection go={go} />}
         {tab === 'sell' && <SellPage go={go} />}
         {tab === 'car-seller' && <CarSellerFormPage go={go} />}
+        {tab === 'car-seller-soon' && <CarSellerSoonPage go={go} />}
         {tab === 'contact' && <ContactPage go={go} />}
         {tab === 'flights' && <FlightSection go={go} />}
         {tab === 'reserve' && <FlightReservationPage go={go} />}
@@ -202,6 +210,8 @@ export default function App() {
             {tab === 'products' && <ProductsPage go={go} />}
             {tab === 'category' && <CategoryPage slug={categorySlug} go={go} />}
             {tab === 'item-detail' && <ItemDetailPage itemId={itemId} go={go} goBack={goBack} />}
+            {tab === 'shop-seller' && <ShopSellerFormPage go={go} />}
+            {tab === 'shop-seller-soon' && <ShopSellerSoonPage go={go} />}
           </CartProvider>
         )}
         {BUSINESS_TABS.includes(tab) && (
@@ -217,6 +227,7 @@ export default function App() {
             {tab === 'tv-gallery' && <TvGalleryPage go={go} />}
             {tab === 'live-chat' && <LiveChatPage go={go} />}
             {tab === 'clean-link' && <CleanLinkPage go={go} />}
+            {tab === 'direct-upload' && <DirectUploadPage go={go} />}
             {tab === 'demo-live-chat' && <LiveChatDemo go={go} />}
             {tab === 'business-cart' && <BusinessCartPage go={go} />}
           </BusinessCartProvider>
@@ -250,7 +261,7 @@ export default function App() {
         {tab === 'provider-form' && <ProviderFormPage slug={formSlug} goBack={goBack} onAuthedChange={setFormAuthed} go={go} />}
       </main>
       <footer className="footer">
-        <p>Yently — Business Systems, Shop, Cars &amp; Flights — All in One Place</p>
+        <p>Yently — Everything you need, gently in one place.</p>
       </footer>
       {!(tab === 'provider-form' && formAuthed) && tab !== 'demo-live-chat' && <ChatWidget />}
     </div>

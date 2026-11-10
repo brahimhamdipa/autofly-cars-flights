@@ -53,6 +53,12 @@ export default function KidsSpanishPage({ go }) {
         <p>Learning that feels like play — your children learn, you see every score.</p>
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>🎥 Watch how it works — about a minute</h3>
+        <p>See what you get, how to get it, and how to use it — a quick video guide for parents and teachers.</p>
+        <video controls preload="metadata" poster="/videos/kids-spanish-guide-poster.jpg" src="/videos/kids-spanish-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+      </div>
+
       <div className="hero-card">
         <h3>What you get</h3>
         <ul>

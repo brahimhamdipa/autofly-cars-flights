@@ -1,3 +1,0 @@
-mileage: 45200
-description: One-owner silver Camry, clean title, new tires, serviced regularly. Runs perfectly.
-price: 8900

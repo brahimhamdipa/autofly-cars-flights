@@ -151,11 +151,11 @@ export default function CarSellerFormPage({ go }) {
   const [batchMsg, setBatchMsg] = useState('')
   const [uploadingBatch, setUploadingBatch] = useState(false)
 
+  // The username is never saved on the device: no restore, and any
+  // name an older version saved is cleared the first time this page
+  // opens, so the field always starts empty.
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem('yently-car-seller-username') || ''
-      if (saved) setCreds(c => ({ ...c, username: saved }))
-    } catch {}
+    try { localStorage.removeItem('yently-car-seller-username') } catch {}
   }, [])
 
   const loadCars = async (c) => {
@@ -184,7 +184,6 @@ export default function CarSellerFormPage({ go }) {
       const c = { username: creds.username.trim(), password: creds.password }
       setSeller(s)
       setLoginMsg('')
-      try { localStorage.setItem('yently-car-seller-username', c.username) } catch {}
       loadCars(c)
     } catch (err) {
       setLoginMsg('Error: ' + err.message)
@@ -263,8 +262,8 @@ export default function CarSellerFormPage({ go }) {
           <h2>Sell your cars on Yently</h2>
           <p>Log in with the username and password Yently gave you, then add your cars — one at a time, or many at once from a data.json file. Every car is checked by Yently before it shows on the Cars page.</p>
         </div>
-        <form className="form-card wide" onSubmit={handleLogin}>
-          <input required placeholder="Username" autoComplete="username" value={creds.username} onChange={e => setCreds({ ...creds, username: e.target.value })} />
+        <form className="form-card wide" onSubmit={handleLogin} autoComplete="off">
+          <input required placeholder="Username" autoComplete="off" value={creds.username} onChange={e => setCreds({ ...creds, username: e.target.value })} />
           <input required placeholder="Password" type="password" autoComplete="current-password" value={creds.password} onChange={e => setCreds({ ...creds, password: e.target.value })} />
           <button type="submit" disabled={loggingIn}>{loggingIn ? 'Checking...' : 'Log in'}</button>
           {loginMsg && <p className="status">{loginMsg}</p>}

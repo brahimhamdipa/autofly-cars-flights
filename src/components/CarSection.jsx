@@ -1,47 +1,45 @@
 import { useEffect, useMemo, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
 import { submitAndNotify } from '../lib/notify'
 import CarsMenu from './CarsMenu'
 
 // ---------------------------------------------------------------------------
-// Folder-driven inventory.
-// To add a car for sale: create Cars/<Car Name>/ containing photos plus a
-// car.txt file, then push to GitHub. car.txt format (one per line):
-//   mileage: 45200
-//   description: One-owner, clean title, new tires.
-//   price: 18900
-// The site rebuilds on push (auto-deploy) and the car appears automatically.
+// Database-driven inventory (2026-11-09 rebuild).
+// Cars live in the `car_listings` table (approved rows only) — sellers add
+// theirs through the seller form (username/password from the admin) and the
+// admin approves them. The old repo folders (Cars/<name>/car.txt + photos)
+// are gone; the 3 example cars were seeded into the table with their photos
+// now at /car-photos/<slug>/.
 // ---------------------------------------------------------------------------
-const txtModules = import.meta.glob('../../Cars/*/car.txt', { query: '?raw', import: 'default', eager: true })
-const imgModules = import.meta.glob('../../Cars/*/*.{jpg,jpeg,png,webp,JPG,JPEG,PNG,WEBP}', { query: '?url', import: 'default', eager: true })
 
-function parseCarTxt(raw) {
-  const info = { mileage: '', description: '', price: '' }
-  for (const line of String(raw || '').split('\n')) {
-    const i = line.indexOf(':')
-    if (i === -1) continue
-    const key = line.slice(0, i).trim().toLowerCase()
-    const val = line.slice(i + 1).trim()
-    if (['mileage', 'miles', 'mi'].includes(key)) info.mileage = val
-    else if (['description', 'desc', 'details'].includes(key)) info.description = val
-    else if (['price', 'cost'].includes(key)) info.price = val
+// One car row, shaped for the listing: `images` is the photos array.
+function shapeCar(row) {
+  return {
+    id: row.id,
+    seller_id: row.seller_id,
+    name: row.name,
+    year: row.year,
+    make: row.make,
+    model: row.model,
+    mileage: row.mileage,
+    price: row.price,
+    description: row.description,
+    phone: row.phone,
+    email: row.email,
+    images: Array.isArray(row.photos) ? row.photos : [],
   }
-  return info
 }
 
-export function loadCars() {
-  const cars = []
-  for (const [path, raw] of Object.entries(txtModules)) {
-    const m = path.match(/Cars\/([^/]+)\/car\.txt$/)
-    if (!m) continue
-    const name = m[1]
-    const prefix = `../../Cars/${name}/`
-    const images = Object.entries(imgModules)
-      .filter(([p]) => p.startsWith(prefix))
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, url]) => url)
-    cars.push({ name, ...parseCarTxt(raw), images })
-  }
-  return cars.sort((a, b) => a.name.localeCompare(b.name))
+// Approved listings, newest first. Used by the Cars page and by the
+// test-drive form's car-name autocomplete.
+export async function loadCars() {
+  const { data, error } = await supabase
+    .from('car_listings')
+    .select('*')
+    .eq('status', 'approved')
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return (data || []).map(shapeCar)
 }
 
 export const fmtNum = (v) => {
@@ -98,34 +96,75 @@ export function Lightbox({ images, start, onClose }) {
   )
 }
 
-function CarCard({ car, onInterested }) {
+function CarSlideshow({ car, height }) {
   const [idx, setIdx] = useState(0)
   const [zoom, setZoom] = useState(false)
   const n = car.images.length
   return (
+    <div className="slideshow">
+      {n > 0 ? (
+        <img src={car.images[idx]} alt={car.name} onClick={() => setZoom(true)} title="Click to enlarge" style={height ? { height } : undefined} />
+      ) : (
+        <div className="no-photo">No photos yet</div>
+      )}
+      {n > 1 && (
+        <>
+          <button className="slide-btn prev" onClick={() => setIdx(i => (i - 1 + n) % n)} aria-label="Previous photo">‹</button>
+          <button className="slide-btn next" onClick={() => setIdx(i => (i + 1) % n)} aria-label="Next photo">›</button>
+          <span className="slide-count">{idx + 1} / {n}</span>
+        </>
+      )}
+      {zoom && n > 0 && <Lightbox images={car.images} start={idx} onClose={() => setZoom(false)} />}
+    </div>
+  )
+}
+
+function CarCard({ car, onDetails, onInterested }) {
+  return (
     <div className="card">
-      <div className="slideshow">
-        {n > 0 ? (
-          <img src={car.images[idx]} alt={car.name} onClick={() => setZoom(true)} title="Click to enlarge" />
-        ) : (
-          <div className="no-photo">No photos yet</div>
-        )}
-        {n > 1 && (
-          <>
-            <button className="slide-btn prev" onClick={() => setIdx(i => (i - 1 + n) % n)} aria-label="Previous photo">‹</button>
-            <button className="slide-btn next" onClick={() => setIdx(i => (i + 1) % n)} aria-label="Next photo">›</button>
-            <span className="slide-count">{idx + 1} / {n}</span>
-          </>
-        )}
-      </div>
+      <CarSlideshow car={car} />
       <div className="card-body">
         <h3>{car.name}</h3>
         {car.mileage && <p>{fmtNum(car.mileage)} miles</p>}
-        {car.description && <p className="car-desc">{car.description}</p>}
+        {car.description && <p className="car-desc desc-clamp">{car.description}</p>}
         {car.price && <p className="price">${fmtNum(car.price)}</p>}
-        <button onClick={() => onInterested(car)}>I'm interested</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => onDetails(car)} style={{ flex: 1, background: '#e5e7eb', color: '#111827' }}>View details</button>
+          <button onClick={() => onInterested(car)} style={{ flex: 1 }}>I'm interested</button>
+        </div>
       </div>
-      {zoom && n > 0 && <Lightbox images={car.images} start={idx} onClose={() => setZoom(false)} />}
+    </div>
+  )
+}
+
+// Full details popup (like the "I'm interested" popup): all photos, every
+// field the seller shared, and the whole description — no clamp here.
+function DetailsModal({ car, onClose, onInterested }) {
+  const rows = [
+    ['Year', car.year],
+    ['Make', car.make],
+    ['Model', car.model],
+    ['Mileage', car.mileage ? `${fmtNum(car.mileage)} miles` : ''],
+    ['Price', car.price ? `$${fmtNum(car.price)}` : ''],
+    ['Phone', car.phone],
+    ['Email', car.email],
+  ].filter(([, v]) => v !== '' && v !== null && v !== undefined)
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <button className="modal-close" onClick={onClose} aria-label="Close">✕</button>
+        <h3>{car.name}</h3>
+        <CarSlideshow car={car} />
+        <div style={{ marginTop: 14 }}>
+          {rows.map(([label, value]) => (
+            <p key={label} style={{ margin: '4px 0', fontSize: 14 }}>
+              <b>{label}:</b> {value}
+            </p>
+          ))}
+          {car.description && <p className="car-desc" style={{ marginTop: 10 }}>{car.description}</p>}
+        </div>
+        <button onClick={() => onInterested(car)} style={{ width: '100%', marginTop: 14 }}>I'm interested</button>
+      </div>
     </div>
   )
 }
@@ -174,10 +213,21 @@ function InterestModal({ car, onClose }) {
 }
 
 export default function CarSection({ go }) {
-  const cars = useMemo(loadCars, [])
+  const [cars, setCars] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [filterText, setFilterText] = useState('')
   const [maxPrice, setMaxPrice] = useState('')
+  const [detailsCar, setDetailsCar] = useState(null)
   const [interestCar, setInterestCar] = useState(null)
+
+  useEffect(() => {
+    let alive = true
+    loadCars()
+      .then(list => { if (alive) { setCars(list); setLoading(false) } })
+      .catch(err => { if (alive) { setLoadError(err.message || 'Could not load the cars.'); setLoading(false) } })
+    return () => { alive = false }
+  }, [])
 
   const filtered = cars.filter(c => {
     if (filterText && !c.name.toLowerCase().includes(filterText.toLowerCase())) return false
@@ -198,16 +248,36 @@ export default function CarSection({ go }) {
         </div>
       </div>
 
-      {filtered.length === 0 && (
-        <div className="hero-card"><p>No cars match. To add cars, create a folder under <b>Cars</b> named after the car, add its photos and a <b>car.txt</b> file, then push.</p></div>
+      {loading && (
+        <div className="hero-card"><p>Loading cars…</p></div>
+      )}
+
+      {!loading && loadError && (
+        <div className="hero-card"><p>Could not load the cars: {loadError}</p></div>
+      )}
+
+      {!loading && !loadError && filtered.length === 0 && (
+        <div className="hero-card"><p>No cars match. Try a different search or price.</p></div>
       )}
 
       <div className="grid">
         {filtered.map(car => (
-          <CarCard key={car.name} car={car} onInterested={setInterestCar} />
+          <CarCard
+            key={car.id || car.name}
+            car={car}
+            onDetails={setDetailsCar}
+            onInterested={setInterestCar}
+          />
         ))}
       </div>
 
+      {detailsCar && (
+        <DetailsModal
+          car={detailsCar}
+          onClose={() => setDetailsCar(null)}
+          onInterested={(car) => { setDetailsCar(null); setInterestCar(car) }}
+        />
+      )}
       {interestCar && <InterestModal car={interestCar} onClose={() => setInterestCar(null)} />}
     </div>
   )

@@ -1,3 +1,0 @@
-mileage: 150200
-description: One-owner red Kia Rio, clean title, new tires, serviced regularly. Runs perfectly.
-price: 4900

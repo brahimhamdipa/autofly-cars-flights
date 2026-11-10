@@ -50,6 +50,12 @@ export default function BarbersPage({ go }) {
         <p>Customers book from their phones. Your queue runs live in the shop — and your customers can watch it live too, privately.</p>
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>🎥 Watch how it works — 2 minutes</h3>
+        <p>See what you get, how to get it, and how to use it — a quick video guide for barbershop owners.</p>
+        <video controls preload="metadata" poster="/videos/barber-guide-poster.jpg" src="/videos/barber-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+      </div>
+
       <div className="hero-card">
         <h3>What your barbershop gets</h3>
         <ul>

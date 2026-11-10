@@ -9,15 +9,15 @@ import { KidsTopBar } from './KidsMenu'
 // automatically in My Cart — and because the cart is shared, Kids
 // subjects count together with Business Systems plans.
 const SUBJECTS = [
-  { name: 'Math', price: 10, blurb: 'Four games — adding, taking away, multiplying, and dividing — by level.', tab: 'kids-math' },
-  { name: 'English', price: 10, blurb: 'Spell it, pick the word, and what does it mean? — from your own word list.', tab: 'kids-english' },
-  { name: 'Arabic', price: 10, blurb: 'Letters, words, and numbers in Arabic — right-to-left, big and clear.', tab: 'kids-arabic' },
-  { name: 'French', price: 10, blurb: 'French words and meanings — spell them, pick them, know them.', tab: 'kids-french' },
-  { name: 'Spanish', price: 10, blurb: 'Spanish words and meanings — spell them, pick them, know them.', tab: 'kids-spanish' },
-  { name: 'Science', price: 10, blurb: 'Quizzes by topic — animals, space, the human body, and more.', tab: 'kids-science' },
-  { name: 'Geography', price: 10, blurb: 'Countries, capitals, and flags — a quiz that travels the world.', tab: 'kids-geography' },
-  { name: 'Coding', price: 10, blurb: 'Build a program from blocks and watch the robot run it.', tab: 'kids-coding' },
-  { name: 'Reading', price: 10, blurb: 'A bookshelf of your own — pick a book, read it, finish it.', tab: 'kids-reading' },
+  { name: 'Math', price: 10, blurb: 'Four games — adding, taking away, multiplying, and dividing — by level.', tab: 'kids-math' , video: true },
+  { name: 'English', price: 10, blurb: 'Spell it, pick the word, and what does it mean? — from your own word list.', tab: 'kids-english' , video: true },
+  { name: 'Arabic', price: 10, blurb: 'Letters, words, and numbers in Arabic — right-to-left, big and clear.', tab: 'kids-arabic' , video: true },
+  { name: 'French', price: 10, blurb: 'French words and meanings — spell them, pick them, know them.', tab: 'kids-french' , video: true },
+  { name: 'Spanish', price: 10, blurb: 'Spanish words and meanings — spell them, pick them, know them.', tab: 'kids-spanish' , video: true },
+  { name: 'Science', price: 10, blurb: 'Quizzes by topic — animals, space, the human body, and more.', tab: 'kids-science' , video: true },
+  { name: 'Geography', price: 10, blurb: 'Countries, capitals, and flags — a quiz that travels the world.', tab: 'kids-geography' , video: true },
+  { name: 'Coding', price: 10, blurb: 'Build a program from blocks and watch the robot run it.', tab: 'kids-coding' , video: true },
+  { name: 'Reading', price: 10, blurb: 'A bookshelf of your own — pick a book, read it, finish it.', tab: 'kids-reading' , video: true },
 ]
 
 function SubjectRow({ item, first, go }) {
@@ -26,6 +26,9 @@ function SubjectRow({ item, first, go }) {
       <div>
         <b>{item.name} — ${item.price}/month</b>
         <p style={{ margin: '4px 0 0' }}>{item.blurb}</p>
+        {item.video && (
+          <a href="#" onClick={(e) => { e.preventDefault(); if (go) go(item.tab) }} style={{ color: '#2563eb', fontWeight: 700, textDecoration: 'none' }}>▶ Watch the video — about a minute</a>
+        )}
       </div>
       <button type="button" onClick={() => go && go(item.tab)} style={{ flexShrink: 0 }}>See it →</button>
     </div>

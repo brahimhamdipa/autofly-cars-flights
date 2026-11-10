@@ -57,6 +57,7 @@ export default function KidsFrenchPage({ go }) {
         <h3>🎥 Watch how it works — about a minute</h3>
         <p>See what you get, how to get it, and how to use it — a quick video guide for parents and teachers.</p>
         <video controls preload="metadata" poster="/videos/kids-french-guide-poster.jpg" src="/videos/kids-french-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+        <p style={{ marginTop: 10 }} >Prefer to read it? <a href="/guides/kids-french-guide.pdf" target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontWeight: 700 }} >Download the step-by-step guide (PDF)</a> &mdash; from buying it to your first game of French words.</p>
       </div>
 
       <div className="hero-card">

@@ -48,15 +48,15 @@ const SYSTEM_GUIDES = [
 ]
 
 const KIDS_GUIDES = [
-  { name: 'Math', tab: 'kids-math', video: '/videos/kids-math-guide.mp4', length: '1:24' },
-  { name: 'English', tab: 'kids-english', video: '/videos/kids-english-guide.mp4', length: '1:22' },
-  { name: 'Arabic', tab: 'kids-arabic', video: '/videos/kids-arabic-guide.mp4', length: '1:26' },
-  { name: 'French', tab: 'kids-french', video: '/videos/kids-french-guide.mp4', length: '1:23' },
-  { name: 'Spanish', tab: 'kids-spanish', video: '/videos/kids-spanish-guide.mp4', length: '1:26' },
-  { name: 'Science', tab: 'kids-science', video: '/videos/kids-science-guide.mp4', length: '1:29' },
-  { name: 'Geography', tab: 'kids-geography', video: '/videos/kids-geography-guide.mp4', length: '1:27' },
-  { name: 'Coding', tab: 'kids-coding', video: '/videos/kids-coding-guide.mp4', length: '1:27' },
-  { name: 'Reading', tab: 'kids-reading', video: '/videos/kids-reading-guide.mp4', length: '1:16' },
+  { name: 'Math', tab: 'kids-math', video: '/videos/kids-math-guide.mp4', length: '1:24', pdf: '/guides/kids-math-guide.pdf' },
+  { name: 'English', tab: 'kids-english', video: '/videos/kids-english-guide.mp4', length: '1:22', pdf: '/guides/kids-english-guide.pdf' },
+  { name: 'Arabic', tab: 'kids-arabic', video: '/videos/kids-arabic-guide.mp4', length: '1:26', pdf: '/guides/kids-arabic-guide.pdf' },
+  { name: 'French', tab: 'kids-french', video: '/videos/kids-french-guide.mp4', length: '1:23', pdf: '/guides/kids-french-guide.pdf' },
+  { name: 'Spanish', tab: 'kids-spanish', video: '/videos/kids-spanish-guide.mp4', length: '1:26', pdf: '/guides/kids-spanish-guide.pdf' },
+  { name: 'Science', tab: 'kids-science', video: '/videos/kids-science-guide.mp4', length: '1:29', pdf: '/guides/kids-science-guide.pdf' },
+  { name: 'Geography', tab: 'kids-geography', video: '/videos/kids-geography-guide.mp4', length: '1:27', pdf: '/guides/kids-geography-guide.pdf' },
+  { name: 'Coding', tab: 'kids-coding', video: '/videos/kids-coding-guide.mp4', length: '1:27', pdf: '/guides/kids-coding-guide.pdf' },
+  { name: 'Reading', tab: 'kids-reading', video: '/videos/kids-reading-guide.mp4', length: '1:16', pdf: '/guides/kids-reading-guide.pdf' },
 ]
 
 const tableStyle = { width: '100%', borderCollapse: 'collapse', fontSize: 15 }
@@ -159,7 +159,11 @@ export default function GuidesPage({ go }) {
                 <tr key={s.name}>
                   <td style={tdStyle}><a onClick={() => go(s.tab)} style={{ ...linkStyle, cursor: 'pointer' }}>{s.name}</a></td>
                   <td style={tdStyle}><a href={s.video} target="_blank" rel="noreferrer" style={linkStyle}>Watch — {s.length}</a></td>
-                  <td style={{ ...tdStyle, color: '#6b7280' }}>Coming soon</td>
+                  <td style={tdStyle}>
+                    {s.pdf
+                      ? <a href={s.pdf} target="_blank" rel="noreferrer" style={linkStyle}>Download the guide (PDF)</a>
+                      : <span style={{ color: '#6b7280' }}>Coming soon</span>}
+                  </td>
                 </tr>
               ))}
             </tbody>

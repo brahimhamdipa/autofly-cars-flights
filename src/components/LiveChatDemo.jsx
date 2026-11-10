@@ -70,7 +70,13 @@ export default function LiveChatDemo({ go }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position: 'sticky', top: 0, zIndex: 10 }}>
+      {/* Top row is NOT sticky: it scrolls away with the page, like the
+          Admin nav. A sticky row here (top: 0, same z-index as the
+          site header) painted over the main menu as soon as the page
+          scrolled — the ☰ top left and the ✕ top right sat on top of
+          the Yently header. The row is still at the top of the page,
+          and "Want this for your business?" below also leaves the demo. */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <BusinessMenu go={go} />
         <button type="button" className="car-submenu-btn" aria-label="Close demo" onClick={() => go && go('live-chat')} style={{ fontSize: 22, color: '#374151' }}>✕</button>
       </div>

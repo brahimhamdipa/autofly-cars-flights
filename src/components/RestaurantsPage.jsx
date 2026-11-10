@@ -51,6 +51,12 @@ export default function RestaurantsPage({ go }) {
         <p>Guests see the menu on their phones — but they can't order. Ordering is for your staff, with one shared employee password. Orders appear in your kitchen as they come — on every phone at once.</p>
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>🎥 Watch how it works — 2 minutes</h3>
+        <p>See what you get, how to get it, and how to use it — a quick video guide for restaurant owners.</p>
+        <video controls preload="metadata" poster="/videos/restaurant-guide-poster.jpg" src="/videos/restaurant-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+      </div>
+
       <div className="hero-card">
         <h3>What your restaurant gets</h3>
         <ul>

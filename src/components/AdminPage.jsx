@@ -17,10 +17,11 @@ import AdminStoreManage from './admin/AdminStoreManage'
 import AdminChat from './admin/AdminChat'
 
 import AdminFolderPasses from './admin/AdminFolderPasses'
-import AdminRestaurantPages from './admin/AdminRestaurantPages'
 import AdminAllPasses from './admin/AdminAllPasses'
+import AdminAllOrders from './admin/AdminAllOrders'
 import AdminCars from './admin/AdminCars'
 import AdminDirectUpload from './admin/AdminDirectUpload'
+import AdminLiveChat from './admin/AdminLiveChat'
 
 // Five numbered menus, top left. A leaf has a section (an AdminPage
 // section) or a table (a Manage table, opened inside the Manage
@@ -51,7 +52,7 @@ const MENUS = [
     { label: 'Cars', section: 'cars' },
   ] },
   { n: 3, name: 'Flights', items: [] },
-  { n: 4, name: 'Business Systems', items: [
+  { n: 4, name: 'Systems', items: [
     { label: 'Diner', children: [
       { label: 'Diner Passes', table: 'diner_restaurants' },
       { label: 'Diner Approvals', table: 'diner_approvals' },
@@ -102,6 +103,11 @@ const MENUS = [
       { label: 'Car Rental Bookings', table: 'rentals_bookings' },
       { label: 'Car Rental Orders', table: 'rentals_order' },
     ] },
+    { label: 'Laundry', children: [
+      { label: 'Laundry Passes', table: 'laundry_shops' },
+      { label: 'Laundry Orders', table: 'laundry_orders' },
+      { label: 'Laundry Checkout Orders', table: 'laundry_order' },
+    ] },
     { label: 'Yently Kids', children: [
       { label: 'Math', children: [
         { label: 'Kids Math Passes', table: 'kids_math_shops' },
@@ -151,7 +157,7 @@ const MENUS = [
     ] },
     { label: 'Add-ons', children: [
       { label: 'TV Gallery Orders', table: 'tv_gallery_orders' },
-      { label: 'Live Chat Orders', table: 'live_chat_orders' },
+      { label: 'Live Chat Orders', section: 'live-chat' },
       { label: 'Clean Link Orders', table: 'clean_link_orders' },
       { label: 'Direct Upload Orders', table: 'direct_upload_orders' },
       { label: 'Direct Upload', section: 'direct-upload' },
@@ -180,11 +186,11 @@ const MENUS = [
       { label: 'Cust.Subm.DB', table: 'barber_reservations' },
       { label: 'Barbers', table: 'barber_orders' },
       { label: 'Folder Passes', section: 'folder-passes' },
-      { label: 'Restaurant Pages', section: 'restaurant-pages' },
     ] },
   ] },
   { n: 5, name: 'Chat', items: [
     { label: 'All Passes', section: 'all-passes' },
+    { label: 'All Orders', section: 'all-orders' },
     { label: 'Live Chat', section: 'chat' },
     { label: 'Chat', children: [
       { label: 'Job Add.Edit.Del', table: 'jobs' },
@@ -376,14 +382,15 @@ export default function AdminPage() {
       {section === 'products' && <AdminProducts />}
       {section === 'cars' && <AdminCars />}
       {section === 'direct-upload' && <AdminDirectUpload />}
+      {section === 'live-chat' && <AdminLiveChat />}
       {section === 'orders' && <AdminOrders />}
       {section === 'submissions' && <AdminSubmissions />}
       {section === 'store-add' && <AdminStoreAdd />}
       {section === 'store-manage' && <AdminStoreManage table={manageTable} onTableChange={setManageTable} />}
       {section === 'chat' && <AdminChat />}
       {section === 'all-passes' && <AdminAllPasses />}
+      {section === 'all-orders' && <AdminAllOrders />}
       {section === 'folder-passes' && <AdminFolderPasses />}
-      {section === 'restaurant-pages' && <AdminRestaurantPages />}
       <button type="button" className="admin-to-top no-print" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Top</button>
     </div>
   )

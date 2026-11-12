@@ -11,13 +11,16 @@ import FloatingAddToCart from './FloatingAddToCart'
 // message them — no account needed for the visitor, and every
 // message reaches the owner by email. $3/month, first month free,
 // no setup fee. No card payment is taken here — the request form
-// emails the owner, who then adds the chat bubble to the customer's
-// website and sets up the owner login by hand, and the Add to cart
+// emails the owner, who switches chat on for the customer's page
+// in Admin, and the Add to cart
 // card puts a live_chat_order row in front of the owner the same
 // way (shared Business cart, BusinessCartContext +
 // live_chat_order table, same pattern as the other Business Systems
-// pages and the TV Gallery add-on). Nothing on this page promises
-// instant signup. Connecting carts to the bank comes later.
+// pages and the TV Gallery add-on). Once ordered, Yently switches
+// chat on for the customer's page in Admin — then the customer
+// answers their visitors from the Chats tab in their Setup page.
+// Nothing on this page promises instant signup. Connecting carts
+// to the bank comes later.
 export default function LiveChatPage({ go }) {
   const { hasPlan, addPlan } = useBusinessCart()
   const inCart = hasPlan(CHAT_PLAN_KEY)
@@ -69,7 +72,7 @@ export default function LiveChatPage({ go }) {
         <h3>How it works</h3>
         <ol className="steps">
           <li><b>Tell Yently you want it</b> — fill in the form below, or simply Add to cart.</li>
-          <li><b>Yently adds the chat bubble to your website</b> and sets up your owner login by hand.</li>
+          <li><b>Yently switches chat on for your page</b> in Admin once you've ordered — then you answer your visitors from the Chats tab in your Setup page.</li>
           <li><b>Visitors tap the bubble and message you</b> — every message reaches you by email.</li>
         </ol>
       </div>

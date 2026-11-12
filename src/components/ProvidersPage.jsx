@@ -4,7 +4,7 @@ import { GroceryTopBar } from './GroceryMenu'
 import { loadProviders } from '../lib/storeData'
 import ScrollTopButton from './ScrollTopButton'
 
-// Physical Stores list — data now comes from the store_providers table
+// Stores list — data now comes from the store_providers table
 // (replaces the old Stores/*/store.txt folders). Search matches name,
 // country, city, zip code, phone, about text and provider ID.
 // Cards look like Online Store cards: picture, name, place, a 3-line
@@ -71,8 +71,8 @@ export default function ProvidersPage({ go, onShop, onView }) {
       <GroceryTopBar go={go} />
 
       <div className="hero-card">
-        <h2>🏬 Our Physical Stores</h2>
-        <p>Yently stores around the world — visit one near you. Search by store name, country, city or zip code.</p>
+        <h2>🏬 Yently Stores</h2>
+        <p>Our stores are virtual for now — we deliver snacks and lunches straight to your workplace. Order today and everything arrives early tomorrow morning, in your company's delivery window. Search by store name, country, city or zip code.</p>
         <div className="filters">
           <input placeholder="Search stores (e.g. Paris, Morocco, 10007)" value={query} onChange={e => setQuery(e.target.value)} />
         </div>

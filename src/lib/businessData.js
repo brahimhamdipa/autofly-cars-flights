@@ -8,6 +8,7 @@ import { insertHousesOrder } from './housesData'
 import { insertDoctorOrder } from './doctorData'
 import { insertHolidayOrder } from './holidayData'
 import { insertRentalsOrder } from './rentalsData'
+import { insertLaundryOrder } from './laundryData'
 import { insertBarberOrder } from './barberData'
 import { insertTvGalleryOrder } from './tvGalleryData'
 import { insertLiveChatOrder } from './liveChatData'
@@ -34,6 +35,7 @@ import {
   DOCTOR_PLAN_KEY,
   HOLIDAY_PLAN_KEY,
   RENTALS_PLAN_KEY,
+  LAUNDRY_PLAN_KEY,
   SAMPLE_PLAN_KEY,
   TV_PLAN_KEY,
   CHAT_PLAN_KEY,
@@ -56,7 +58,7 @@ import {
 // did, only now the items share one cart. The per-plan tables stay
 // separate (restaurant_order, pos_order, barbershop_order,
 // dealer_order, employee_order, bodyshop_order, houses_order,
-// doctor_order, holiday_order, rentals_order, barber_order,
+// doctor_order, holiday_order, rentals_order, laundry_order, barber_order,
 // tv_gallery_order, live_chat_order, clean_link_order, direct_upload_order,
 // kids_math_order,
 // kids_english_order, kids_arabic_order, kids_french_order,
@@ -75,6 +77,7 @@ const INSERT_BY_KEY = {
   [DOCTOR_PLAN_KEY]: insertDoctorOrder,
   [HOLIDAY_PLAN_KEY]: insertHolidayOrder,
   [RENTALS_PLAN_KEY]: insertRentalsOrder,
+  [LAUNDRY_PLAN_KEY]: insertLaundryOrder,
   [SAMPLE_PLAN_KEY]: insertBarberOrder,
   [TV_PLAN_KEY]: insertTvGalleryOrder,
   [CHAT_PLAN_KEY]: insertLiveChatOrder,

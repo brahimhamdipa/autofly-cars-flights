@@ -69,6 +69,10 @@ export const RENTALS_PLAN_KEY = 'cr:website'
 export const RENTALS_PLAN_NAME = 'Car rental page'
 export const RENTALS_PLAN_PRICE = 20
 
+export const LAUNDRY_PLAN_KEY = 'la:website'
+export const LAUNDRY_PLAN_NAME = 'Laundry page'
+export const LAUNDRY_PLAN_PRICE = 20
+
 export const SAMPLE_PLAN_KEY = 'b:website'
 export const SAMPLE_PLAN_NAME = 'Simple website'
 export const SAMPLE_PLAN_PRICE = 10
@@ -125,7 +129,7 @@ export const KIDS_READING_PLAN_KEY = 'kids-reading'
 export const KIDS_READING_PLAN_NAME = 'Kids Reading page'
 export const KIDS_READING_PLAN_PRICE = 10
 
-// Single source of truth for the twenty plans, keyed by plan key.
+// Single source of truth for the twenty-five plans, keyed by plan key.
 export const BUSINESS_PLANS = {
   [RESTAURANT_PLAN_KEY]: { key: RESTAURANT_PLAN_KEY, name: RESTAURANT_PLAN_NAME, price: RESTAURANT_PLAN_PRICE },
   [POS_PLAN_KEY]: { key: POS_PLAN_KEY, name: POS_PLAN_NAME, price: POS_PLAN_PRICE },
@@ -133,6 +137,11 @@ export const BUSINESS_PLANS = {
   [DEALER_PLAN_KEY]: { key: DEALER_PLAN_KEY, name: DEALER_PLAN_NAME, price: DEALER_PLAN_PRICE },
   [EMPLOYEE_PLAN_KEY]: { key: EMPLOYEE_PLAN_KEY, name: EMPLOYEE_PLAN_NAME, price: EMPLOYEE_PLAN_PRICE },
   [BODYSHOP_PLAN_KEY]: { key: BODYSHOP_PLAN_KEY, name: BODYSHOP_PLAN_NAME, price: BODYSHOP_PLAN_PRICE },
+  [HOUSES_PLAN_KEY]: { key: HOUSES_PLAN_KEY, name: HOUSES_PLAN_NAME, price: HOUSES_PLAN_PRICE },
+  [DOCTOR_PLAN_KEY]: { key: DOCTOR_PLAN_KEY, name: DOCTOR_PLAN_NAME, price: DOCTOR_PLAN_PRICE },
+  [HOLIDAY_PLAN_KEY]: { key: HOLIDAY_PLAN_KEY, name: HOLIDAY_PLAN_NAME, price: HOLIDAY_PLAN_PRICE },
+  [RENTALS_PLAN_KEY]: { key: RENTALS_PLAN_KEY, name: RENTALS_PLAN_NAME, price: RENTALS_PLAN_PRICE },
+  [LAUNDRY_PLAN_KEY]: { key: LAUNDRY_PLAN_KEY, name: LAUNDRY_PLAN_NAME, price: LAUNDRY_PLAN_PRICE },
   [SAMPLE_PLAN_KEY]: { key: SAMPLE_PLAN_KEY, name: SAMPLE_PLAN_NAME, price: SAMPLE_PLAN_PRICE },
   [TV_PLAN_KEY]: { key: TV_PLAN_KEY, name: TV_PLAN_NAME, price: TV_PLAN_PRICE },
   [CHAT_PLAN_KEY]: { key: CHAT_PLAN_KEY, name: CHAT_PLAN_NAME, price: CHAT_PLAN_PRICE },
@@ -149,7 +158,7 @@ export const BUSINESS_PLANS = {
   [KIDS_READING_PLAN_KEY]: { key: KIDS_READING_PLAN_KEY, name: KIDS_READING_PLAN_NAME, price: KIDS_READING_PLAN_PRICE },
 }
 
-// Bundle discount — pure math, no new state. All twenty plans count:
+// Bundle discount — pure math, no new state. All twenty-five plans count:
 // 2 plans in the cart = 10% off the monthly total, 3 plans = 15%,
 // 4 or more = 20%. The discount is cart-level display only: each
 // order row still keeps its plan's list price (see businessData.js),

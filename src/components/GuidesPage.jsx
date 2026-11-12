@@ -20,6 +20,7 @@ const PRICE_GROUPS = [
       { name: 'Doctor', blurb: 'Your clinic page: doctors, prices + appointments', price: 20, tab: 'doctor' },
       { name: 'Holiday', blurb: 'Your holiday rentals page: properties, dates + bookings', price: 20, tab: 'holiday' },
       { name: 'Car Rental', blurb: 'Your car rental page: cars, drivers + bookings', price: 20, tab: 'rentals' },
+      { name: 'Laundry', blurb: 'Your laundry page: services, prices + orders with pickup or delivery', price: 20, tab: 'laundry' },
       { name: 'Simple Website', blurb: 'Any website, built for you — your name, logo, services, and pictures', price: 10, tab: 'simple-barbershop' },
     ],
   },

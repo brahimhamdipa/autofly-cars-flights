@@ -48,6 +48,10 @@ const KNOWN = new Set([
   'dealer',
   'employee',
   'bodyshop',
+  'houses',
+  'doctor',
+  'holiday',
+  'rentals',
   'kids-math',
   'kids-english',
   'kids-arabic',
@@ -67,6 +71,10 @@ const PARAM_BY_SYSTEM = {
   dealer: 'd',
   employee: 'e',
   bodyshop: 'b',
+  houses: 'h',
+  doctor: 'doc',
+  holiday: 'hol',
+  rentals: 'c',
 }
 
 function paramFor(system) {

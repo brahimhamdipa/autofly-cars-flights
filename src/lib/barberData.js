@@ -83,7 +83,7 @@ export async function insertBarberOrder(data, emailExtras) {
   return submitAndNotify({
     table: 'barber_order',
     data,
-    subject: `New sample website order — ${data.customer_name}`,
+    subject: `New simple website order — ${data.customer_name}`,
     emailExtras,
   })
 }

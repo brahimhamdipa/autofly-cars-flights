@@ -4,6 +4,10 @@ import { insertBarbershopOrder } from './barbershopData'
 import { insertDealerOrder } from './dealerData'
 import { insertEmployeeOrder } from './employeeData'
 import { insertBodyshopOrder } from './bodyshopData'
+import { insertHousesOrder } from './housesData'
+import { insertDoctorOrder } from './doctorData'
+import { insertHolidayOrder } from './holidayData'
+import { insertRentalsOrder } from './rentalsData'
 import { insertBarberOrder } from './barberData'
 import { insertTvGalleryOrder } from './tvGalleryData'
 import { insertLiveChatOrder } from './liveChatData'
@@ -26,6 +30,10 @@ import {
   DEALER_PLAN_KEY,
   EMPLOYEE_PLAN_KEY,
   BODYSHOP_PLAN_KEY,
+  HOUSES_PLAN_KEY,
+  DOCTOR_PLAN_KEY,
+  HOLIDAY_PLAN_KEY,
+  RENTALS_PLAN_KEY,
   SAMPLE_PLAN_KEY,
   TV_PLAN_KEY,
   CHAT_PLAN_KEY,
@@ -47,7 +55,8 @@ import {
 // the owner once per item — exactly what the old per-system carts
 // did, only now the items share one cart. The per-plan tables stay
 // separate (restaurant_order, pos_order, barbershop_order,
-// dealer_order, employee_order, bodyshop_order, barber_order,
+// dealer_order, employee_order, bodyshop_order, houses_order,
+// doctor_order, holiday_order, rentals_order, barber_order,
 // tv_gallery_order, live_chat_order, clean_link_order, direct_upload_order,
 // kids_math_order,
 // kids_english_order, kids_arabic_order, kids_french_order,
@@ -62,6 +71,10 @@ const INSERT_BY_KEY = {
   [DEALER_PLAN_KEY]: insertDealerOrder,
   [EMPLOYEE_PLAN_KEY]: insertEmployeeOrder,
   [BODYSHOP_PLAN_KEY]: insertBodyshopOrder,
+  [HOUSES_PLAN_KEY]: insertHousesOrder,
+  [DOCTOR_PLAN_KEY]: insertDoctorOrder,
+  [HOLIDAY_PLAN_KEY]: insertHolidayOrder,
+  [RENTALS_PLAN_KEY]: insertRentalsOrder,
   [SAMPLE_PLAN_KEY]: insertBarberOrder,
   [TV_PLAN_KEY]: insertTvGalleryOrder,
   [CHAT_PLAN_KEY]: insertLiveChatOrder,

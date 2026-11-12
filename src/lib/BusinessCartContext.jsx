@@ -53,8 +53,24 @@ export const BODYSHOP_PLAN_KEY = 'bs:website'
 export const BODYSHOP_PLAN_NAME = 'Bodyshop management'
 export const BODYSHOP_PLAN_PRICE = 20
 
+export const HOUSES_PLAN_KEY = 'h:website'
+export const HOUSES_PLAN_NAME = 'Houses page'
+export const HOUSES_PLAN_PRICE = 20
+
+export const DOCTOR_PLAN_KEY = 'dr:website'
+export const DOCTOR_PLAN_NAME = 'Doctor booking page'
+export const DOCTOR_PLAN_PRICE = 20
+
+export const HOLIDAY_PLAN_KEY = 'hol:website'
+export const HOLIDAY_PLAN_NAME = 'Holiday rentals page'
+export const HOLIDAY_PLAN_PRICE = 20
+
+export const RENTALS_PLAN_KEY = 'cr:website'
+export const RENTALS_PLAN_NAME = 'Car rental page'
+export const RENTALS_PLAN_PRICE = 20
+
 export const SAMPLE_PLAN_KEY = 'b:website'
-export const SAMPLE_PLAN_NAME = 'Sample website'
+export const SAMPLE_PLAN_NAME = 'Simple website'
 export const SAMPLE_PLAN_PRICE = 10
 
 export const TV_PLAN_KEY = 'tv:website'

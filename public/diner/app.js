@@ -73,6 +73,46 @@
   var draft = null; // staff draft (Setup)
   var draftStatus = 'editing';
   var staffCreds = null; // {u, p} in memory only, never stored
+  /* ---------- Shop live chat (per-shop add-on) ---------- */
+  /* The visitor bubble mounts once, after the shop's live data loads;
+     the shared file checks the per-shop switch itself and renders
+     nothing while it is OFF. The owner inbox lives in Setup, behind
+     the owner login. NOTE: ShopChat.mountBubble sets its container's
+     innerHTML, so it must NOT be given document.body - that would
+     wipe the whole page. It gets a dedicated container div instead. */
+  var shopChatMounted = false;
+  function mountShopChatBubble(shopName, ownerEmail) {
+    if (shopChatMounted || !window.ShopChat) return;
+    shopChatMounted = true;
+    var wrap = document.createElement('div');
+    wrap.id = 'shop-chat-wrap';
+    document.body.appendChild(wrap);
+    window.ShopChat.mountBubble(wrap, { ownerType: 'diner', ownerKey: SLUG, shopName: shopName || 'this shop', ownerEmail: ownerEmail || '' });
+  }
+  function stopShopChat() {
+    var box = $('setup-chats');
+    if (box && box._shopChatStop) box._shopChatStop();
+  }
+  function wireShopChatInbox() {
+    var btn = $('setup-chats-toggle');
+    var box = $('setup-chats');
+    if (!btn || !box) return;
+    btn.addEventListener('click', function () {
+      if (box._shopChatStop) {
+        box._shopChatStop();
+        box._shopChatStop = null;
+        box.innerHTML = '';
+        btn.textContent = 'Open chats';
+        return;
+      }
+      if (!window.ShopChat) {
+        box.innerHTML = '<p class="error">Chat could not load. Please try again in a moment.</p>';
+        return;
+      }
+      window.ShopChat.mountInbox(box, { ownerType: 'diner', ownerKey: SLUG, creds: { u: staffCreds.u, p: staffCreds.p } });
+      btn.textContent = 'Close chats';
+    });
+  }
   var empPass = null; // employee password in memory only, never stored
   var empUnlocked = false; // true once the employee password is entered, or when the restaurant has none set
   var cart = {}; // menu index -> quantity
@@ -360,6 +400,7 @@
 
   function show(view) {
     currentView = view;
+    if (view !== 'setup') stopShopChat();
     if (view !== 'kitchen') stopKitchenPoll();
     if (view !== 'menu') stopSlideTimer();
     ['menu', 'order', 'kitchen', 'receipt', 'setup'].forEach(function (v) {
@@ -837,6 +878,7 @@
 
   /* ---------- Setup (login only: draft + Upload for approval) ---------- */
   function openSetup() {
+    stopShopChat(); // the loading state replaces the Setup view, destroying the inbox container
     if (!staffUnlocked()) {
       renderStaffLogin($('view-setup'), 'Setup sign-in', function () { openSetup(); });
       return;
@@ -858,6 +900,7 @@
     return 'Your changes are saved as a draft. Visitors still see the approved menu until you upload and Yently approves.';
   }
   function renderSetup() {
+    stopShopChat(); // re-render destroys the inbox container; stop its poll first
     var el = $('view-setup');
     function field(label, id, value, type) {
       return '<label>' + label + '</label><input id="' + id + '" type="' + (type || 'text') + '" value="' + esc(value == null ? '' : value) + '">';
@@ -884,8 +927,13 @@
       '<button id="setup-add" class="secondary">+ Add menu item</button>' +
       '<div class="row" style="margin-top:16px"><button id="setup-save" class="secondary">Save draft</button>' +
       '<button id="setup-upload">Upload for approval</button></div>' +
-      '<div id="setup-out" style="margin-top:12px"></div>';
+      '<div id="setup-out" style="margin-top:12px"></div>' +
+      '<div class="card"><h3>Chats</h3>' +
+      '<p class="info">Messages from visitors on this page. Visitors only see the chat bubble once Yently switches live chat on for this shop.</p>' +
+      '<div class="row"><button type="button" id="setup-chats-toggle" class="secondary">Open chats</button></div>' +
+      '<div id="setup-chats"></div></div>';
     el.innerHTML = html;
+    wireShopChatInbox();
     var menuEl = $('setup-menu');
     function menuRow(item, i) {
       var row = document.createElement('div');
@@ -1052,6 +1100,7 @@
       $('site-footer').innerHTML = (firstLine ? '<div>' + firstLine + '</div>' : '') +
         '<div>Powered by Yently</div>';
       updateBadges();
+      mountShopChatBubble(data.name, data.email);
       rpc('diner_pass_status', { p_slug: SLUG }).then(function (s) {
         empUnlocked = (s !== 'locked');
         renderMenu();

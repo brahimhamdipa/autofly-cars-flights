@@ -52,6 +52,13 @@ export default function DoctorPage({ go }) {
         <p>Patients browse your doctors, see the fee and visit length, and book an appointment — all from any phone. You see every booking the moment it comes in.</p>
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>🎥 Watch how it works — 2 minutes</h3>
+        <p>See what you get, how to get it, and how to use it — a quick video guide for clinics.</p>
+        <video controls preload="metadata" poster="/videos/doctor-guide-poster.jpg" src="/videos/doctor-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+        <p style={{ marginTop: 10 }}>Prefer to read it? <a href="/guides/doctor-guide.pdf" target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontWeight: 700 }}>Download the step-by-step guide (PDF)</a> — from buying it to taking your first booking.</p>
+      </div>
+
       <div className="hero-card">
         <h3>What your clinic gets</h3>
         <ul>

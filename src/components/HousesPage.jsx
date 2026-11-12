@@ -49,6 +49,13 @@ export default function HousesPage({ go }) {
         <p>Customers browse your homes, save their favorites, work out the mortgage, and ask about a home — all from any phone. You see every question the moment it comes in.</p>
       </div>
 
+      <div className="hero-card" style={{ textAlign: 'center' }}>
+        <h3>🎥 Watch how it works — 2 minutes</h3>
+        <p>See what you get, how to get it, and how to use it — a quick video guide for home sellers.</p>
+        <video controls preload="metadata" poster="/videos/houses-guide-poster.jpg" src="/videos/houses-guide.mp4" style={{ width: '100%', maxWidth: 720, borderRadius: 10, background: '#000' }} />
+        <p style={{ marginTop: 10 }}>Prefer to read it? <a href="/guides/houses-guide.pdf" target="_blank" rel="noreferrer" style={{ color: '#2563eb', fontWeight: 700 }}>Download the step-by-step guide (PDF)</a> — from buying it to selling your first home.</p>
+      </div>
+
       <div className="hero-card">
         <h3>What your agency gets</h3>
         <ul>

@@ -49,6 +49,11 @@ const SYSTEM_GUIDES = [
   { name: 'Dealer', tab: 'dealer', video: '/videos/dealer-guide.mp4', length: '1:59', pdf: '/guides/dealer-guide.pdf' },
   { name: 'Employee', tab: 'employee', video: '/videos/employee-guide.mp4', length: '2:07', pdf: '/guides/employee-guide.pdf' },
   { name: 'Bodyshop', tab: 'bodyshop', video: '/videos/bodyshop-guide.mp4', length: '2:09', pdf: '/guides/bodyshop-guide.pdf' },
+  { name: 'Houses', tab: 'houses', video: '/videos/houses-guide.mp4', length: '2:04', pdf: '/guides/houses-guide.pdf' },
+  { name: 'Doctor', tab: 'doctor', video: '/videos/doctor-guide.mp4', length: '2:01', pdf: '/guides/doctor-guide.pdf' },
+  { name: 'Holiday', tab: 'holiday', video: '/videos/holiday-guide.mp4', length: '2:05', pdf: '/guides/holiday-guide.pdf' },
+  { name: 'Car Rental', tab: 'rentals', video: '/videos/rentals-guide.mp4', length: '2:02', pdf: '/guides/rentals-guide.pdf' },
+  { name: 'Laundry', tab: 'laundry', video: '/videos/laundry-guide.mp4', length: '2:13', pdf: '/guides/laundry-guide.pdf' },
   { name: 'Add-Ons', tab: 'business-hub', video: '/videos/addons-guide.mp4', length: '2:15', pdf: '/guides/addons-guide.pdf' },
   { name: 'Direct Upload', tab: 'direct-upload', video: null, length: null, pdf: null },
 ]

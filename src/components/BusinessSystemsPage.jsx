@@ -16,11 +16,11 @@ const SYSTEMS = [
   { name: 'Dealer', price: 20, blurb: 'Your own dealer page — vehicles, test drives, and trade-ins.', tab: 'dealer', video: true },
   { name: 'Employee', price: 20, blurb: 'Your own employee time page — log time and keep records.', tab: 'employee', video: true },
   { name: 'Bodyshop', price: 20, blurb: 'Your own bodyshop page — estimates, jobs, and loan cars.', tab: 'bodyshop', video: true },
-  { name: 'Houses', price: 20, blurb: 'Your own houses page — listings, photos, and a mortgage calculator.', tab: 'houses', video: false },
-  { name: 'Doctor', price: 20, blurb: 'Your own clinic page — doctors, prices, and appointments.', tab: 'doctor', video: false },
-  { name: 'Holiday', price: 20, blurb: 'Your own holiday rentals page — properties, dates, and bookings.', tab: 'holiday', video: false },
-  { name: 'Car Rental', price: 20, blurb: 'Your own car rental page — cars, drivers, and bookings.', tab: 'rentals', video: false },
-  { name: 'Laundry', price: 20, blurb: 'Your own laundry page — services, prices, and orders with pickup or delivery.', tab: 'laundry', video: false },
+  { name: 'Houses', price: 20, blurb: 'Your own houses page — listings, photos, and a mortgage calculator.', tab: 'houses', video: true },
+  { name: 'Doctor', price: 20, blurb: 'Your own clinic page — doctors, prices, and appointments.', tab: 'doctor', video: true },
+  { name: 'Holiday', price: 20, blurb: 'Your own holiday rentals page — properties, dates, and bookings.', tab: 'holiday', video: true },
+  { name: 'Car Rental', price: 20, blurb: 'Your own car rental page — cars, drivers, and bookings.', tab: 'rentals', video: true },
+  { name: 'Laundry', price: 20, blurb: 'Your own laundry page — services, prices, and orders with pickup or delivery.', tab: 'laundry', video: true },
   { name: 'Simple Website', price: 10, blurb: 'Any website, built for you — your name, logo, services, and pictures.', tab: 'simple-barbershop' },
 ]
 

@@ -94,6 +94,7 @@ export default function FlightReservationPage({ go }) {
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState('')
   const [busy, setBusy] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
   const formRef = useRef(null)
 
   const setTripField = (k, v) => setTrip(prev => ({ ...prev, [k]: v }))
@@ -138,6 +139,7 @@ export default function FlightReservationPage({ go }) {
         },
       })
       if (error) throw error
+      setSubmitted(true)
       setStatus('✓ Submitted! The PDF was emailed to our team.')
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -190,6 +192,12 @@ export default function FlightReservationPage({ go }) {
           </div>
           <p className="hint">"Submit as PDF" emails the PDF to our team. "Download PDF" just saves it to your device.</p>
           {status && <p className="status">{status}</p>}
+          {submitted && (
+            <div style={{ marginTop: 12 }}>
+              <p style={{ margin: '0 0 8px' }}>Your reservation is with us. Next step — pay the exact amount we agreed:</p>
+              <button type="button" onClick={() => go && go('flight-pay')} style={{ background: '#f5c542', color: '#111827', fontWeight: 700 }}>Pay Flight →</button>
+            </div>
+          )}
         </form>
       </div>
     </div>

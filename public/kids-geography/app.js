@@ -139,6 +139,7 @@
 
   function show(view) {
     currentView = view;
+    stopSetupChats();
     ['play', 'teacher', 'setup'].forEach(function (v) {
       $('view-' + v).hidden = v !== view;
     });
@@ -387,6 +388,14 @@
       });
     });
   }
+  /* Per-shop live chat: stop the owner inbox poll when Setup is
+     left or the Chats section is closed. No-op when chats were
+     never opened. */
+  function stopSetupChats() {
+    var box = $('setup-chats');
+    if (box && box._shopChatStop) { try { box._shopChatStop(); } catch (e) {} }
+  }
+
   function openSetup() {
     if (!staffUnlocked()) {
       renderStaffLogin($('view-setup'), 'Setup sign-in', function () { openSetup(); });
@@ -426,8 +435,27 @@
       '<button id="setup-country-add" class="secondary">+ Add country</button>' +
       '<div class="row" style="margin-top:16px"><button id="setup-save" class="secondary">Save draft</button>' +
       '<button id="setup-upload">Upload for approval</button></div>' +
-      '<div id="setup-out" style="margin-top:12px"></div>';
+      '<div id="setup-out" style="margin-top:12px"></div>' +
+      '<h2>Chats — المحادثات</h2>' +
+      '<div class="row"><button id="setup-chats-toggle" class="secondary">💬 Chats — المحادثات</button></div>' +
+      '<div id="setup-chats"></div>';
     el.innerHTML = html;
+    /* Per-shop live chat: owner inbox, behind the owner login.
+       Opens on tap; tapping again (or leaving Setup) stops its poll. */
+    $('setup-chats-toggle').addEventListener('click', function () {
+      var box = $('setup-chats');
+      if (!box) return;
+      if (box.innerHTML) {
+        stopSetupChats();
+        box.innerHTML = '';
+        return;
+      }
+      if (window.ShopChat) {
+        window.ShopChat.mountInbox(box, { ownerType: 'kids-geography', ownerKey: SLUG, creds: { u: staffCreds.u, p: staffCreds.p } });
+      } else {
+        box.innerHTML = '<p class="error">Chat is not available right now. Please reload the page and try again.</p>';
+      }
+    });
 
     function drawStudents() {
       var box = $('setup-students');
@@ -547,6 +575,18 @@
     resolveSlug().then(function () { return rpc('get_kids_geography_live', { p_slug: SLUG }); }).then(function (json) {
       if (!json || !json.name) throw new Error('not found');
       data = json;
+      /* Per-shop live chat: visitor bubble. ShopChat checks the
+         switch itself and renders nothing while OFF. mountBubble
+         writes into the element it is given, so it mounts into its
+         own container div — never document.body, which would wipe
+         the page. No owner email exists for Kids schools, so ''
+         is passed and no email is attempted. */
+      if (window.ShopChat) {
+        var chatBox = document.createElement('div');
+        chatBox.id = 'shop-chat-mount';
+        document.body.appendChild(chatBox);
+        window.ShopChat.mountBubble(chatBox, { ownerType: 'kids-geography', ownerKey: SLUG, shopName: data.name || 'Kids Geography', ownerEmail: '' });
+      }
       data.students = data.students || [];
       data.countries = data.countries || [];
       document.title = data.name || 'Kids Geography';

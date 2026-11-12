@@ -25,7 +25,7 @@ import { fetchAll, fmtDate } from '../../lib/admin'
 
 const SYSTEM_OPTIONS = [
   'diner', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'houses',
-  'doctor', 'holiday', 'rentals', 'store',
+  'doctor', 'holiday', 'rentals', 'laundry', 'store',
   'car-seller',
   'kids-math', 'kids-english', 'kids-arabic', 'kids-french', 'kids-spanish',
   'kids-science', 'kids-geography', 'kids-coding', 'kids-reading',

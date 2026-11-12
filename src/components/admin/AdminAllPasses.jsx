@@ -52,6 +52,7 @@ const GROUPS = [
   { key: 'doctor', title: 'Doctor' },
   { key: 'holiday', title: 'Holiday' },
   { key: 'rentals', title: 'Car Rental' },
+  { key: 'laundry', title: 'Laundry' },
   { key: 'kids', title: 'Yently Kids' },
   { key: 'barbers', title: 'Barbers' },
   { key: 'websites', title: 'Websites' },
@@ -63,7 +64,7 @@ const GROUPS = [
 // can be approved, and the only rows with a team/employee password.
 // The nine Kids tables work exactly like the other six: a school has
 // a slug, a login, a teacher password (epass) and a draft.
-const SHOP_TABLES = ['diner_restaurants', 'barbershop_shops', 'pos_stores', 'dealer_shops', 'employee_shops', 'bodyshop_shops', 'houses_shops', 'doctor_shops', 'holiday_shops', 'rentals_shops', 'kids_math_shops', 'kids_english_shops', 'kids_arabic_shops', 'kids_french_shops', 'kids_spanish_shops', 'kids_science_shops', 'kids_geography_shops', 'kids_coding_shops', 'kids_reading_shops']
+const SHOP_TABLES = ['diner_restaurants', 'barbershop_shops', 'pos_stores', 'dealer_shops', 'employee_shops', 'bodyshop_shops', 'houses_shops', 'doctor_shops', 'holiday_shops', 'rentals_shops', 'laundry_shops', 'kids_math_shops', 'kids_english_shops', 'kids_arabic_shops', 'kids_french_shops', 'kids_spanish_shops', 'kids_science_shops', 'kids_geography_shops', 'kids_coding_shops', 'kids_reading_shops']
 
 // Approve RPCs, copied exactly from AdminStoreManage: diner takes
 // p_restaurant_id, POS takes p_store_id, the other four — and all
@@ -79,6 +80,7 @@ const APPROVE_RPC = {
   doctor_shops: { rpc: 'approve_doctor_draft', param: 'p_shop_id' },
   holiday_shops: { rpc: 'approve_holiday_draft', param: 'p_shop_id' },
   rentals_shops: { rpc: 'approve_rentals_draft', param: 'p_shop_id' },
+  laundry_shops: { rpc: 'approve_laundry_draft', param: 'p_shop_id' },
   kids_math_shops: { rpc: 'approve_kids_math_draft', param: 'p_shop_id' },
   kids_english_shops: { rpc: 'approve_kids_english_draft', param: 'p_shop_id' },
   kids_arabic_shops: { rpc: 'approve_kids_arabic_draft', param: 'p_shop_id' },
@@ -120,6 +122,7 @@ const CREATE_SYSTEMS = [
   { value: 'doctor_shops', group: 'Doctor', label: 'Doctor clinic' },
   { value: 'holiday_shops', group: 'Holiday', label: 'Holiday rentals' },
   { value: 'rentals_shops', group: 'Car Rental', label: 'Car rental' },
+  { value: 'laundry_shops', group: 'Laundry', label: 'Laundry' },
   { value: 'kids_math_shops', group: 'Yently Kids', label: 'Kids Math school' },
   { value: 'kids_english_shops', group: 'Yently Kids', label: 'Kids English school' },
   { value: 'kids_arabic_shops', group: 'Yently Kids', label: 'Kids Arabic school' },
@@ -163,6 +166,7 @@ const liveDataDefault = (table, name) => {
   if (table === 'doctor_shops') return { name, address: '', phone: '', hours: '', about: '' }
   if (table === 'holiday_shops') return { name, address: '', phone: '', hours: '', about: '' }
   if (table === 'rentals_shops') return { name, address: '', phone: '', hours: '', about: '' }
+  if (table === 'laundry_shops') return { name, address: '', phone: '', hours: '', about: '' }
   return null
 }
 
@@ -210,7 +214,7 @@ export default function AdminAllPasses() {
       if (error) { failedGroups.push(key); return [] }
       return data || []
     }
-    const [providers, formRows, employees, passRows, intakeRows, dinerRows, shopRows, uploadRows, folderRows, posRows, dealerRows, employeeRows, bodyshopRows, housesRows, doctorRows, holidayRows, rentalsRows, kidsMathRows, kidsEnglishRows, kidsArabicRows, kidsFrenchRows, kidsSpanishRows, kidsScienceRows, kidsGeographyRows, kidsCodingRows, kidsReadingRows, cleanLinkRows] = await Promise.all([
+    const [providers, formRows, employees, passRows, intakeRows, dinerRows, shopRows, uploadRows, folderRows, posRows, dealerRows, employeeRows, bodyshopRows, housesRows, doctorRows, holidayRows, rentalsRows, laundryRows, kidsMathRows, kidsEnglishRows, kidsArabicRows, kidsFrenchRows, kidsSpanishRows, kidsScienceRows, kidsGeographyRows, kidsCodingRows, kidsReadingRows, cleanLinkRows] = await Promise.all([
       grab('stores', supabase.from('store_providers').select('id, name')),
       grab('stores', supabase.from('providersForm').select('id, provider_id, f, u, p, comment').order('f')),
       grab('chat', supabase.from('employees').select('id, firstName, lastName')),
@@ -228,6 +232,7 @@ export default function AdminAllPasses() {
       grab('doctor', supabase.from('doctor_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
       grab('holiday', supabase.from('holiday_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
       grab('rentals', supabase.from('rentals_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
+      grab('laundry', supabase.from('laundry_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
       grab('kids', supabase.from('kids_math_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
       grab('kids', supabase.from('kids_english_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
       grab('kids', supabase.from('kids_arabic_shops').select('id, slug, name, u, p, epass, note, draft_status').order('name')),
@@ -270,6 +275,7 @@ export default function AdminAllPasses() {
       ...doctorRows.map(r => shopRow('doctor', 'doctor', 'Doctor pass', 'doctor_shops', '/doctor?doc=', r)),
       ...holidayRows.map(r => shopRow('holiday', 'holiday', 'Holiday pass', 'holiday_shops', '/holiday?hol=', r)),
       ...rentalsRows.map(r => shopRow('rentals', 'rentals', 'Car Rental pass', 'rentals_shops', '/rentals?c=', r)),
+      ...laundryRows.map(r => shopRow('laundry', 'laundry', 'Laundry pass', 'laundry_shops', '/laundry?l=', r)),
       ...kidsMathRows.map(r => shopRow('kids-math', 'kids', 'Kids Math pass', 'kids_math_shops', '/kids-math?s=', r)),
       ...kidsEnglishRows.map(r => shopRow('kids-english', 'kids', 'Kids English pass', 'kids_english_shops', '/kids-english?s=', r)),
       ...kidsArabicRows.map(r => shopRow('kids-arabic', 'kids', 'Kids Arabic pass', 'kids_arabic_shops', '/kids-arabic?s=', r)),

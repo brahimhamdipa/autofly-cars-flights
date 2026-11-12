@@ -73,6 +73,46 @@
   var draft = null; // owner draft (Setup)
   var draftStatus = 'editing';
   var ownerCreds = null; // {u, p} in memory only, never stored
+  /* ---------- Shop live chat (per-shop add-on) ---------- */
+  /* The visitor bubble mounts once, after the shop's live data loads;
+     the shared file checks the per-shop switch itself and renders
+     nothing while it is OFF. The owner inbox lives in Setup, behind
+     the owner login. NOTE: ShopChat.mountBubble sets its container's
+     innerHTML, so it must NOT be given document.body - that would
+     wipe the whole page. It gets a dedicated container div instead. */
+  var shopChatMounted = false;
+  function mountShopChatBubble(shopName, ownerEmail) {
+    if (shopChatMounted || !window.ShopChat) return;
+    shopChatMounted = true;
+    var wrap = document.createElement('div');
+    wrap.id = 'shop-chat-wrap';
+    document.body.appendChild(wrap);
+    window.ShopChat.mountBubble(wrap, { ownerType: 'holiday', ownerKey: SLUG, shopName: shopName || 'this shop', ownerEmail: ownerEmail || '' });
+  }
+  function stopShopChat() {
+    var box = $('setup-chats');
+    if (box && box._shopChatStop) box._shopChatStop();
+  }
+  function wireShopChatInbox() {
+    var btn = $('setup-chats-toggle');
+    var box = $('setup-chats');
+    if (!btn || !box) return;
+    btn.addEventListener('click', function () {
+      if (box._shopChatStop) {
+        box._shopChatStop();
+        box._shopChatStop = null;
+        box.innerHTML = '';
+        btn.textContent = 'Open chats';
+        return;
+      }
+      if (!window.ShopChat) {
+        box.innerHTML = '<p class="error">Chat could not load. Please try again in a moment.</p>';
+        return;
+      }
+      window.ShopChat.mountInbox(box, { ownerType: 'holiday', ownerKey: SLUG, creds: { u: ownerCreds.u, p: ownerCreds.p } });
+      btn.textContent = 'Close chats';
+    });
+  }
   var empPass = null; // employee password in memory only, never stored
   var empUnlocked = false; // true once the employee password is entered, or when the business has none set
   var passLocked = false;
@@ -305,6 +345,7 @@
   /* ---------- views ---------- */
   function show(view) {
     currentView = view;
+    if (view !== 'setup') stopShopChat();
     ['properties', 'book', 'bookings', 'setup'].forEach(function (v) {
       var el = $('view-' + v);
       if (el) el.hidden = v !== view;
@@ -657,6 +698,7 @@
 
   /* ---------- Setup (owner) ---------- */
   function renderSetup() {
+    stopShopChat(); // re-render destroys the inbox container; stop its poll first
     var el = $('view-setup');
     if (!holiday) { el.innerHTML = '<p class="info">Loading…</p>'; return; }
     if (!ownerCreds) {
@@ -727,8 +769,13 @@
       '<p class="error" id="v-pics-status" hidden></p>' +
       '<div class="row"><button id="v-save">Save property</button>' +
       '<button id="v-cancel" class="secondary" hidden>Cancel edit</button></div>' +
-      '<p class="error" id="v-err" hidden></p></div>';
+      '<p class="error" id="v-err" hidden></p></div>' +
+      '<div class="card"><h3>Chats</h3>' +
+      '<p class="info">Messages from visitors on this page. Visitors only see the chat bubble once Yently switches live chat on for this shop.</p>' +
+      '<div class="row"><button type="button" id="setup-chats-toggle" class="secondary">Open chats</button></div>' +
+      '<div id="setup-chats"></div></div>';
     el.innerHTML = h;
+    wireShopChatInbox();
     renderPropertiesList();
     $('d-save').addEventListener('click', function () { saveDraft(false); });
     $('d-upload').addEventListener('click', function () { saveDraft(true); });
@@ -974,6 +1021,7 @@
         $('view-properties').innerHTML = '<div class="card"><h2>Holiday not found</h2><p class="info">No holiday business with this link yet. Ask Yently to set it up.</p></div>';
         return;
       }
+      mountShopChatBubble(d.name, '');
       return rpc('holiday_pass_status', { p_slug: SLUG }).then(function (st) {
         passLocked = st === 'locked';
         empUnlocked = !passLocked;

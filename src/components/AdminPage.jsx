@@ -82,6 +82,26 @@ const MENUS = [
       { label: 'Bodyshop Jobs', table: 'bodyshop_jobs' },
       { label: 'Bodyshop Orders', table: 'bodyshop_orders' },
     ] },
+    { label: 'Houses', children: [
+      { label: 'Houses Passes', table: 'houses_shops' },
+      { label: 'Houses Inquiries', table: 'houses_inquiries' },
+      { label: 'Houses Orders', table: 'houses_order' },
+    ] },
+    { label: 'Doctor', children: [
+      { label: 'Doctor Passes', table: 'doctor_shops' },
+      { label: 'Doctor Appointments', table: 'doctor_appointments' },
+      { label: 'Doctor Orders', table: 'doctor_order' },
+    ] },
+    { label: 'Holiday', children: [
+      { label: 'Holiday Passes', table: 'holiday_shops' },
+      { label: 'Holiday Bookings', table: 'holiday_bookings' },
+      { label: 'Holiday Orders', table: 'holiday_order' },
+    ] },
+    { label: 'Car Rental', children: [
+      { label: 'Car Rental Passes', table: 'rentals_shops' },
+      { label: 'Car Rental Bookings', table: 'rentals_bookings' },
+      { label: 'Car Rental Orders', table: 'rentals_order' },
+    ] },
     { label: 'Yently Kids', children: [
       { label: 'Math', children: [
         { label: 'Kids Math Passes', table: 'kids_math_shops' },

@@ -7,7 +7,7 @@ export default function AboutPage() {
       </div>
       <div className="form-card wide">
         <h3>What we do</h3>
-        <p><b>Business Systems.</b> The tools a small business runs on: a restaurant ordering page, a point-of-sale register, a barber booking page, a dealer website, an employee time page, or bodyshop management. We build it, host it, and keep it running — you just use it. See a live example first under Sample Website: a barbershop booking page with a live queue and a stopwatch for every cut.</p>
+        <p><b>Business Systems.</b> The tools a small business runs on: a restaurant ordering page, a point-of-sale register, a barber booking page, a dealer website, an employee time page, or bodyshop management. We build it, host it, and keep it running — you just use it. See a live example first under Simple Website: a barbershop booking page with a live queue and a stopwatch for every cut.</p>
         <p><b>Cars.</b> Browse cars for sale near you, each with real photos, mileage, and price. Found one you like? Tap "I'm interested" and we'll get right back to you. Selling? Send us your car and get an instant offer.</p>
         <p><b>Flights.</b> Tell us where you're going and who's traveling — adults, children, everyone's ages — and our US-based travel experts reply with options within 24 hours. No endless searching, no confusing fare pages.</p>
         <p><b>Shopping.</b> Browse products from local stores — groceries and more — with delivery or pickup in covered areas. Same simple idea: one place, everything you need.</p>

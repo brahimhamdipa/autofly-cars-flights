@@ -3,8 +3,9 @@ import { BusinessTopBar } from './BusinessMenu'
 // Business Systems hub page — the first nav button and the default
 // tab. Every system and add-on in one place, each row linking to its
 // own ad page. Prices match the ad pages exactly (Restaurant $40,
-// POS $50, Barber $15, Dealer $20, Employee $20, Bodyshop $20,
-// Sample Website $10, TV Gallery $2, Live Chat $3 — all per month,
+// POS $50, Barber $15, Dealer $20, Employee $20, Bodyshop $20, Houses $20,
+// Doctor $20, Holiday $20, Car Rental $20,
+// Simple Website $10, TV Gallery $2, Live Chat $3 — all per month,
 // first month free). No Add to cart here on purpose: each ad page
 // has its own. Bundle tiers (2 plans 10% off, 3 plans 15% off, 4+
 // plans 20% off) apply automatically in My Cart.
@@ -15,7 +16,11 @@ const SYSTEMS = [
   { name: 'Dealer', price: 20, blurb: 'Your own dealer page — vehicles, test drives, and trade-ins.', tab: 'dealer', video: true },
   { name: 'Employee', price: 20, blurb: 'Your own employee time page — log time and keep records.', tab: 'employee', video: true },
   { name: 'Bodyshop', price: 20, blurb: 'Your own bodyshop page — estimates, jobs, and loan cars.', tab: 'bodyshop', video: true },
-  { name: 'Sample Website', price: 10, blurb: 'Any website, built for you — your name, logo, services, and pictures.', tab: 'simple-barbershop' },
+  { name: 'Houses', price: 20, blurb: 'Your own houses page — listings, photos, and a mortgage calculator.', tab: 'houses', video: false },
+  { name: 'Doctor', price: 20, blurb: 'Your own clinic page — doctors, prices, and appointments.', tab: 'doctor', video: false },
+  { name: 'Holiday', price: 20, blurb: 'Your own holiday rentals page — properties, dates, and bookings.', tab: 'holiday', video: false },
+  { name: 'Car Rental', price: 20, blurb: 'Your own car rental page — cars, drivers, and bookings.', tab: 'rentals', video: false },
+  { name: 'Simple Website', price: 10, blurb: 'Any website, built for you — your name, logo, services, and pictures.', tab: 'simple-barbershop' },
 ]
 
 const ADDONS = [

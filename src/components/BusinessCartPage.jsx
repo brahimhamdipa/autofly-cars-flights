@@ -19,7 +19,7 @@ const PLAN_HINTS = {
   'd:website': 'Your own dealer page + test drives + trade-ins, for your dealership.',
   'e:website': 'Your own time page + records, for your team.',
   'bs:website': 'Your own bodyshop page + estimates + jobs, for your shop.',
-  'b:website': 'Your own sample website, for your business.',
+  'b:website': 'Your own simple website, for your business.',
   'tv:website': 'Your own TV gallery page + up to 7 pictures, for your screens.',
   'chat:website': 'Your own chat bubble + every message by email, for your website.',
   'clean:website': 'A short, clean link for your system — your own yently.com address.',

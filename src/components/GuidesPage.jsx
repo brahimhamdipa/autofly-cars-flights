@@ -16,7 +16,11 @@ const PRICE_GROUPS = [
       { name: 'Dealer', blurb: 'Your dealer website: vehicles, test drives, trade-ins', price: 20, tab: 'dealer' },
       { name: 'Employee', blurb: 'Time tracking + employee records', price: 20, tab: 'employee' },
       { name: 'Bodyshop', blurb: 'Estimates, jobs, customers + loan cars', price: 20, tab: 'bodyshop' },
-      { name: 'Sample Website', blurb: 'Any website, built for you — your name, logo, services, and pictures', price: 10, tab: 'simple-barbershop' },
+      { name: 'Houses', blurb: 'Your houses page: listings, photos + mortgage calculator', price: 20, tab: 'houses' },
+      { name: 'Doctor', blurb: 'Your clinic page: doctors, prices + appointments', price: 20, tab: 'doctor' },
+      { name: 'Holiday', blurb: 'Your holiday rentals page: properties, dates + bookings', price: 20, tab: 'holiday' },
+      { name: 'Car Rental', blurb: 'Your car rental page: cars, drivers + bookings', price: 20, tab: 'rentals' },
+      { name: 'Simple Website', blurb: 'Any website, built for you — your name, logo, services, and pictures', price: 10, tab: 'simple-barbershop' },
     ],
   },
   {

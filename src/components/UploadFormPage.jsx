@@ -351,7 +351,7 @@ export default function UploadFormPage({ slug, goBack, go }) {
           <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('dealer') }}>Dealer</button>
           <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('employee') }}>Employee</button>
           <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('bodyshop') }}>Bodyshop</button>
-          <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('simple-barbershop') }}>Sample Website</button>
+          <button type="button" onClick={e => { e.stopPropagation(); setMenuOpen(false); if (go) go('simple-barbershop') }}>Simple Website</button>
           <button type="button" onClick={e => { e.stopPropagation(); setMenuAddonsOpen(o => !o) }}>Add-ons {menuAddonsOpen ? '▾' : '▸'}</button>
           {menuAddonsOpen && (
             <a href="/demo-tv-gallery" style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', textDecoration: 'none', borderTop: '1px solid #f1f2f5' }}>TV Gallery</a>

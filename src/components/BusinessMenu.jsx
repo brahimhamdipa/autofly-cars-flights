@@ -6,8 +6,8 @@ import { useBusinessCart } from '../lib/BusinessCartContext'
 // button, plain list). Seven top rows: My Cart (with the live
 // business-cart count), Business Systems (the hub page), Restaurant,
 // POS, Barber, then two branches that open in place (like the Admin
-// menu branches): "More Systems" (Dealer, Employee, Bodyshop, Sample
-// Website) and "Add-ons" (TV Gallery, Live Chat, Clean Link, Direct
+// menu branches): "More Systems" (Dealer, Employee, Bodyshop, Houses, Doctor, Holiday,
+// Car Rental, Simple Website) and "Add-ons" (TV Gallery, Live Chat, Clean Link, Direct
 // Upload). Each branch button shows a right arrow when closed and a
 // down arrow when open, and its links are indented like sub-items,
 // same size, same plain weight — none of them bold. One cart and one
@@ -52,7 +52,19 @@ export default function BusinessMenu({ go }) {
             <button onClick={() => pick('bodyshop')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Bodyshop</button>
           )}
           {moreOpen && (
-            <button onClick={() => pick('simple-barbershop')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Sample Website</button>
+            <button onClick={() => pick('houses')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Houses</button>
+          )}
+          {moreOpen && (
+            <button onClick={() => pick('doctor')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Doctor</button>
+          )}
+          {moreOpen && (
+            <button onClick={() => pick('holiday')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Holiday</button>
+          )}
+          {moreOpen && (
+            <button onClick={() => pick('rentals')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Car Rental</button>
+          )}
+          {moreOpen && (
+            <button onClick={() => pick('simple-barbershop')} style={{ display: 'block', width: '100%', background: 'white', color: '#111827', textAlign: 'left', padding: '12px 16px 12px 32px', fontSize: '14.5px', fontWeight: '400', borderTop: '1px solid #f1f2f5' }}>Simple Website</button>
           )}
           <button onClick={() => setAddonsOpen(o => !o)}>Add-ons {addonsOpen ? '▾' : '▸'}</button>
           {addonsOpen && (

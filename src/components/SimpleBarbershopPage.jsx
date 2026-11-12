@@ -4,7 +4,7 @@ import { BusinessTopBar } from './BusinessMenu'
 import FloatingAddToCart from './FloatingAddToCart'
 import { submitAndNotify } from '../lib/notify'
 
-// Sample Websites page (reached from the Business Systems submenu,
+// Simple Website page (reached from the Business Systems submenu,
 // last link). This is the $10/month simple website sales page: one
 // product only, a simple website for ANY kind of business — a barber
 // is one website type (see the website_type table), a personal
@@ -29,11 +29,11 @@ export default function SimpleBarbershopPage({ go }) {
     try {
       await submitAndNotify({
         table: 'car_inquiries',
-        data: { car_id: null, car_name: 'Sample Website Request', name: form.name, email: form.email, phone: form.phone, message: form.message },
-        subject: `Sample website request — ${form.name}`,
+        data: { car_id: null, car_name: 'Simple Website Request', name: form.name, email: form.email, phone: form.phone, message: form.message },
+        subject: `Simple website request — ${form.name}`,
         emailExtras: { website_name: form.shop.trim() },
       })
-      setStatus('✓ Sent! Thanks — Yently will be in touch to set up your sample website.')
+      setStatus('✓ Sent! Thanks — Yently will be in touch to set up your simple website.')
       setForm({ name: '', shop: '', email: '', phone: '', message: '' })
     } catch (err) {
       setStatus('Error: ' + err.message)
@@ -46,7 +46,7 @@ export default function SimpleBarbershopPage({ go }) {
       <BusinessTopBar go={go} />
       <div className="hero-card" style={{ background: '#161d44', color: '#fff', textAlign: 'center' }}>
         <h2 style={{ color: '#fff' }}>🌐 Your website, online</h2>
-        <p style={{ fontSize: 18, color: '#f5c542' }}>Your own sample website for ${SAMPLE_PLAN_PRICE}/month. No tech skills needed.</p>
+        <p style={{ fontSize: 18, color: '#f5c542' }}>Your own simple website for ${SAMPLE_PLAN_PRICE}/month. No tech skills needed.</p>
         <p>A simple website for your business — barbers, personal pages, and more. Customers find you, see what you offer, and get in touch from their phone.</p>
       </div>
 
@@ -61,12 +61,12 @@ export default function SimpleBarbershopPage({ go }) {
 
       <div className="hero-card">
         <h3>Simple, honest pricing</h3>
-        <p><b>${SAMPLE_PLAN_PRICE}/month.</b> That's it — your sample website, for less than one haircut. No setup fee, no commission.</p>
+        <p><b>${SAMPLE_PLAN_PRICE}/month.</b> That's it — your simple website, for less than one haircut. No setup fee, no commission.</p>
         <p className="hint">Place your order below and Yently will be in touch to build your page with your own logo, services, prices and pictures.</p>
       </div>
 
       <div className="hero-card" style={{ textAlign: 'center' }}>
-        <h3>Sample website — ${SAMPLE_PLAN_PRICE}/month</h3>
+        <h3>Simple website — ${SAMPLE_PLAN_PRICE}/month</h3>
         {inCart ? (
           <div>
             <p>✓ In your cart.</p>
@@ -79,7 +79,7 @@ export default function SimpleBarbershopPage({ go }) {
 
       <div className="hero-card">
         <h3>Or send a request</h3>
-        <p>Prefer to talk first? Send a request and Yently will be in touch about your sample website.</p>
+        <p>Prefer to talk first? Send a request and Yently will be in touch about your simple website.</p>
         <form onSubmit={handleSubmit}>
           <label>Your name</label>
           <input required value={form.name} onChange={set('name')} />
@@ -94,7 +94,7 @@ export default function SimpleBarbershopPage({ go }) {
           <button type="submit" disabled={busy}>Send request</button>
           {status && <p className="status">{status}</p>}
         </form>
-      <FloatingAddToCart planKey={SAMPLE_PLAN_KEY} name="Sample website" price={SAMPLE_PLAN_PRICE} go={go} />
+      <FloatingAddToCart planKey={SAMPLE_PLAN_KEY} name="Simple website" price={SAMPLE_PLAN_PRICE} go={go} />
       </div>
     </div>
   )

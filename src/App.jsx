@@ -37,6 +37,7 @@ import HousesPage from './components/HousesPage'
 import DoctorPage from './components/DoctorPage'
 import HolidayPage from './components/HolidayPage'
 import RentalsPage from './components/RentalsPage'
+import LaundryPage from './components/LaundryPage'
 import TvGalleryPage from './components/TvGalleryPage'
 import LiveChatPage from './components/LiveChatPage'
 import CleanLinkPage from './components/CleanLinkPage'
@@ -138,7 +139,7 @@ export default function App() {
   }, [])
 
   const GROCERY_TABS = ['grocery-cart', 'lunches', 'meats', 'grocery-contact', 'stores', 'store-detail', 'store-order', 'category', 'products', 'item-detail', 'shop-seller', 'shop-seller-soon']
-  const BUSINESS_TABS = ['business-hub', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'houses', 'doctor', 'holiday', 'rentals', 'simple-barbershop', 'tv-gallery', 'live-chat', 'clean-link', 'direct-upload', 'demo-live-chat', 'business-cart']
+  const BUSINESS_TABS = ['business-hub', 'restaurants', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'houses', 'doctor', 'holiday', 'rentals', 'laundry', 'simple-barbershop', 'tv-gallery', 'live-chat', 'clean-link', 'direct-upload', 'demo-live-chat', 'business-cart']
   const KIDS_TABS = ['kids-hub', 'kids-math', 'kids-english', 'kids-arabic', 'kids-french', 'kids-spanish', 'kids-science', 'kids-geography', 'kids-coding', 'kids-reading', 'kids-books']
   const inMore = ['services', 'services-home', 'services-contact', 'about', 'guides', 'clothes'].includes(tab) || KIDS_TABS.includes(tab)
   const inBusiness = BUSINESS_TABS.includes(tab)
@@ -231,6 +232,7 @@ export default function App() {
             {tab === 'doctor' && <DoctorPage go={go} />}
             {tab === 'holiday' && <HolidayPage go={go} />}
             {tab === 'rentals' && <RentalsPage go={go} />}
+            {tab === 'laundry' && <LaundryPage go={go} />}
             {tab === 'simple-barbershop' && <SimpleBarbershopPage go={go} />}
             {tab === 'tv-gallery' && <TvGalleryPage go={go} />}
             {tab === 'live-chat' && <LiveChatPage go={go} />}

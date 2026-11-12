@@ -232,24 +232,46 @@
         }
         statusEl.textContent = '';
         input.value = '';
-        var needStart = !conversationId;
-        var start = needStart
-          ? rpc('start_shop_chat', { p_owner_type: ownerType, p_owner_key: ownerKey, p_visitor_id: visitorId, p_visitor_name: visitorName || '' })
-              .then(function (id) {
-                conversationId = convId(id);
-                if (!conversationId) throw new Error('Could not start the chat.');
-                storeSet(convKey(ownerType, ownerKey), String(conversationId));
-                var nr = $('shop-chat-name-row');
-                if (nr) nr.style.display = 'none';
-              })
-          : Promise.resolve();
-        start.then(function () {
-          return rpc('send_shop_message', { p_conversation_id: conversationId, p_visitor_id: visitorId, p_body: body });
-        }).then(function () {
+        var retried = false;
+        function sendOnce() {
+          var need = !conversationId;
+          var st = need
+            ? rpc('start_shop_chat', { p_owner_type: ownerType, p_owner_key: ownerKey, p_visitor_id: visitorId, p_visitor_name: visitorName || '' })
+                .then(function (id) {
+                  conversationId = convId(id);
+                  if (!conversationId) throw new Error('Could not start the chat.');
+                  storeSet(convKey(ownerType, ownerKey), String(conversationId));
+                  var nr = $('shop-chat-name-row');
+                  if (nr) nr.style.display = 'none';
+                })
+            : Promise.resolve();
+          return st.then(function () {
+            return rpc('send_shop_message', { p_conversation_id: conversationId, p_visitor_id: visitorId, p_body: body });
+          });
+        }
+        sendOnce().then(function () {
           /* Owner email is best-effort: it must never block the chat. */
           notifyOwner(ownerEmail, shopName, visitorName, body);
           return refresh();
         }).catch(function (err) {
+          /* A stored conversation id can go stale (the chat was
+             deleted, or the visitor's browser kept an old id): drop
+             it, start a fresh conversation and try once more. */
+          var gone = String((err && err.message) || '').toLowerCase().indexOf('not found') !== -1;
+          if (gone && !retried) {
+            retried = true;
+            storeDel(convKey(ownerType, ownerKey));
+            conversationId = null;
+            var nr = $('shop-chat-name-row');
+            if (nr) nr.style.display = '';
+            return sendOnce().then(function () {
+              notifyOwner(ownerEmail, shopName, visitorName, body);
+              return refresh();
+            }).catch(function (err2) {
+              statusEl.textContent = 'Could not send: ' + err2.message + ' Please try again.';
+              input.value = body;
+            });
+          }
           statusEl.textContent = 'Could not send: ' + err.message + ' Please try again.';
           input.value = body;
         });
@@ -325,6 +347,12 @@
     function renderThread() {
       var t = $('shop-chat-thread');
       if (!t) return;
+      /* Keep a typed reply (and its focus) across re-renders: the
+         poll rebuilds this form, and must never eat what the owner
+         is typing or a Send click in progress. */
+      var draftInput = $('shop-chat-reply');
+      var draft = draftInput ? draftInput.value : '';
+      var draftFocused = draftInput ? document.activeElement === draftInput : false;
       if (authFailed) { t.innerHTML = ''; return; }
       if (!selectedId) { t.innerHTML = ''; return; }
       var sel = null;
@@ -345,20 +373,25 @@
         '<button type="submit" style="padding:9px 14px;border:none;border-radius:8px;background:' + ACCENT + ';font-weight:bold;cursor:pointer;">Send</button>' +
       '</form><p id="shop-chat-reply-status" style="margin:8px 0 0;color:#a00;font-size:13px;"></p>';
       t.innerHTML = html;
+      var restored = $('shop-chat-reply');
+      if (restored && draft) { restored.value = draft; if (draftFocused) restored.focus(); }
       $('shop-chat-reply-form').addEventListener('submit', function (e) {
         e.preventDefault();
         var input = $('shop-chat-reply');
         var body = input.value.trim();
         if (!body || !selectedId) return;
-        var st = $('shop-chat-reply-status');
         input.value = '';
         rpc('send_shop_reply', { p_conversation_id: selectedId, p_u: creds.u, p_p: creds.p, p_body: body })
           .then(function () { return refreshThread(); })
           .then(function () { return loadConvs(true); })
           .catch(function (err) {
             if (isAuthError(err)) { authFailed = true; renderList(); renderThread(); return; }
-            if (st) st.textContent = 'Could not send: ' + err.message;
-            input.value = body;
+            /* Fetch the elements fresh: a poll may have rebuilt the
+               form since the submit, and the old ones are detached. */
+            var curSt = $('shop-chat-reply-status');
+            if (curSt) curSt.textContent = 'Could not send: ' + err.message;
+            var curInput = $('shop-chat-reply');
+            if (curInput) curInput.value = body;
           });
       });
     }
@@ -380,7 +413,12 @@
     function refreshThread() {
       if (!selectedId) return Promise.resolve();
       return rpc('get_shop_conversation_messages', { p_conversation_id: selectedId, p_u: creds.u, p_p: creds.p })
-        .then(function (rows) { messages = normMessages(rows); renderThread(); })
+        .then(function (rows) {
+          var next = normMessages(rows);
+          /* Re-render only when something actually arrived: the poll
+             must not rebuild the reply form under the owner's fingers. */
+          if (JSON.stringify(next) !== JSON.stringify(messages)) { messages = next; renderThread(); }
+        })
         .catch(function (err) {
           if (isAuthError(err)) { authFailed = true; renderList(); renderThread(); }
           /* otherwise keep the last good thread on a failed poll */

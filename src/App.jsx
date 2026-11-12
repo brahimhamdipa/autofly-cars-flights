@@ -8,6 +8,8 @@ import CarSellerFormPage from './components/CarSellerFormPage'
 import ContactPage from './components/ContactPage'
 import FlightReservationPage from './components/FlightReservationPage'
 import FlightContactPage from './components/FlightContactPage'
+import FlightsHubPage from './components/FlightsHubPage'
+import FlightPayPage from './components/FlightPayPage'
 import ClothesPage from './components/ClothesPage'
 import ServicesPage from './components/ServicesPage'
 import ServicesSoonPage from './components/ServicesSoonPage'
@@ -144,7 +146,7 @@ export default function App() {
   const inMore = ['services', 'services-home', 'services-contact', 'about', 'guides', 'clothes'].includes(tab) || KIDS_TABS.includes(tab)
   const inBusiness = BUSINESS_TABS.includes(tab)
   const inCars = ['cars', 'sell', 'contact', 'car-seller', 'car-seller-soon'].includes(tab)
-  const inFlights = ['flights', 'reserve', 'flight-contact'].includes(tab)
+  const inFlights = ['flights', 'flights-hub', 'reserve', 'flight-pay', 'flight-contact'].includes(tab)
 
   return (
     <div className="app">
@@ -159,7 +161,7 @@ export default function App() {
             <button className={inBusiness ? 'active' : ''} onClick={() => go('business-hub')}>Systems</button>
             <button className={GROCERY_TABS.includes(tab) ? 'active' : ''} onClick={() => go('products')}>Shop</button>
             <button className={inCars ? 'active' : ''} onClick={() => go('cars')}>Cars</button>
-            <button className={inFlights ? 'active' : ''} onClick={() => go('flights')}>Flights</button>
+            <button className={inFlights ? 'active' : ''} onClick={() => go('flights-hub')}>Flights</button>
             <span className="dropdown" ref={moreRef}>
               <button className={inMore ? 'active' : ''} onClick={() => setMoreOpen(o => !o)}>More ▾</button>
               {moreOpen && (
@@ -184,7 +186,7 @@ export default function App() {
           </div>
         </div>
         </div>
-        <div className="announce-bar">Yently officially opens in 2027 | Everything you need, <span className="slogan-word"><span className="slogan-g">g</span><span className="slogan-y">y</span><span className="slogan-ently">ently</span></span> in one place — business systems, cars, flights, groceries &amp; services, all in one place</div>
+        <div className="announce-bar">YENTLY | Everything you need, <span className="slogan-word"><span className="slogan-g">g</span><span className="slogan-y">y</span><span className="slogan-ently">ently</span></span> in one place</div>
       </header>
       <main className="main">
         {tab === 'cars' && <CarSection go={go} />}
@@ -193,7 +195,9 @@ export default function App() {
         {tab === 'car-seller-soon' && <CarSellerSoonPage go={go} />}
         {tab === 'contact' && <ContactPage go={go} />}
         {tab === 'flights' && <FlightSection go={go} />}
+        {tab === 'flights-hub' && <FlightsHubPage go={go} />}
         {tab === 'reserve' && <FlightReservationPage go={go} />}
+        {tab === 'flight-pay' && <FlightPayPage go={go} />}
         {tab === 'flight-contact' && <FlightContactPage go={go} />}
         {GROCERY_TABS.includes(tab) && (
           <CartProvider>

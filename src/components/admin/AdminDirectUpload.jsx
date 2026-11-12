@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { fetchAll, fmtDate } from '../../lib/admin'
 
-// Admin → menu 4 (Business Systems) → Add-ons → Direct Upload.
+// Admin → menu 4 (Systems) → Add-ons → Direct Upload.
 //
 // Direct Upload is a $5/month add-on: once it is on for a customer,
 // their uploads go live straight away, with no admin approval step.

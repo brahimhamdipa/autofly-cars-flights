@@ -24,7 +24,8 @@ import { fetchAll, fmtDate } from '../../lib/admin'
 // (direct_upload_orders), not this page.
 
 const SYSTEM_OPTIONS = [
-  'diner', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'store',
+  'diner', 'pos', 'barbers', 'dealer', 'employee', 'bodyshop', 'houses',
+  'doctor', 'holiday', 'rentals', 'store',
   'car-seller',
   'kids-math', 'kids-english', 'kids-arabic', 'kids-french', 'kids-spanish',
   'kids-science', 'kids-geography', 'kids-coding', 'kids-reading',

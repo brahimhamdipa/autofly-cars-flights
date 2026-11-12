@@ -19,6 +19,7 @@ import AdminChat from './admin/AdminChat'
 import AdminFolderPasses from './admin/AdminFolderPasses'
 import AdminAllPasses from './admin/AdminAllPasses'
 import AdminAllOrders from './admin/AdminAllOrders'
+import AdminBarcodeGenerator from './admin/AdminBarcodeGenerator'
 import AdminCars from './admin/AdminCars'
 import AdminDirectUpload from './admin/AdminDirectUpload'
 import AdminLiveChat from './admin/AdminLiveChat'
@@ -33,6 +34,7 @@ import AdminLiveChat from './admin/AdminLiveChat'
 const MENUS = [
   { n: 1, name: 'Shop', items: [
     { label: 'Products & Stock', section: 'products' },
+    { label: 'Barcode Generator', section: 'barcode-generator' },
     { label: 'Orders', section: 'orders' },
     { label: 'Form Submissions', section: 'submissions' },
     { label: 'Stores', children: [
@@ -390,6 +392,7 @@ export default function AdminPage() {
       {section === 'chat' && <AdminChat />}
       {section === 'all-passes' && <AdminAllPasses />}
       {section === 'all-orders' && <AdminAllOrders />}
+      {section === 'barcode-generator' && <AdminBarcodeGenerator />}
       {section === 'folder-passes' && <AdminFolderPasses />}
       <button type="button" className="admin-to-top no-print" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Top</button>
     </div>

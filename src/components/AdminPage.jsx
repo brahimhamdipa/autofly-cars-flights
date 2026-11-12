@@ -23,8 +23,9 @@ import AdminBarcodeGenerator from './admin/AdminBarcodeGenerator'
 import AdminCars from './admin/AdminCars'
 import AdminDirectUpload from './admin/AdminDirectUpload'
 import AdminLiveChat from './admin/AdminLiveChat'
+import AdminVault from './admin/AdminVault'
 
-// Five numbered menus, top left. A leaf has a section (an AdminPage
+// Six numbered menus, top left. A leaf has a section (an AdminPage
 // section) or a table (a Manage table, opened inside the Manage
 // section) or the signout action. A branch has children and opens in
 // place when tapped — the phone-friendly pattern, no flyouts. Menu 3
@@ -201,6 +202,9 @@ const MENUS = [
       { label: 'Employee Passes', table: 'passes' },
     ] },
   ] },
+  { n: 6, name: 'My Vault', items: [
+    { label: 'My Vault', section: 'vault' },
+  ] },
 ]
 
 // Admin area: email + password login (Supabase Auth). Only the owner's
@@ -221,7 +225,7 @@ export default function AdminPage() {
 
   const [section, setSection] = useState('products')
 
-  const [openMenu, setOpenMenu] = useState(null) // null or 1..5
+  const [openMenu, setOpenMenu] = useState(null) // null or 1..6
 
   const [expanded, setExpanded] = useState([]) // branch keys open in the menu
 
@@ -393,6 +397,7 @@ export default function AdminPage() {
       {section === 'all-passes' && <AdminAllPasses />}
       {section === 'all-orders' && <AdminAllOrders />}
       {section === 'barcode-generator' && <AdminBarcodeGenerator />}
+      {section === 'vault' && <AdminVault />}
       {section === 'folder-passes' && <AdminFolderPasses />}
       <button type="button" className="admin-to-top no-print" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>↑ Top</button>
     </div>
